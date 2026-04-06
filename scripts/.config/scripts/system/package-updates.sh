@@ -17,7 +17,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 # --- Configuration ---
 readonly SCRIPT_NAME="${0##*/}"
 readonly LOCK_FILE="/tmp/${SCRIPT_NAME%.sh}.lock"
-readonly THRESHOLD_YELLOW=25
+readonly THRESHOLD_YELLOW=50
 readonly THRESHOLD_RED=100
 
 # --- Functions ---

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Skwd-wall
+GenericName=Skwd-wall
+Comment=Browse, download and apply image or video wallpapers in style.
+Exec=quickshell -p /usr/local/share/skwd-wall/shell.qml
+Terminal=false
+Categories=Utility;Settings;
+Keywords=wallpaper;background;theme;color;
+NoDisplay=true

@@ -1,7 +1,7 @@
 {
-  "label": "lock",
-  "action": "hyprlock",
-  "keybind": "l"
+  "label": "suspend",
+  "action": "systemctl suspend && hyprlock",
+  "keybind": "s"
 }
 {
   "label": "reboot",

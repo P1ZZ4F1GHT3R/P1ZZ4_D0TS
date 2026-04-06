@@ -71,7 +71,7 @@
     "return-type": "json",
     "exec": "~/.config/scripts/system/package-updates.sh",
     "interval": 1800,
-    "on-click": "ghostty -e yay -Syu --noconfirm"
+    "on-click": "ghostty -e bash -c yay -Syu --noconfirm && hyprpm update"
   },
   "hyprland/workspaces": {
     "format": "{icon}",
