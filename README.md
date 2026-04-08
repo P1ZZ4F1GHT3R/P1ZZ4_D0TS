@@ -1,6 +1,6 @@
 # Hyprland Rice (stow-managed)
 
-A Hyprland rice based on [Saatvik333's](https://github.com/saatvik333/hyprland-dotfiles) configuration. Managed with GNU Stow for simple dotfile symlinking.
+A Hyprland rice based on [Saatvik333's](https://github.com/saatvik333/hyprland-dotfiles) configuration and uses quickshell elements from [ilyamiro's](https://github.com/ilyamiro/imperative-dots) configuration. The wallpaper picker is from [liixini](https://github.com/liixini/skwd-wall). Everything is managed with GNU Stow for simple dotfile symlinking.
 
 > Warning: The installer is untested. Use at your own risk and review the install script before running.
 
@@ -9,9 +9,8 @@ A Hyprland rice based on [Saatvik333's](https://github.com/saatvik333/hyprland-d
 - Arch Linux (or an Arch-based distribution) (btw)
 - sudo access
 - Internet connection
-- GNU Stow (installed by the script)
 
-## What it does
+## What the script does
 
 - Installs required base packages (via pacman).
 - Backs up your existing `~/.config` directory.
@@ -40,15 +39,6 @@ chmod +x ./install.sh
 
 The script will create a backup of `~/.config` before applying the stow-managed symlinks.
 
-## Usage
-
-- Config files are managed inside the repository and symlinked into `~/.config` with `stow`.
-- To modify what is enabled, edit or add stow packages in the repo and run
-```bash
-stowall
-```
- manually
-
 ## Uninstallation / Restore
 
 - The installer creates a backup of your original `~/.config` at `~/.dotfiles-backup/config`.
@@ -62,7 +52,8 @@ stow -D *
 ## Customization
 
 - Edit or add dotfiles inside the repo's stow package folders.
-- Use `stowall` to apply changes without rerunning the full installer.
+- Use the integrated `stowall` command to apply changes without rerunning the full installer.
+> Note: if you add a new package to the repo, you also have to add it in the stowall.sh script under the section PACKAGES.
 
 ## Contributing
 
