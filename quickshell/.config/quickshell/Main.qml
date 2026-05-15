@@ -83,7 +83,7 @@ FloatingWindow {
                 
                 // Key bubbling catch-all.
                 Keys.onEscapePressed: {
-                    Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/qs_manager.sh", "close"])
+                    Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/scripts/quickshell/qs_manager.sh", "close"])
                     event.accepted = true
                 }
 

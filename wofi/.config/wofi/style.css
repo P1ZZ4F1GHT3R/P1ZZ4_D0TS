@@ -3,25 +3,25 @@
 window {
     margin: 5px;
     border-radius: 8px;
-    background-color: rgba(3,3,14, 0.9);
+    background-color: rgba(5,5,5, 0.9);
     font-family: "Liga SFMono Nerd Font", monospace;
 }
 
 #input {
     margin: 8px;
     padding: 10px 12px;
-    border: 2px solid #9172cd;
+    border: 2px solid #819e85;
     border-radius: 8px;
-    color: #AAA9B6;
-    background-color: rgba(76,68,77, 0.8);
+    color: #ABABAB;
+    background-color: rgba(78,77,71, 0.8);
     outline: none;
-    caret-color: #C479B0;
+    caret-color: #CD9A6D;
     font-size: 14px;
 }
 
 #input:focus {
-    border-color: #C479B0;
-    box-shadow: 0 0 8px rgba(162,128,153, 0.3);
+    border-color: #CD9A6D;
+    box-shadow: 0 0 8px rgba(162,137,119, 0.3);
 }
 
 #inner-box {
@@ -44,12 +44,12 @@ window {
 #text {
     margin: 3px;
     padding: 3px;
-    color: #AAA9B6;
+    color: #ABABAB;
     font-size: 13px;
 }
 
 #text:selected {
-    color: #C479B0;
+    color: #CD9A6D;
     font-weight: bold;
 }
 
@@ -61,12 +61,12 @@ window {
 }
 
 #entry:hover {
-    background-color: rgba(162,128,153, 0.2);
+    background-color: rgba(162,137,119, 0.2);
 }
 
 #entry:selected {
-    background-color: rgba(162,128,153, 0.4);
-    box-shadow: 0 2px 6px rgba(162,128,153, 0.2);
+    background-color: rgba(162,137,119, 0.4);
+    box-shadow: 0 2px 6px rgba(162,137,119, 0.2);
 }
 
 #img {
@@ -79,7 +79,7 @@ window {
 }
 
 #urgent {
-    background-color: rgba(67,65,94, 0.3);
-    color: #43415E;
-    border-left: 3px solid #43415E;
+    background-color: rgba(70,70,70, 0.3);
+    color: #464646;
+    border-left: 3px solid #464646;
 }

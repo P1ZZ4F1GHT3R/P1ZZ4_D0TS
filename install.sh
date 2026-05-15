@@ -72,12 +72,14 @@ exec > >(tee -a "$INSTALL_LOG") 2>&1
 clear
 echo -e "${BOLD}${MAGENTA}"
 cat << 'EOF'
-  ██╗  ██╗██╗   ██╗██████╗ ██████╗ ██╗      █████╗ ███╗   ██╗██████╗
-  ██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗██║     ██╔══██╗████╗  ██║██╔══██╗
-  ███████║ ╚████╔╝ ██████╔╝██████╔╝██║     ███████║██╔██╗ ██║██║  ██║
-  ██╔══██║  ╚██╔╝  ██╔═══╝ ██╔══██╗██║     ██╔══██║██║╚██╗██║██║  ██║
-  ██║  ██║   ██║   ██║     ██║  ██║███████╗██║  ██║██║ ╚████║██████╔╝
-  ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝
+
+██████╗  ██╗███████╗███████╗██╗  ██╗███████╗ ██╗ ██████╗ ██╗  ██╗████████╗██████╗ ██████╗ 
+██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║██╔════╝███║██╔════╝ ██║  ██║╚══██╔══╝╚════██╗██╔══██╗
+██████╔╝╚██║  ███╔╝   ███╔╝ ███████║█████╗  ╚██║██║  ███╗███████║   ██║    █████╔╝██████╔╝
+██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║██╔══╝   ██║██║   ██║██╔══██║   ██║    ╚═══██╗██╔══██╗
+██║      ██║███████╗███████╗     ██║██║      ██║╚██████╔╝██║  ██║   ██║   ██████╔╝██║  ██║
+╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚═╝      ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝
+                                                                                          
 EOF
 echo -e "${RESET}"
 echo -e "${DIM}  dotfiles installer  •  $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
@@ -178,13 +180,13 @@ fi
 header "Official packages (pacman)"
 
 PACMAN_PACKAGES=(
-    hyprland bash zsh fish
+    hyprland-git bash zsh fish
     thunar dunst neofetch fastfetch
     pavucontrol starship swaync waybar
     easyeffects wofi wlogout yazi
     btop ghostty swww vscodium
     sddm neovim python python-edev python-pip
-    zen-browser quickshell-git
+    zen-browser quickshell-git matugen socat
 )
 
 step "The following packages will be installed:"
@@ -205,8 +207,9 @@ fi
 header "AUR packages (yay)"
 
 AUR_PACKAGES=(
-    waytrogen kew vicinae wallust sunsetr
+    kew vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
+    waybound skwd-wall skwd-daemon-bin
 )
 
 if command -v yay >/dev/null 2>&1; then
@@ -231,6 +234,15 @@ if command -v yay >/dev/null 2>&1; then
 else
     warn "yay not available — skipping AUR packages."
 fi
+
+# ============================================================
+#   Hyprland Plugins
+# ============================================================
+    header "Installing Hyprland Plugins"
+    hyprpm add https://github.com/virtcode/hypr-dynamic-cursors
+    hyprpm enable dynamic-cursors
+    hyprpm add https://github.com/yayuuu/hyprland-scroll-overview
+    hyprpm enable scrolloverview
 
 # ============================================================
 #   GTK themes — Colloid variants

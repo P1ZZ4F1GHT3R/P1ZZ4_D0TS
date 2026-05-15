@@ -4,28 +4,28 @@ css = { src = "wofi.css", dst = "~/.config/wofi/colors.css" }
  */
 
 :root {
-    --wallpaper: url("/home/p1zz4f1ght3r/Pictures/Wallpapers/Dark/pple-carplay-ios-26-4000x2182-23298.jpg");
+    --wallpaper: url("/home/p1zz4f1ght3r/Pictures/Wallpapers/Dark/undefined - Imgur.webp");
 
     /* Special */
-    --background: #03030E;
-    --foreground: #AAA9B6;
-    --cursor: #B791B3;
+    --background: #050505;
+    --foreground: #ABABAB;
+    --cursor: #BCA38C;
 
     /* Colors */
-    --color0:  #4C444D;
-    --color1:  #43415E;
-    --color2:  #5D5E9E;
-    --color3:  #926A88;
-    --color4:  #8563C8;
-    --color5:  #C479B0;
-    --color6:  #948EE4;
-    --color7:  #7D7C8F;
-    --color8:  #585764;
-    --color9:  #43415E;
-    --color10: #5D5E9E;
-    --color11: #926A88;
-    --color12: #8563C8;
-    --color13: #C479B0;
-    --color14: #948EE4;
-    --color15: #7D7C8F;
+    --color0:  #4E4D47;
+    --color1:  #464646;
+    --color2:  #647D6C;
+    --color3:  #927560;
+    --color4:  #749478;
+    --color5:  #CD9A6D;
+    --color6:  #EFEBCA;
+    --color7:  #7F7F7F;
+    --color8:  #595959;
+    --color9:  #464646;
+    --color10: #647D6C;
+    --color11: #927560;
+    --color12: #749478;
+    --color13: #CD9A6D;
+    --color14: #EFEBCA;
+    --color15: #7F7F7F;
 }

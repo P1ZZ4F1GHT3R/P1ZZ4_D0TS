@@ -1,5 +1,5 @@
 {
-  "output": "DP-1",
+  "output": "DP-2",
   "reload_style_on_change": true,
   "layer": "top",
   "position": "top",
@@ -71,7 +71,7 @@
     "return-type": "json",
     "exec": "~/.config/scripts/system/package-updates.sh",
     "interval": 1800,
-    "on-click": "ghostty -e bash -c yay -Syu --noconfirm && hyprpm update"
+    "on-click": "ghostty -e yay -Syu --noconfirm"
   },
   "hyprland/workspaces": {
     "format": "{icon}",

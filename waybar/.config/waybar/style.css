@@ -62,9 +62,10 @@ window#waybar {
 }
 
 #workspaces button.active {
-  color: @color5;
-  border: solid 2px @color5;
-  background: rgba(0, 0, 0, 0.35);
+  color: @background;
+  border: solid 2px @color3;
+  background: @color3;
+  padding: 0 12px;
 }
 
 #workspaces button.urgent {

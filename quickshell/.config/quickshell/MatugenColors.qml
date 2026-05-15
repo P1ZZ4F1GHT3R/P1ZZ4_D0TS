@@ -33,7 +33,7 @@ Item {
 
     Process {
         id: themeReader
-        command: ["cat", "/tmp/qs_colors.json"]
+        command: ["cat", "/home/p1zz4f1ght3r/.config/quickshell/qs_colors.json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let txt = this.text.trim();

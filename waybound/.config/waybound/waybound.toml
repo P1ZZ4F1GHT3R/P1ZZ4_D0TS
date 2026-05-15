@@ -1,0 +1,6 @@
+debug = false
+size = 1
+
+[[boundaries]]
+boundary = "bottom-right"
+command = "hyprctl dispatch scrolloverview:overview toggle"

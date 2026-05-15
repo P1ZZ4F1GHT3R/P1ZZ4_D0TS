@@ -25,6 +25,8 @@ if [[ "$ACTION" =~ ^[0-9]+$ ]]; then
     MOVE_OPT="$2"
     
     echo "close" > "$IPC_FILE"
+    QS_ADDR=$(hyprctl clients -j | jq -r '.[] | select(.title == "qs-master") | .address')
+    hyprctl --batch "dispatch pin address:$QS_ADDR ; dispatch movetoworkspacesilent special:qs_hidden,address:$QS_ADDR"
     
     CMD="workspace $WORKSPACE_NUM"
     [[ "$MOVE_OPT" == "move" ]] && CMD="movetoworkspace $WORKSPACE_NUM"
@@ -171,6 +173,7 @@ save_and_focus_widget() {
         # FOOLPROOF FIX: Move the qs-master window to the currently active workspace silently, THEN focus it.
         hyprctl --batch "keyword cursor:no_warps true ; dispatch movetoworkspacesilent $active_ws,title:^qs-master$ ; dispatch focuswindow title:^qs-master$ ; keyword cursor:no_warps false" >/dev/null 2>&1
     ) &
+    hyprctl --batch "keyword cursor:no_warps true ; dispatch movetoworkspacesilent $active_ws,title:^qs-master$ ; dispatch focuswindow title:^qs-master$ ; dispatch pin title:^qs-master$ ; keyword cursor:no_warps false"
 }
 
 restore_focus() {
@@ -189,6 +192,8 @@ restore_focus() {
 # -----------------------------------------------------------------------------
 if [[ "$ACTION" == "close" ]]; then
     echo "close" > "$IPC_FILE"
+    QS_ADDR=$(hyprctl clients -j | jq -r '.[] | select(.title == "qs-master") | .address')
+    hyprctl --batch "dispatch pin address:$QS_ADDR ; dispatch movetoworkspacesilent special:qs_hidden,address:$QS_ADDR"
     restore_focus
     if [[ "$TARGET" == "network" || "$TARGET" == "all" || -z "$TARGET" ]]; then
         if [ -f "$BT_PID_FILE" ]; then
@@ -218,6 +223,8 @@ if [[ "$ACTION" == "open" || "$ACTION" == "toggle" ]]; then
             if [[ -n "$SUBTARGET" ]]; then
                 if [[ "$CURRENT_MODE" == "$SUBTARGET" ]]; then
                     echo "close" > "$IPC_FILE"
+                    QS_ADDR=$(hyprctl clients -j | jq -r '.[] | select(.title == "qs-master") | .address')
+    hyprctl --batch "dispatch pin address:$QS_ADDR ; dispatch movetoworkspacesilent special:qs_hidden,address:$QS_ADDR"
                     restore_focus
                 else
                     echo "$SUBTARGET" > "$NETWORK_MODE_FILE"
@@ -225,6 +232,8 @@ if [[ "$ACTION" == "open" || "$ACTION" == "toggle" ]]; then
                 fi
             else
                 echo "close" > "$IPC_FILE"
+                QS_ADDR=$(hyprctl clients -j | jq -r '.[] | select(.title == "qs-master") | .address')
+    hyprctl --batch "dispatch pin address:$QS_ADDR ; dispatch movetoworkspacesilent special:qs_hidden,address:$QS_ADDR"
                 restore_focus
             fi
         else
@@ -241,6 +250,8 @@ if [[ "$ACTION" == "open" || "$ACTION" == "toggle" ]]; then
     # Intercept toggle logic for all other widgets so we can restore focus properly
     if [[ "$ACTION" == "toggle" && "$ACTIVE_WIDGET" == "$TARGET" ]]; then
         echo "close" > "$IPC_FILE"
+        QS_ADDR=$(hyprctl clients -j | jq -r '.[] | select(.title == "qs-master") | .address')
+    hyprctl --batch "dispatch pin address:$QS_ADDR ; dispatch movetoworkspacesilent special:qs_hidden,address:$QS_ADDR"
         restore_focus
         exit 0
     fi

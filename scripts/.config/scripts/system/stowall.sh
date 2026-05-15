@@ -1,55 +1,136 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Re-stowing dotfiles (handling broken symlinks)..."
+STOW_DIR="$HOME/P1ZZ4F1GHT3RS-Hyprland-Dotfiles"
 
+echo "Re-stowing dotfiles from: $STOW_DIR"
+
+# Explicit package list - only packages that actually exist in the repo
+# If you add a new stow package, add it here
 PACKAGES=(
     "hypr"
+    "wallust"
+    "waybar"
+    "bash"
+    "bongocat"
+    "btop"
+    "chrome-flags.conf"
+    "code-flags.conf"
+    "dunst"
+    "easyeffects"
+    "fastfetch"
+    "fish"
+    "ghostty"
+    "kew"
+    "neofetch"
+    "nvim"
+    "QtProject.conf"
+    "quickshell"
+    "scripts"
+    "shell.env"
+    "starship"
+    "swaync"
+    "Thunar"
+    "vicinae"
+    "wlogout"
+    "wofi"
+    "yazi"
+    "zsh"
     "pavucontrol.ini"
+    ".zshenv"
+    "matugen"
+    "waybound"
+    "skwd-wall"
+)
+
+# Packages where the themer overwrites symlinks with real files.
+# Before stowing these, any conflicting real files at the target are removed.
+FORCE_PACKAGES=(
+    "hypr"
     "wallust"
     "waybar"
 )
 
-# Step 1: Unstow everything (removes all symlinks)
+# Removes real files (not symlinks) at stow target paths for a given package
+clear_theme_conflicts() {
+    local pkg="$1"
+    while IFS= read -r -d '' src; do
+        local rel="${src#$STOW_DIR/$pkg/}"
+        local target="$HOME/$rel"
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            echo "  Removing conflicting file: $target"
+            rm -f "$target"
+        fi
+    done < <(find "$STOW_DIR/$pkg" -type f -print0)
+}
+
+# --- Validate all packages exist before touching anything ---
+echo "Validating packages..."
+missing=()
+for pkg in "${PACKAGES[@]}"; do
+    if [ ! -d "$STOW_DIR/$pkg" ]; then
+        missing+=("$pkg")
+    fi
+done
+
+if [ ${#missing[@]} -gt 0 ]; then
+    echo "WARNING: The following packages don't exist as directories and will be skipped:"
+    for m in "${missing[@]}"; do
+        echo "  - $m"
+    done
+    read -r -p "Continue anyway? [y/N]: " CONTINUE
+    case "$CONTINUE" in
+        y|Y|yes|YES) ;;
+        *) echo "Aborted."; exit 1 ;;
+    esac
+fi
+
+# Filter to only existing packages
+existing=()
+for pkg in "${PACKAGES[@]}"; do
+    [ -d "$STOW_DIR/$pkg" ] && existing+=("$pkg")
+done
+
+# --- Step 1: Unstow everything cleanly ---
+echo ""
 echo "Step 1: Removing existing symlinks..."
-for pkg in "${PACKAGES[@]}"; do
-    stow -D -v "$pkg" 2>/dev/null || true
+for pkg in "${existing[@]}"; do
+    stow --no-folding -d "$STOW_DIR" -D "$pkg" 2>/dev/null && echo "  Unstowed: $pkg" || true
 done
 
-for pkg in */; do
-    pkg_name="${pkg%/}"
-    if [[ ! " ${PACKAGES[@]} " =~ " ${pkg_name} " ]] && [ -d "$pkg_name/.config" ]; then
-        stow -D -v "$pkg_name" 2>/dev/null || true
+# --- Step 2: Stow everything with file-level symlinks ---
+echo ""
+echo "Step 2: Stowing all packages (file-level symlinks)..."
+failed=()
+for pkg in "${existing[@]}"; do
+    # For packages known to have themer-overwritten files, clear conflicts first
+    for fp in "${FORCE_PACKAGES[@]}"; do
+        if [ "$pkg" = "$fp" ]; then
+            clear_theme_conflicts "$pkg"
+            break
+        fi
+    done
+    if stow --no-folding -d "$STOW_DIR" "$pkg"; then
+        echo "  Stowed: $pkg"
+    else
+        echo "  FAILED: $pkg"
+        failed+=("$pkg")
     fi
 done
 
-# Step 2: Adopt any remaining files (the ones that broke symlinks)
-echo "Step 2: Adopting broken symlink files back into repo..."
-for pkg in "${PACKAGES[@]}"; do
-    stow --adopt -v "$pkg" 2>/dev/null || true
-done
+# --- Summary ---
+echo ""
+if [ ${#failed[@]} -gt 0 ]; then
+    echo "WARNING: The following packages failed to stow:"
+    for f in "${failed[@]}"; do
+        echo "  - $f"
+    done
+    echo "Run 'stow -v --no-folding <package>' to see why."
+else
+    echo "All packages stowed successfully."
+fi
 
-for pkg in */; do
-    pkg_name="${pkg%/}"
-    if [[ ! " ${PACKAGES[@]} " =~ " ${pkg_name} " ]] && [ -d "$pkg_name/.config" ]; then
-        stow --adopt -v "$pkg_name" 2>/dev/null || true
-    fi
-done
-
-# Step 3: Stow everything cleanly
-echo "Step 3: Stowing all packages..."
-for pkg in "${PACKAGES[@]}"; do
-    stow -v "$pkg"
-done
-
-for pkg in */; do
-    pkg_name="${pkg%/}"
-    if [[ ! " ${PACKAGES[@]} " =~ " ${pkg_name} " ]] && [ -d "$pkg_name/.config" ]; then
-        stow -v "$pkg_name"
-    fi
-done
-
-echo
+echo ""
 read -r -p "Reboot now? [y/N]: " REBOOT_CHOICE
 case "$REBOOT_CHOICE" in
     y|Y|yes|YES)
@@ -58,10 +139,6 @@ case "$REBOOT_CHOICE" in
         sudo systemctl reboot
         ;;
     *)
-        echo "Reboot skipped."
-        echo "To complete setup, reboot with: sudo systemctl reboot"
+        echo "Reboot skipped. Run 'sudo systemctl reboot' when ready."
         ;;
 esac
-
-echo ""
-echo "✓ Done! All symlinks restored."

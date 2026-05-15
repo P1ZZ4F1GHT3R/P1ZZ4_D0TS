@@ -38,6 +38,3 @@ done
 
 echo ""
 echo "✓ Done! Files copied and symlinked to repo."
-echo ""
-echo "NOTE: Run 'git status' to see if any system files were adopted."
-echo "      Run 'git checkout .' to restore your repo versions if needed."

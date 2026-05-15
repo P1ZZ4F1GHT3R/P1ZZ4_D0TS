@@ -15,7 +15,7 @@ class=$(echo "$window_data" | jq -r '.class // "none"')
 
 # 4. If ANY of these match your Quickshell widget, spare it and exit
 if [ "$title" = "qs-master" ] || [ "$initial_title" = "qs-master" ] || [ "$class" = "quickshell" ]; then
-    exit 0
+    ~/.config/scripts/quickshell/qs_manager.sh close
 else
     # 5. Otherwise, kill the active window
     hyprctl dispatch killactive
