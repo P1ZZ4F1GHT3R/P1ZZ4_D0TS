@@ -73,12 +73,13 @@ clear
 echo -e "${BOLD}${MAGENTA}"
 cat << 'EOF'
 
-██████╗  ██╗███████╗███████╗██╗  ██╗███████╗ ██╗ ██████╗ ██╗  ██╗████████╗██████╗ ██████╗ 
-██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║██╔════╝███║██╔════╝ ██║  ██║╚══██╔══╝╚════██╗██╔══██╗
-██████╔╝╚██║  ███╔╝   ███╔╝ ███████║█████╗  ╚██║██║  ███╗███████║   ██║    █████╔╝██████╔╝
-██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║██╔══╝   ██║██║   ██║██╔══██║   ██║    ╚═══██╗██╔══██╗
-██║      ██║███████╗███████╗     ██║██║      ██║╚██████╔╝██║  ██║   ██║   ██████╔╝██║  ██║
-╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚═╝      ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝
+██████╗  ██╗███████╗███████╗██╗  ██╗        ██████╗  ██████╗ ████████╗███████╗
+██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║        ██╔══██╗██╔═████╗╚══██╔══╝██╔════╝
+██████╔╝╚██║  ███╔╝   ███╔╝ ███████║        ██║  ██║██║██╔██║   ██║   ███████╗
+██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║        ██║  ██║████╔╝██║   ██║   ╚════██║
+██║      ██║███████╗███████╗     ██║███████╗██████╔╝╚██████╔╝   ██║   ███████║
+╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚══════╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
+
                                                                                           
 EOF
 echo -e "${RESET}"
@@ -186,7 +187,7 @@ PACMAN_PACKAGES=(
     easyeffects wofi wlogout yazi
     btop ghostty swww vscodium
     sddm neovim python python-edev python-pip
-    zen-browser quickshell-git matugen socat
+    zen-browser quickshell-git matugen
 )
 
 step "The following packages will be installed:"
@@ -209,7 +210,8 @@ header "AUR packages (yay)"
 AUR_PACKAGES=(
     kew vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
-    waybound skwd-wall skwd-daemon-bin
+    waybound skwd-wall skwd-daemon-bin pipes-rs
+    quicksnip-git
 )
 
 if command -v yay >/dev/null 2>&1; then

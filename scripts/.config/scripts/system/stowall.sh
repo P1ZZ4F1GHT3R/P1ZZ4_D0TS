@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STOW_DIR="$HOME/P1ZZ4F1GHT3RS-Hyprland-Dotfiles"
+STOW_DIR="$HOME/P11Z4_D0TS"
 
 echo "Re-stowing dotfiles from: $STOW_DIR"
 

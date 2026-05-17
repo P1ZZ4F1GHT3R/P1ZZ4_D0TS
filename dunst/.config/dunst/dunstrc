@@ -64,28 +64,28 @@ mouse_middle_click = do_action, close_current
 mouse_right_click = close_all
 
 # Colors
-frame_color = "#749478"
-highlight = "#CD9A6D"
-separator_color = "#ABABAB"
+frame_color = "#E8232A"
+highlight = "#B06279"
+separator_color = "#AEAEAE"
 
 [experimental]
 per_monitor_dpi = false
 
 [urgency_low]
 timeout = 4
-background = "#040404ee"
-foreground = "#ABABAB"
-frame_color = "#749478"
+background = "#060606ee"
+foreground = "#AEAEAE"
+frame_color = "#E8232A"
 
 [urgency_normal]
 timeout = 6
-background = "#04040480"
-foreground = "#ABABAB"
-frame_color = "#EFEBCA"
+background = "#06060680"
+foreground = "#AEAEAE"
+frame_color = "#688BC4"
 
 [urgency_critical]
 timeout = 0
-background = "#040404ee"
-foreground = "#ABABAB"
-frame_color = "#464646"
+background = "#060606ee"
+foreground = "#AEAEAE"
+frame_color = "#4B4B4B"
 new_icon = /usr/share/icons/Papirus-Dark/24x24/status/dialog-warning.svg

@@ -116,7 +116,18 @@
     "autoDeleteVideoTrash": false
   },
   "postProcessing": [
-    "/home/p1zz4f1ght3r/.config/scripts/theme/theme-sync.sh"
+    {
+      "command": "/home/p1zz4f1ght3r/.config/scripts/theme/theme-sync.sh",
+      "type": "all"
+    },
+    {
+      "command": "pkill waybar && sleep 2 && waybar",
+      "type": "all"
+    },
+    {
+      "command": "hyprctl dispatch exec \"[workspace 10; fullscreen] ghostty -e pipes-rs -f 45 -k heavy,light -r 0.6\" && sleep 1 && hyprctl dispatch workspace previous",
+      "type": "all"
+    }
   ],
   "postProcessOnRestore": true,
   "defaultMatugenConfig": "/home/p1zz4f1ght3r/.config/matugen/config.toml",
@@ -137,10 +148,11 @@
     "searchBarAlwaysVisible": false,
     "notifyOnWallpaperChange": false,
     "filterBarAlwaysVisible": true,
-    "locale": "Borculo",
+    "locale": "",
     "randomIncludeVideo": false,
     "randomIncludeWE": false,
-    "randomIncludeFavourites": true
+    "randomIncludeFavourites": false,
+    "randomInterval": 600
   },
   "transition": {
     "shader": "random",
