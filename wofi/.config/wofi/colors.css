@@ -4,28 +4,28 @@ css = { src = "wofi.css", dst = "~/.config/wofi/colors.css" }
  */
 
 :root {
-    --wallpaper: url("/home/p1zz4f1ght3r/Pictures/Wallpapers/Dark/wallhaven-xe782v.webp");
+    --wallpaper: url("/home/p1zz4f1ght3r/Pictures/Wallpapers/Dark/wallpaper.webp");
 
     /* Special */
-    --background: #070707;
-    --foreground: #AEAEAE;
-    --cursor: #AF8893;
+    --background: #03030E;
+    --foreground: #A9AAB6;
+    --cursor: #A19FCE;
 
     /* Colors */
-    --color0:  #3D414B;
-    --color1:  #4B4B4B;
-    --color2:  #826870;
-    --color3:  #7F75AC;
-    --color4:  #E8232A;
-    --color5:  #B06279;
-    --color6:  #688BC4;
-    --color7:  #828383;
-    --color8:  #5B5B5B;
-    --color9:  #4B4B4B;
-    --color10: #826870;
-    --color11: #7F75AC;
-    --color12: #E8232A;
-    --color13: #B06279;
-    --color14: #688BC4;
-    --color15: #828383;
+    --color0:  #3C323B;
+    --color1:  #41425E;
+    --color2:  #5D5DA0;
+    --color3:  #8D6B8C;
+    --color4:  #8868CB;
+    --color5:  #9894E5;
+    --color6:  #D99ED3;
+    --color7:  #7C7D8F;
+    --color8:  #575764;
+    --color9:  #41425E;
+    --color10: #5D5DA0;
+    --color11: #8D6B8C;
+    --color12: #8868CB;
+    --color13: #9894E5;
+    --color14: #D99ED3;
+    --color15: #7C7D8F;
 }

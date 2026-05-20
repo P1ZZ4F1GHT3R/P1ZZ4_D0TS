@@ -21,7 +21,8 @@
   "ollama": {
     "url": "http://localhost:11434",
     "model": "gemma3:4b",
-    "consolidationModel": "gemma3:4b"
+    "consolidationModel": "gemma3:4b",
+    "prompt": "You are tagging an image for visual search. Look at the image, then output exactly two lines.\n\nLINE 1 - tags, lowercase, comma-separated. Cover these four categories, in this order. Skip a category if nothing in the image fits it.\n\n1. SUBJECTS - every distinct living thing or notable foreground object you can see. Each subject gets its own tag. If two creatures are present, tag both separately.\n2. THEMES - the larger setting, environment, or location depicted (one to a few tags).\n3. MOOD - the overall feeling the image conveys (one tag, sometimes two).\n4. ART STYLE - the visual technique used to make the image (one tag).\n\nStrict rules:\n  - Only tag what is clearly visible. Never invent. If you do not see a person or creature, do not tag one. Missing a tag is always better than inventing one.\n  - Lowercase, one word per tag (hyphen only for unavoidable compounds).\n  - No duplicates. No color names. No generic filler (image, wallpaper, background, scene, view, aesthetic, beautiful).\n  - Prefer specific over vague.\n  - Tag count scales to image complexity. A dense scene may have 10-15 tags; a simple abstract may have 3-4. Do not pad to hit a number.\n\nQuality flags - include each independently only if it obviously applies:\n  - minimalist (sparse composition, lots of negative space)\n  - colourful (five or more distinct, well-distributed colors)\n  - vibrant (saturated, high-energy colors)\n\nLINE 2 - weather fit, comma-separated subset of: clear, sunny, cloudy, rainy, snowy, stormy, foggy, windy. If nothing fits, output 'clear'."
   },
   "steam": {
     "apiKey": "05CACAE0CD1F5FE23943D45E77DA58C8",
@@ -31,7 +32,7 @@
     "apiKey": "VWaH6VNBIdgsh4mA0CAoQUCQZXozNAhd"
   },
   "matugen": {
-    "schemeType": "scheme-content",
+    "schemeType": "scheme-vibrant",
     "mode": "dark",
     "pickerOnApply": false
   },
@@ -45,8 +46,7 @@
     {
       "name": "quickshell",
       "template": "~/.config/quickshell/colors.json.template",
-      "output": "~/.config/quickshell/qs_colors.json",
-      "reload": "pkill waybar && sleep 2 && waybar"
+      "output": "~/.config/quickshell/qs_colors.json"
     }
   ],
   "components": {
@@ -117,20 +117,12 @@
   },
   "postProcessing": [
     {
-      "command": "/home/p1zz4f1ght3r/.config/scripts/theme/theme-sync.sh",
-      "type": "all"
-    },
-    {
-      "command": "pkill waybar && sleep 2 && waybar",
-      "type": "all"
-    },
-    {
-      "command": "hyprctl dispatch exec \"[workspace 10; fullscreen] ghostty -e pipes-rs -f 45 -k heavy,light -r 0.6\" && sleep 1 && hyprctl dispatch workspace previous",
+      "command": "bash ~/.config/scripts/theme/theme-sync.sh",
       "type": "all"
     }
   ],
-  "postProcessOnRestore": true,
-  "defaultMatugenConfig": "/home/p1zz4f1ght3r/.config/matugen/config.toml",
+  "postProcessOnRestore": false,
+  "defaultMatugenConfig": "~/.config/matugen/config.toml",
   "display": {
     "fillMode": "fill"
   },
@@ -143,10 +135,10 @@
   },
   "general": {
     "wallpaperPerMonitor": false,
-    "closeOnSelection": false,
+    "closeOnSelection": true,
     "reopenAtLastSelection": false,
     "searchBarAlwaysVisible": false,
-    "notifyOnWallpaperChange": false,
+    "notifyOnWallpaperChange": true,
     "filterBarAlwaysVisible": true,
     "locale": "",
     "randomIncludeVideo": false,
@@ -157,5 +149,6 @@
   "transition": {
     "shader": "random",
     "lastShader": "morph"
-  }
+  },
+  "externalMatugenCommand": "matugen -c %config% image -source-color-index 0 %path%"
 }

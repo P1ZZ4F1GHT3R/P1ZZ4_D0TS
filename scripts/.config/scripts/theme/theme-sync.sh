@@ -193,6 +193,27 @@ execute_wallust_generation() {
     log_success "Wallust theme generation completed"
 }
 
+execute_ambxst_matugen_generation() {
+    local -r wallpaper="$1"
+    local -r matugen_config="$CONFIG_DIR/matugen/config.toml"
+
+    log_debug "Executing Ambxst matugen theme generation"
+
+    if [[ ! -r "$wallpaper" ]]; then
+        die "Wallpaper file not readable: $wallpaper"
+    fi
+
+    if [[ ! -f "$matugen_config" ]]; then
+        die "Matugen config not found: $matugen_config"
+    fi
+
+    if ! matugen image "$wallpaper" --source-color-index 0 -c "$matugen_config" -t scheme-tonal-spot 2>/dev/null; then
+        die "Ambxst matugen generation failed for: $wallpaper"
+    fi
+
+    log_success "Ambxst matugen theme generation completed"
+}
+
 execute_wofi_color_update() {
     validate_executable "$WOFI_SCRIPT" "Wofi color script"
     
@@ -225,6 +246,7 @@ execute_theme_scripts() {
     execute_waybar_detection "$wallpaper"
     execute_gtk_theme_update
     execute_wallust_generation "$wallpaper"
+    execute_ambxst_matugen_generation "$wallpaper"
     execute_ghostty_update
     execute_wofi_color_update
     
@@ -339,6 +361,21 @@ reload_swaync() {
     swaync-client -rs
 }
 
+reload_ghostty() {
+    sleep 0.5
+    pkill ghostty 2>/dev/null || true
+    sleep 0.5
+    hyprctl dispatch exec "[workspace 6] ghostty -e pipes-rs -f 45 -k heavy,light -r 0.6"
+    # Wait until ghostty window appears
+    for i in $(seq 1 20); do
+        hyprctl clients -j | grep -q '"class": "com.mitchellh.ghostty"' && break
+        sleep 0.1
+    done
+    hyprctl dispatch workspace 6 && sleep 0.2 && hyprctl dispatch fullscreen
+    sleep 0.2
+    hyprctl dispatch workspace previous
+}
+
 reload_system_components() {
     log_info "Reloading system components"
     
@@ -346,9 +383,10 @@ reload_system_components() {
     reload_hyprland
     # reload_waybar
     # restart_dunst
-    reload_swaync
+    #reload_swaync
     restart_hyprswitch
     reload_hyprland_plugins
+    reload_ghostty
     
     log_success "All system components reloaded successfully"
 }
@@ -365,7 +403,7 @@ main() {
     ensure_directory "$(dirname "$WALLPAPER_CACHE")"
     
     # Validate system dependencies
-    validate_dependencies "awww" "wallust" "hyprctl"
+    validate_dependencies "awww" "wallust" "matugen" "hyprctl"
     
     # Process current wallpaper (handles GIF extraction)
     local wallpaper

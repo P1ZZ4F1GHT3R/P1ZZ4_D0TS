@@ -211,7 +211,6 @@ AUR_PACKAGES=(
     kew vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
-    quicksnip-git
 )
 
 if command -v yay >/dev/null 2>&1; then
