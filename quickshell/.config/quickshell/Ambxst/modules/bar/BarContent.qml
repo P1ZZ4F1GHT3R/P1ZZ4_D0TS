@@ -31,12 +31,27 @@ Item {
     readonly property var compositorMonitor: AxctlService.monitorFor(screen)
     readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !AxctlService.clients.values) ? [] : AxctlService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
 
-    // Fullscreen detection - use ToplevelManager (native Wayland) for reliable detection
+    // Fullscreen detection is scoped to this bar's monitor so a fullscreen window
+    // on another output does not hide the DP-2 bar.
     readonly property bool activeWindowFullscreen: {
-        const toplevel = ToplevelManager.activeToplevel;
-        if (!toplevel || !toplevel.activated)
+        if (!compositorMonitor || !compositorMonitor.activeWorkspace)
             return false;
-        return toplevel.fullscreen === true;
+
+        const activeWorkspaceId = compositorMonitor.activeWorkspace.id;
+        const monId = compositorMonitor.id;
+
+        // Check active toplevel first (fast path), but only for this monitor.
+        const toplevel = ToplevelManager.activeToplevel;
+        if (toplevel && toplevel.activated && toplevel.fullscreen === true && AxctlService.focusedMonitor && AxctlService.focusedMonitor.id === monId)
+            return true;
+
+        // Check all windows on this monitor's active workspace (robust path).
+        const wins = CompositorData.windowList;
+        for (let i = 0; i < wins.length; i++) {
+            if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId)
+                return true;
+        }
+        return false;
     }
 
 
