@@ -181,10 +181,9 @@ fi
 header "Official packages (pacman)"
 
 PACMAN_PACKAGES=(
-    hyprland-git bash zsh fish
-    thunar dunst neofetch fastfetch
-    pavucontrol starship swaync waybar
-    easyeffects wofi wlogout yazi
+    hyprland-git bash zsh
+    thunar fastfetch
+    yazi
     btop ghostty swww vscodium
     sddm neovim python python-edev python-pip
     zen-browser quickshell-git matugen
@@ -208,7 +207,7 @@ fi
 header "AUR packages (yay)"
 
 AUR_PACKAGES=(
-    kew vicinae wallust sunsetr
+    vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
 )
@@ -323,17 +322,17 @@ fi
 # ============================================================
 #   Replace username in config
 # ============================================================
-header "Patching config — username"
+header "Patching config — skwd-wall"
 
-TARGET_FILE="./waytrogen/.config/waytrogen/config.json"
-step "Replacing hardcoded user 'p1zz4f1ght3r' → '${USER}' in config.json"
+TARGET_FILE="./skwd-wall/.config/skwd-wall/config.json"
+step "Replacing hardcoded user 'p1zz4f1ght3r' → '${USER}' in $TARGET_FILE"
 
 if [ -f "$TARGET_FILE" ]; then
-    if confirm "Apply username patch to $TARGET_FILE?" "y"; then
+    if confirm "Apply path patch to skwd-wall config?" "y"; then
         sed -i "s/p1zz4f1ght3r/$USER/g" "$TARGET_FILE"
-        success "Username updated"
+        success "Paths updated to /home/$USER"
     else
-        warn "Skipping username patch. Waytrogen may not work correctly."
+        warn "Skipping patch. skwd-wall will likely fail to find wallpapers."
     fi
 else
     warn "Target file not found at $TARGET_FILE — skipping patch."

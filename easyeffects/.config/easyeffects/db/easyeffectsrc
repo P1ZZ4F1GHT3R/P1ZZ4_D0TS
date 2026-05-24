@@ -1,5 +1,0 @@
-[StreamInputs]
-inputDevice=alsa_output.pci-0000_09_00.1.hdmi-stereo
-
-[StreamOutputs]
-outputDevice=alsa_output.usb-Macronix_Razer_Barracuda_X_2.4_1234-00.analog-stereo
