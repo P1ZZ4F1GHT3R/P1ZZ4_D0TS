@@ -365,15 +365,11 @@ reload_ghostty() {
     sleep 0.5
     pkill ghostty 2>/dev/null || true
     sleep 0.5
-    hyprctl dispatch exec "[workspace 6] ghostty -e pipes-rs -f 45 -k heavy,light -r 0.6"
-    # Wait until ghostty window appears
-    for i in $(seq 1 20); do
-        hyprctl clients -j | grep -q '"class": "com.mitchellh.ghostty"' && break
-        sleep 0.1
-    done
-    hyprctl dispatch workspace 6 && sleep 0.2 && hyprctl dispatch fullscreen
-    sleep 0.2
-    hyprctl dispatch workspace previous
+    hyprctl dispatch 'hl.dsp.focus({workspace = "6"})' 
+    sleep 0.5
+    hyprctl dispatch 'hl.dsp.exec_cmd("ghostty -e pipes-rs -f 45 -k heavy,light -r 0.6", {fullscreen = true})'
+    sleep 0.5
+    hyprctl dispatch 'hl.dsp.focus({workspace = "previous"})'
 }
 
 reload_system_components() {
@@ -384,7 +380,7 @@ reload_system_components() {
     # reload_waybar
     # restart_dunst
     #reload_swaync
-    restart_hyprswitch
+    #restart_hyprswitch
     reload_hyprland_plugins
     reload_ghostty
     

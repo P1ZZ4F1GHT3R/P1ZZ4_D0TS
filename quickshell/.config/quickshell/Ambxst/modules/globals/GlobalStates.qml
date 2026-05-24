@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.services
 import qs.config
+import "../../config/defaults/bar.js" as BarDefaults
 
 Singleton {
     id: root
@@ -552,16 +553,31 @@ Singleton {
 
     signal assistantFocusRequested(bool wasAlreadyOpen)
 
+    function assistantTargetScreenName() {
+        const list = Config.bar && Config.bar.screenList && Config.bar.screenList.length > 0
+            ? Config.bar.screenList
+            : (BarDefaults.data.screenList || []);
+
+        if (AxctlService.focusedMonitor && AxctlService.focusedMonitor.name && list.indexOf(AxctlService.focusedMonitor.name) !== -1) {
+            return AxctlService.focusedMonitor.name;
+        }
+
+        for (let i = 0; i < Quickshell.screens.length; i++) {
+            if (list.indexOf(Quickshell.screens[i].name) !== -1) {
+                return Quickshell.screens[i].name;
+            }
+        }
+
+        return Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "";
+    }
+
     function toggleAssistant() {
         if (assistantVisible) {
+            assistantScreenName = assistantTargetScreenName();
             assistantFocusRequested(true);
         } else {
             assistantVisible = true;
-            if (AxctlService.focusedMonitor && AxctlService.focusedMonitor.name) {
-                assistantScreenName = AxctlService.focusedMonitor.name;
-            } else if (Quickshell.screens.length > 0) {
-                assistantScreenName = Quickshell.screens[0].name;
-            }
+            assistantScreenName = assistantTargetScreenName();
             assistantFocusRequested(false);
         }
     }

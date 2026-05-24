@@ -1063,7 +1063,7 @@ Item {
 
                         ToggleRow {
                             label: "Disable Hover Expansion"
-                            checked: Config.notch.disableHoverExpansion ?? true
+                            checked: Config.notch.disableHoverExpansion ?? false
                             onToggled: value => {
                                 if (value !== Config.notch.disableHoverExpansion) {
                                     GlobalStates.markShellChanged();

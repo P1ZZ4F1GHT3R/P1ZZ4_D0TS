@@ -63,6 +63,7 @@ QtObject {
             case "default": toggleDashboardTab(0); break;
             case "system-monitor": toggleDashboardTab(1); break;
             case "metrics": toggleDashboardTab(1); break;
+            case "assistant": GlobalStates.toggleAssistant(); break;
 
             // System
             case "powermenu": toggleSimpleModule("powermenu"); break;

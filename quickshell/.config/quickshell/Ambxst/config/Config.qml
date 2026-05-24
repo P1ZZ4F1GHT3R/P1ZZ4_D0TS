@@ -677,7 +677,7 @@ Singleton {
             property bool keepHidden: false
             property string noMediaDisplay: "userHost"
             property string customText: "Ambxst"
-            property bool disableHoverExpansion: true
+            property bool disableHoverExpansion: false
         }
     }
 
@@ -3398,5 +3398,4 @@ Singleton {
         return Qt.rgba(color.r, color.g, color.b, opacity);
     }
 }
-
 

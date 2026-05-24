@@ -60,17 +60,25 @@ Item {
         return false;
     }
 
-    // Fullscreen detection - use parent panel's robust detection, fallback to ToplevelManager
+    // Fullscreen detection is scoped to this notch's monitor so fullscreen
+    // windows on another output do not hide this notch.
     readonly property bool activeWindowFullscreen: {
-        // Prefer the parent UnifiedShellPanel's hasFullscreenWindow (checks both ToplevelManager + CompositorData)
         if (barPanelRef && typeof barPanelRef.hasFullscreenWindow !== 'undefined') {
             return barPanelRef.hasFullscreenWindow;
         }
-        // Fallback: use ToplevelManager (native Wayland) like the bar does
-        const toplevel = ToplevelManager.activeToplevel;
-        if (!toplevel || !toplevel.activated)
+
+        if (!compositorMonitor || !compositorMonitor.activeWorkspace)
             return false;
-        return toplevel.fullscreen === true;
+
+        const activeWorkspaceId = compositorMonitor.activeWorkspace.id;
+        const monId = compositorMonitor.id;
+
+        const wins = CompositorData.windowList;
+        for (let i = 0; i < wins.length; i++) {
+            if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId)
+                return true;
+        }
+        return false;
     }
 
     // Should auto-hide logic:

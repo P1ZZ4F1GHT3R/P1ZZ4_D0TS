@@ -1,0 +1,43 @@
+-- Workspace keybinds
+hl.bind(mainMod .. " + 1", hl.dsp.focus({ workspace = "1" }))
+hl.bind(mainMod .. " + 2", hl.dsp.focus({ workspace = "2" }))
+hl.bind(mainMod .. " + 3", hl.dsp.focus({ workspace = "3" }))
+hl.bind(mainMod .. " + 4", hl.dsp.focus({ workspace = "4" }))
+hl.bind(mainMod .. " + 5", hl.dsp.focus({ workspace = "5" }))
+hl.bind(secondMod .. " + 1", hl.dsp.focus({ workspace = "6" }))
+hl.bind(secondMod .. " + 2", hl.dsp.focus({ workspace = "7" }))
+hl.bind(secondMod .. " + 3", hl.dsp.focus({ workspace = "8" }))
+hl.bind(secondMod .. " + 4", hl.dsp.focus({ workspace = "9" }))
+hl.bind(secondMod .. " + 5", hl.dsp.focus({ workspace = "10" }))
+
+hl.bind(mainMod .. " + SHIFT + 1", hl.dsp.window.move({ workspace = "1" }))
+hl.bind(mainMod .. " + SHIFT + 2", hl.dsp.window.move({ workspace = "2" }))
+hl.bind(mainMod .. " + SHIFT + 3", hl.dsp.window.move({ workspace = "3" }))
+hl.bind(mainMod .. " + SHIFT + 4", hl.dsp.window.move({ workspace = "4" }))
+hl.bind(mainMod .. " + SHIFT + 5", hl.dsp.window.move({ workspace = "5" }))
+hl.bind(mainMod .. " + SHIFT + 6", hl.dsp.window.move({ workspace = "6" }))
+hl.bind(mainMod .. " + SHIFT + 7", hl.dsp.window.move({ workspace = "7" }))
+hl.bind(mainMod .. " + SHIFT + 8", hl.dsp.window.move({ workspace = "8" }))
+hl.bind(mainMod .. " + SHIFT + 9", hl.dsp.window.move({ workspace = "9" }))
+hl.bind(mainMod .. " + SHIFT + 0", hl.dsp.window.move({ workspace = "10" }))
+
+hl.bind(mainMod .. " + D", hl.dsp.workspace.toggle_special("Discord"))
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.window.move({ workspace = "special:Discord" }))
+hl.bind(mainMod .. " + ALT + D", hl.dsp.window.move({ workspace = "special:Discord", silent = true }))
+
+hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("windows"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:windows" }))
+hl.bind(mainMod .. " + ALT + S", hl.dsp.window.move({ workspace = "special:windows", silent = true }))
+
+-- Dual monitor setup
+hl.workspace_rule({workspace = "1", monitor = "DP-2", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "2", monitor = "DP-2", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "3", monitor = "DP-2", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "4", monitor = "DP-2", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "5", monitor = "DP-2", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+
+hl.workspace_rule({workspace = "6", monitor = "DP-3", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "7", monitor = "DP-3", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "8", monitor = "DP-3", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "9", monitor = "DP-3", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })
+hl.workspace_rule({workspace = "10", monitor = "DP-3", no_rounding = false, decorate = true, gaps_in = 5, gaps_out = 10 })

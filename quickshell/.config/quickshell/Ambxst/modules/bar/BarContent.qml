@@ -32,7 +32,7 @@ Item {
     readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !AxctlService.clients.values) ? [] : AxctlService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
 
     // Fullscreen detection is scoped to this bar's monitor so a fullscreen window
-    // on another output does not hide the DP-2 bar.
+    // on another output does not hide this bar.
     readonly property bool activeWindowFullscreen: {
         if (!compositorMonitor || !compositorMonitor.activeWorkspace)
             return false;
@@ -40,9 +40,8 @@ Item {
         const activeWorkspaceId = compositorMonitor.activeWorkspace.id;
         const monId = compositorMonitor.id;
 
-        // Check active toplevel first (fast path), but only for this monitor.
-        const toplevel = ToplevelManager.activeToplevel;
-        if (toplevel && toplevel.activated && toplevel.fullscreen === true && AxctlService.focusedMonitor && AxctlService.focusedMonitor.id === monId)
+        const focused = AxctlService.focusedClient;
+        if (focused && focused.monitor === monId && focused.fullscreen)
             return true;
 
         // Check all windows on this monitor's active workspace (robust path).

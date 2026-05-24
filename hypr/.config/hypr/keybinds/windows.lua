@@ -1,0 +1,10 @@
+-- WINDOW MANAGEMENT KEYBINDINGS
+hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + Z", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
+hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.window.move({ direction = "l" }))
+hl.bind(mainMod .. " + SHIFT + mouse_up", hl.dsp.window.move({ direction = "r" }))
+hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("move +col"))
+hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("move -col"))

@@ -48,8 +48,6 @@ alacritty = { template = 'alacritty.toml', target = '~/.config/alacritty/colors.
 
 wofi = { src = 'wofi.css', dst = '~/.config/wofi/colors.css' }
 
-hypr = { src = 'hyprland.conf', dst = '~/.config/hypr/border.conf' }
-
 waybar = { src = 'waybar.css', dst = '~/.config/waybar/colors.css' }
 
 wlogout = { src = 'wlogout.css', dst = '~/.config/wlogout/colors.css' }
@@ -64,7 +62,7 @@ dunst = { src = 'dunstrc', dst = '~/.config/dunst/dunstrc' }
 
 hyprswitch = { src = 'hyprswitch.css', dst = '~/.config/hypr/config/hyprswitch.css' }
 
-border = { src = 'border.conf', dst = '~/.config/hypr/config/border.conf' }
+border = { src = 'border.lua', dst = '~/.config/hypr/config/border.lua' }
 
 vscode = { src = 'vscode.json', dst = '~/.cache/wallust/colors.json' }
 
@@ -74,6 +72,6 @@ neopywal = { src = 'neopywal.vim', dst = '~/.cache/wallust/colors_neopywal.vim' 
 
 swaync = { src = "swaync.css", dst = "~/.config/swaync/colors.css" }
 
-colloid = { src = "~/.config/wallust/templates/color-palette-wallust.scss", dst = "~/.local/share/colloid-src/src/sass/_color-palette-wallust.scss"}
+colloid = { src = "color-palette-wallust.scss", dst = "~/.local/share/colloid-src/src/sass/_color-palette-wallust.scss"}
 
-ghostty = { src = "~/.config/wallust/templates/ghostty.conf", dst = "~/.config/ghostty/themes/wallust.conf" }
+ghostty = { src = "ghostty.conf", dst = "~/.config/ghostty/themes/wallust.conf" }

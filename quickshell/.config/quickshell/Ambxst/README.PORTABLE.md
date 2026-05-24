@@ -21,7 +21,7 @@ Removed from startup/runtime:
 - bar system tray
 - bar pin/auto-hide controls
 
-The shell surface is intentionally limited to monitor `DP-2`.
+The shell surface follows the configured bar screen list, which defaults to monitor `DP-2`.
 
 ## IPC Actions
 
@@ -29,6 +29,7 @@ Bind these from your compositor:
 
 ```sh
 ambxst run dashboard
+ambxst run assistant
 ambxst run default
 ambxst run system-monitor
 ambxst run metrics
@@ -122,7 +123,7 @@ fi
 
 ## Monitor And Workspaces
 
-The bar/notch shell is restricted to `DP-2`. Workspace indicators are fixed to five numbered buttons: `1 2 3 4 5`.
+The bar/notch shell follows `screenList` and defaults to `DP-2`. Workspace indicators are fixed to five numbered buttons: `1 2 3 4 5`.
 
 If you already have old generated Ambxst config, make sure these files agree:
 

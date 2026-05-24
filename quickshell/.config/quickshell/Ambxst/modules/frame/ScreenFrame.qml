@@ -21,13 +21,12 @@ Item {
         const activeWorkspaceId = monitor.activeWorkspace.id;
         const monId = monitor.id;
 
-        // Check active toplevel first (fast path)
-        const toplevel = ToplevelManager.activeToplevel;
-        if (toplevel && toplevel.fullscreen && AxctlService.focusedMonitor.id === monId) {
+        const focused = AxctlService.focusedClient;
+        if (focused && focused.monitor === monId && focused.fullscreen) {
             return true;
         }
 
-        // Check all windows on this monitor (robust path)
+        // Check all windows on this monitor's active workspace.
         const wins = CompositorData.windowList;
         for (let i = 0; i < wins.length; i++) {
             if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId) {

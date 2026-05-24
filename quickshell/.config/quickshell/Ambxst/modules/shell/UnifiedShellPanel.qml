@@ -6,6 +6,7 @@ import qs.modules.bar
 import qs.modules.bar.workspaces
 import qs.modules.notch
 import qs.modules.frame
+import qs.modules.sidebar
 import qs.modules.services
 import qs.modules.globals
 import qs.modules.components
@@ -29,7 +30,7 @@ PanelWindow {
     // Dynamic keyboard focus: Exclusive when a notch module is open (so text fields work),
     // None otherwise (so compositor receives normal input).
     WlrLayershell.keyboardFocus: {
-        if (notchContent.screenNotchOpen) {
+        if (notchContent.screenNotchOpen || assistantSidebar.active) {
             return WlrKeyboardFocus.Exclusive;
         }
         return WlrKeyboardFocus.None;
@@ -83,13 +84,12 @@ PanelWindow {
         const activeWorkspaceId = compositorMonitor.activeWorkspace.id;
         const monId = compositorMonitor.id;
 
-        // Check active toplevel first (fast path)
-        const toplevel = ToplevelManager.activeToplevel;
-        if (toplevel && toplevel.fullscreen && AxctlService.focusedMonitor.id === monId) {
+        const focused = AxctlService.focusedClient;
+        if (focused && focused.monitor === monId && focused.fullscreen) {
             return true;
         }
 
-        // Check all windows on this monitor (robust path)
+        // Check all windows on this monitor's active workspace.
         const wins = CompositorData.windowList;
         for (let i = 0; i < wins.length; i++) {
             if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId) {
@@ -139,6 +139,9 @@ PanelWindow {
             },
             Region {
                 item: notchContent.notchHitbox
+            },
+            Region {
+                item: assistantSidebar.active ? assistantSidebar.hitbox : null
             }
         ]
     }
@@ -151,6 +154,16 @@ PanelWindow {
 
         onCleared: {
             Visibilities.setActiveModule("");
+        }
+    }
+
+    FocusGrab {
+        id: assistantFocusGrab
+        windows: [unifiedPanel]
+        active: assistantSidebar.active
+
+        onCleared: {
+            GlobalStates.hideAssistant();
         }
     }
 
@@ -204,6 +217,13 @@ PanelWindow {
             anchors.fill: parent
             screen: unifiedPanel.targetScreen
             z: 4
+        }
+
+        AssistantSidebar {
+            id: assistantSidebar
+            anchors.fill: parent
+            targetScreen: unifiedPanel.targetScreen
+            z: 5
         }
     }
 }

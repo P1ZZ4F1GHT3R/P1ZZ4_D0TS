@@ -7,5 +7,5 @@ var data = {
     "keepHidden": false,
     "noMediaDisplay": "userHost",
     "customText": "Ambxst",
-    "disableHoverExpansion": true
+    "disableHoverExpansion": false
 }

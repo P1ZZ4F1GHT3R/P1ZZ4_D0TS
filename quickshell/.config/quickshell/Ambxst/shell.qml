@@ -21,6 +21,7 @@ import qs.modules.globals
 import qs.modules.shell
 import qs.config
 import qs.modules.shell.osd
+import "config/defaults/bar.js" as BarDefaults
 import "modules/tools"
 
 ShellRoot {
@@ -31,9 +32,17 @@ ShellRoot {
         command: ["bash", Quickshell.shellDir + "/scripts/daemon_priority.sh"]
     }
 
+    function configuredBarScreens() {
+        if (!Config.barReady || !Config.bar)
+            return [];
+
+        const list = Config.bar.screenList || [];
+        return list.length > 0 ? list : (BarDefaults.data.screenList || []);
+    }
+
     readonly property var targetScreens: {
-        const matches = Quickshell.screens.filter(screen => screen.name === "DP-2");
-        return matches.length > 0 ? matches : [];
+        const list = root.configuredBarScreens();
+        return Quickshell.screens.filter(screen => list.indexOf(screen.name) !== -1);
     }
 
     ContextMenu {
@@ -69,8 +78,8 @@ ShellRoot {
 
                 // Bar status for reservations
                 barEnabled: {
-                    const list = (Config.bar && Config.bar.screenList !== undefined ? Config.bar.screenList : []);
-                    return (!list || list.length === 0 || list.indexOf(screen.name) !== -1);
+                    const list = root.configuredBarScreens();
+                    return list.indexOf(screen.name) !== -1;
                 }
                 barPosition: unifiedPanel.barPosition
                 barPinned: unifiedPanel.pinned

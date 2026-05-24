@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.notch
+import qs.modules.widgets.config
 import qs.modules.widgets.dashboard.widgets
 import qs.modules.widgets.dashboard.metrics
 import qs.config
@@ -20,12 +21,12 @@ NotchAnimationBehavior {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    readonly property var tabModel: [Icons.widgets, Icons.heartbeat]
+    readonly property var tabModel: [Icons.widgets, Icons.heartbeat, Icons.assistant]
     readonly property int tabCount: tabModel.length
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16
+    readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : (state.currentTab === 2 ? 540 : 400)) + tabWidth + 16
 
     implicitWidth: nonAnimWidth
     implicitHeight: 430
@@ -377,12 +378,20 @@ NotchAnimationBehavior {
                     sourceComponent: metricsComponent
                     z: visible ? 1 : 0
                 }
+
+                // Tab 2: AI
+                TabLoader {
+                    property int index: 2
+                    sourceComponent: aiComponent
+                    z: visible ? 1 : 0
+                }
                 
                 // Helper to access current item for focus
                 property var currentItem: {
                     switch(root.state.currentTab) {
                         case 0: return children[0].item;
                         case 1: return children[1].item;
+                        case 2: return children[2].item;
                         default: return null;
                     }
                 }
@@ -502,5 +511,10 @@ NotchAnimationBehavior {
     Component {
         id: metricsComponent
         MetricsTab {}
+    }
+
+    Component {
+        id: aiComponent
+        AiPanel {}
     }
 }

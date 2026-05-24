@@ -53,6 +53,18 @@ Item {
         inputField.forceActiveFocus();
     }
 
+    function closeSidebar() {
+        root.menuExpanded = false;
+        root.wantsFocus = false;
+        GlobalStates.hideAssistant();
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.active
+        onActivated: root.closeSidebar()
+    }
+
     Connections {
         target: GlobalStates
         function onAssistantFocusRequested(wasAlreadyOpen) {
@@ -1459,7 +1471,7 @@ Item {
                                                     if (root.menuExpanded) {
                                                         root.menuExpanded = false;
                                                     } else {
-                                                        root.wantsFocus = false;
+                                                        root.closeSidebar();
                                                     }
                                                     event.accepted = true;
                                                     return;
