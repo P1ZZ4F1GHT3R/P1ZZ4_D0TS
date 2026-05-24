@@ -11,9 +11,7 @@ scripts/
 │   └── color-utils.sh      # Color processing and image analysis
 ├── theme/                  # Theme management scripts
 │   ├── theme-sync.sh       # Master theme synchronization script
-│   ├── waybar-detection.sh # Waybar theme adjustment based on wallpaper
 │   ├── gtk-colors.sh       # GTK theme updates
-│   └── wofi-colors.sh      # Wofi color scheme updates
 ├── media/                  # Media and system control
 │   ├── music-status.sh     # Music player status display
 │   └── volume-brightness.sh # Volume, brightness, and media controls
@@ -21,13 +19,6 @@ scripts/
 │   ├── cleanup.sh           # Remove ignored files from git tracking
 │   └── validate-gitignore.sh # Validate .gitignore effectiveness
 ├── system/                # System utilities
-│   ├── package-updates.sh # Package update checker for Waybar
-│   ├── battery-notify.sh  # CronJob to notify for low-battery
-│   └── floating-run.sh    # Launch floating terminal applications
-└── utils/                 # Utility launchers and tools
-    ├── util-launcher.sh   # Wofi-based emoji picker and utility launcher
-    ├── screenshot.sh      # Advanced screenshot tool with grim/slurp
-    └── ss                 # Simple screenshot wrapper
 ```
 
 ## 🎨 Theme Management

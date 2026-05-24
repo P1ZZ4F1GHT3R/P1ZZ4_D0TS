@@ -119,7 +119,6 @@ echo -e "  ${DIM}  2. Install base tools, official packages, and AUR packages${R
 echo -e "  ${DIM}  3. Build and install Colloid GTK theme variants${RESET}"
 echo -e "  ${DIM}  4. Back up your current ~/.config${RESET}"
 echo -e "  ${DIM}  5. Stow the dotfiles into place${RESET}"
-echo -e "  ${DIM}  6. Install custom Waybar modules${RESET}"
 
 if ! confirm "Ready to begin?" "y"; then
     info "Aborted. Nothing was changed."
@@ -370,61 +369,6 @@ else
     warn "Skipping stow. Dotfiles are NOT active yet."
 fi
 
-# ============================================================
-#   Custom Waybar modules
-# ============================================================
-header "Custom Waybar modules"
-
-step "Will install:"
-echo -e "  ${DIM}wpm-waybar  (words-per-minute module)${RESET}"
-echo -e "  ${DIM}gpu-usage-waybar  (via cargo)${RESET}"
-
-if confirm "Install custom Waybar modules?" "y"; then
-
-    # wpm-waybar
-    info "Cloning and installing wpm-waybar..."
-    sudo usermod -aG input $USER
-    git clone https://github.com/andriy-koz/wpm-waybar.git
-    cd wpm-waybar
-    git checkout 8b201bb
-    bash install.sh
-    cd -
-    rm -rf wpm-waybar
-    success "wpm-waybar installed"
-
-    # gpu-usage-waybar
-info "Installing gpu-usage-waybar via cargo..."
-
-# Check for Rust/cargo and install if missing
-if ! command -v cargo >/dev/null 2>&1; then
-    warn "Rust not found — installing via rustup..."
-    if confirm "Install Rust (via rustup)?" "y"; then
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source "$HOME/.cargo/env"
-        success "Rust installed"
-    else
-        warn "Skipping Rust — gpu-usage-waybar will not be installed."
-    fi
-fi
-
-if command -v cargo >/dev/null 2>&1; then
-    if ! echo "$PATH" | grep -q "$HOME/.cargo/bin"; then
-        warn "~/.cargo/bin not in PATH — adding it..."
-        echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "$HOME/.bashrc"
-        echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "$HOME/.zshrc"
-        mkdir -p "$HOME/.config/fish"
-        echo 'set -gx PATH $HOME/.cargo/bin $PATH' >> "$HOME/.config/fish/config.fish"
-        export PATH="$HOME/.cargo/bin:$PATH"
-        success "Added ~/.cargo/bin to PATH (bash, zsh, fish)"
-    fi
-    cargo install gpu-usage-waybar
-    success "gpu-usage-waybar installed"
-else
-    warn "Rust/cargo still not available — skipping gpu-usage-waybar."
-fi
-else
-    warn "Skipping custom Waybar modules."
-fi
 
 # ============================================================
 #   Done!

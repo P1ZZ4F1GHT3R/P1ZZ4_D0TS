@@ -33,7 +33,6 @@ PACKAGES=(
 FORCE_PACKAGES=(
     "hypr"
     "wallust"
-    "waybar"
 )
 
 is_force_package() {
