@@ -16,6 +16,7 @@ PanelWindow {
     id: unifiedPanel
 
     required property ShellScreen targetScreen
+    required property bool fullscreenActive
     screen: targetScreen
 
     anchors {
@@ -78,6 +79,9 @@ PanelWindow {
 
     readonly property var compositorMonitor: AxctlService.monitorFor(targetScreen)
     readonly property bool hasFullscreenWindow: {
+        if (fullscreenActive)
+            return true;
+
         if (!compositorMonitor)
             return false;
 
@@ -207,6 +211,7 @@ PanelWindow {
             id: barContent
             anchors.fill: parent
             screen: unifiedPanel.targetScreen
+            fullscreenActive: unifiedPanel.fullscreenActive
             z: 2
             visible: unifiedPanel.barEnabled
         }

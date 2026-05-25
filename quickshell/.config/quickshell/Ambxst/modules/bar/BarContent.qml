@@ -20,6 +20,7 @@ Item {
     id: root
 
     required property ShellScreen screen
+    property bool fullscreenActive: false
 
     property string barPosition: (Config.bar && Config.bar.position !== undefined && ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top")
     property string orientation: barPosition === "left" || barPosition === "right" ? "vertical" : "horizontal"
@@ -34,6 +35,9 @@ Item {
     // Fullscreen detection is scoped to this bar's monitor so a fullscreen window
     // on another output does not hide this bar.
     readonly property bool activeWindowFullscreen: {
+        if (fullscreenActive)
+            return true;
+
         if (!compositorMonitor || !compositorMonitor.activeWorkspace)
             return false;
 
