@@ -92,4 +92,6 @@ This configuration is provided as-is for educational and personal use. Individua
 
 ## Disclaimer
 
-This script is provided as-is and has not been fully tested across all environments. Review `install.sh` and all included files before running. I am not responsible for any system changes or data loss.
+- This script is provided as-is and has not been fully tested across all environments. Review `install.sh` and all included files before running. I am not responsible for any system changes or data loss.
+- I use AI to assist me in perfecting my dotfiles.
+
