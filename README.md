@@ -50,8 +50,8 @@ sudo pacman -S --needed base-devel git sudo
 
 2. Clone this repository:
 ```bash
-git clone https://github.com/P1ZZ4F1GHT3R/P1ZZ4F1GHT3RS-Hyprland-Dotfiles.git
-cd P1ZZ4F1GHT3RS-Hyprland-Dotfiles
+git clone https://github.com/P1ZZ4F1GHT3R/P1ZZ4_D0TS.git
+cd P1ZZ4_D0TS
 ```
 
 3. Make the installer executable and run it:
@@ -67,7 +67,7 @@ The script will create a backup of `~/.config` before applying the stow-managed 
 - The installer creates a backup of your original `~/.config` at `~/.dotfiles-backup/config`.
 - To remove the stowed configs:
 ```bash
-cd P1ZZ4F1GHT3RS-Hyprland-Dotfiles
+cd P1ZZ4_D0TS
 stow -D *
 ```
 - Restore your backed-up `~/.config` manually from the backup location if needed.

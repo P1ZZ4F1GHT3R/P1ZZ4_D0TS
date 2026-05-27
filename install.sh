@@ -209,6 +209,7 @@ AUR_PACKAGES=(
     vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
+    plymouth
 )
 
 if command -v yay >/dev/null 2>&1; then
