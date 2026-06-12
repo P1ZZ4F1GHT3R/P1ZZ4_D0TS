@@ -24,7 +24,6 @@ PACKAGES=(
     ".zshenv"
     "matugen"
     "waybound"
-    "skwd-wall"
     "cli.sh"
 )
 
