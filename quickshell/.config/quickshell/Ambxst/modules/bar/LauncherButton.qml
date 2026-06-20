@@ -18,7 +18,7 @@ ToggleButton {
     Process {
         id: updateProcess
         running: false
-        command: ["ghostty", "-e", "bash", "-c", "sudo pacman -Syu --noconfirm; printf '\\nPress Enter to close...'; read _"]
+        command: ["ghostty", "-e", "bash", "-c", "sudo pacman -Syu --noconfirm"]
         onExited: PackageUpdateService.refresh()
     }
 

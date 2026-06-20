@@ -7,7 +7,7 @@ var data = {
     "launcherIconFullTint": true,
     "launcherIconSize": 24,
     "pillStyle": "default",
-    "screenList": ["DP-2"],
+    "screenList": ["DP-1"],
     "enableFirefoxPlayer": false,
     "barColor": [["surface", 0.0]],
     "frameEnabled": false,

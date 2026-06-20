@@ -47,5 +47,3 @@ timeoutLock = 600000     -- 10 minutes
 timeoutScreen = 900000   -- 15 minutes
 timeoutSuspend = 1200000 -- 20 minutes
 
--- Dual GPU 
-hl.env("AQ_DRM_DEVICES", "/dev/dri/primary_gpu:/dev/dri/secondary_gpu")

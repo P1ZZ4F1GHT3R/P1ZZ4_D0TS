@@ -21,7 +21,7 @@ Removed from startup/runtime:
 - bar system tray
 - bar pin/auto-hide controls
 
-The shell surface follows the configured bar screen list, which defaults to monitor `DP-2`.
+The shell surface follows the configured bar screen list, which defaults to monitor `DP-1`.
 
 ## IPC Actions
 
@@ -123,13 +123,13 @@ fi
 
 ## Monitor And Workspaces
 
-The bar/notch shell follows `screenList` and defaults to `DP-2`. Workspace indicators are fixed to five numbered buttons: `1 2 3 4 5`.
+The bar/notch shell follows `screenList` and defaults to `DP-1`. Workspace indicators are fixed to five numbered buttons: `1 2 3 4 5`.
 
 If you already have old generated Ambxst config, make sure these files agree:
 
 ```json
 // ~/.config/ambxst/config/bar.json
-{ "screenList": ["DP-2"], "showPinButton": false, "hoverToReveal": false }
+{ "screenList": ["DP-1"], "showPinButton": false, "hoverToReveal": false }
 ```
 
 ```json
