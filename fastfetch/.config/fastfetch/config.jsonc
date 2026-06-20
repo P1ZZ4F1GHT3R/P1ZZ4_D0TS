@@ -3,14 +3,7 @@
   "logo": {
     "source": "$HOME/.config/fastfetch/illuminati.txt",
     "color": {
-      "1": "black",
-      "2": "red",
-      "3": "green",
-      "4": "yellow",
-      "5": "blue",
-      "6": "magenta",
-      "7": "cyan",
-      "8": "white"
+      "1": "blue",
     },
     "padding": {
       "right": 2
@@ -33,8 +26,7 @@
     "key": {
       "width": 15
     },
-    "color": "blink_",
-    "separator": " ~> "
+    "separator": ": "
   },
   "modules": [
     "break",
@@ -48,7 +40,7 @@
     "separator",
     {
       "type": "os",
-      "format": "{#blue}{2}{#}{?6}({#green}{6}{#}){?} {?12}{12}{?}"
+      "format": "{#yellow}{2}{#}{?6}({#green}{6}{#}){?} {?12}{12}{?}"
     },
     "kernel",
     "shell",
@@ -59,7 +51,9 @@
       "compact": true
     },
     "uptime",
+    "separator",
     "break",
+    "separator",
     {
       "type": "cpu",
       "showPeCoreCount": true,
@@ -73,7 +67,9 @@
     {
       "type": "disk"
     },
+    "separator",
     "break",
+    "separator",
     {
       "type": "media",
       "format": "{5}: <{#underline_yellow}{1}{#}> {?3}by {#1}{3}{#}{?}"
@@ -82,6 +78,7 @@
       "type": "sound",
       "format": "{2:15} {5} {3}"
     },
+    "separator",
     "break",
     "colors"
   ]
