@@ -247,7 +247,7 @@ reload_system_components() {
     # Reload components in order
     reload_hyprland
     reload_hyprland_plugins
-    #reload_ghostty
+    #`reload_ghostty
     
     log_success "All system components reloaded successfully"
 }

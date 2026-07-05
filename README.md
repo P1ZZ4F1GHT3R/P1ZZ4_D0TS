@@ -82,7 +82,6 @@ stow -D *
 
 - **Saatvik333:** The original foundation for the Hyprland configuration.
 - **Axenide:** The creator of the Ambxst shell.
-- **ilyamiro:** For the Quickshell components and inspiration from imperative-dots.
 - **liixini:** For the sleek `skwd-wall` wallpaper picker.
 - **ericbrand97:** For the Vimix Hyprcursor theme.
 

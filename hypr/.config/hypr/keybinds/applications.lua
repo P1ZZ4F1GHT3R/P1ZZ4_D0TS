@@ -13,8 +13,6 @@ hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("ambxst run powermenu"))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("skwd wall toggle"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("ambxst run lockscreen"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("ambxst run assistant"))
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(launcher .. " deeplink vicinae://extensions/vicinae/core/search-emojis"))
-hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("bash ~/.config/scripts/quickshell/qs_manager.sh toggle monitors"))
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("bash ~/.config/scripts/quickshell/qs_manager.sh toggle focustime"))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(launcher .. " vicinae://launch/core/search-emojis"))
 
 
