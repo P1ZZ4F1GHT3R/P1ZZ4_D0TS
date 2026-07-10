@@ -1,6 +1,7 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("ambxst")
     hl.exec_cmd("sunsetr")
+    hl.exec_cmd("hyprpm update")
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("spotify")
     hl.exec_cmd("steam -silent &")
