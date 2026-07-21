@@ -17,6 +17,8 @@ hl.config({
     scrolling = {
         follow_focus = true,
         column_width = scrollingRatio,
+        wrap_focus = true,
+        wrap_swapcol = true,
         direction = "left",
     },
 })

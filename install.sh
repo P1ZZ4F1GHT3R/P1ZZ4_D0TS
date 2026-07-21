@@ -238,6 +238,8 @@ fi
 # ============================================================
 #   Hyprland Plugins
 # ============================================================
+    header "Updating Hyprpm Headers"
+    hyprpm update
     header "Installing Hyprland Plugins"
     hyprpm add https://github.com/virtcode/hypr-dynamic-cursors
     hyprpm enable dynamic-cursors
