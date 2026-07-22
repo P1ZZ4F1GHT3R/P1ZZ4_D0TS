@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Wayland
+import qs.modules.bar.workspaces
 import qs.modules.theme
 import qs.modules.bar.clock
 import qs.modules.widgets.powermenu
