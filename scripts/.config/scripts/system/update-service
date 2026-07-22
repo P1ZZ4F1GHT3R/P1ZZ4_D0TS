@@ -1,0 +1,254 @@
+#!/usr/bin/env bash
+# Update Arch packages, AUR packages, and Hyprland plugin headers without
+# stopping at the first failure. Intended for use from a terminal emulator.
+set -uo pipefail
+
+RESET="\033[0m"
+BOLD="\033[1m"
+DIM="\033[2m"
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+CYAN="\033[1;36m"
+MAGENTA="\033[1;35m"
+
+info()    { echo -e "${CYAN}  •${RESET} $*"; }
+success() { echo -e "${GREEN}  ✓${RESET} $*"; }
+warn()    { echo -e "${YELLOW}  ⚠${RESET}  $*"; }
+error()   { echo -e "${RED}  ✗${RESET} $*"; }
+header()  { echo -e "\n${BOLD}${BLUE}══════════════════════════════════════${RESET}"; \
+            echo -e "${BOLD}${BLUE}  $*${RESET}"; \
+            echo -e "${BOLD}${BLUE}══════════════════════════════════════${RESET}"; }
+
+FAILED_STEPS=()
+UPDATE_LOGS=()
+
+cleanup() {
+    local log
+    for log in "${UPDATE_LOGS[@]}"; do
+        [[ -e "$log" ]] && rm -f -- "$log"
+    done
+}
+trap cleanup EXIT
+
+strip_ansi() {
+    sed -E 's/\x1B\[[0-9;]*[[:alpha:]]//g'
+}
+
+show_bar() {
+    local current="$1"
+    local total="$2"
+    local width=20
+    local filled empty percent
+    local i
+
+    if (( total <= 0 )); then
+        total=1
+    fi
+    filled=$(( current * width / total ))
+    empty=$(( width - filled ))
+    percent=$(( current * 100 / total ))
+
+    printf "${MAGENTA}["
+    for ((i = 0; i < filled; i++)); do
+        printf "█"
+    done
+    for ((i = 0; i < empty; i++)); do
+        printf "░"
+    done
+    printf "]${RESET} ${BOLD}%3d%%${RESET}" "$percent"
+}
+
+print_package_queue() {
+    local count="$1"
+    shift
+    local package
+
+    if (( $# == 0 )); then
+        return
+    fi
+
+    echo -e "${CYAN}  Packages queued${RESET} ${DIM}($count total)${RESET}"
+    for package in "$@"; do
+        echo -e "${DIM}    •${RESET} ${BOLD}$package${RESET}"
+    done
+}
+
+add_package_tokens() {
+    local token
+    for token in "$@"; do
+        [[ -z "$token" ]] && continue
+        [[ "$token" =~ ^[-[:alnum:]_+.@:/]+$ ]] || continue
+        PACKAGE_QUEUE+=("$token")
+    done
+}
+
+show_success_details() {
+    local log="$1"
+
+    if grep -qi 'there is nothing to do' "$log"; then
+        return
+    fi
+    info "Finished without errors."
+}
+
+show_live_progress() {
+    local line current total action package queue_total
+    local in_package_block=0
+    local -a PACKAGE_QUEUE=()
+
+    while IFS= read -r line; do
+        line="${line//$'\r'/}"
+        line="$(strip_ansi <<< "$line")"
+
+        if [[ "$line" =~ ^Packages[[:space:]]+\(([0-9]+)\)[[:space:]]*(.*)$ ]]; then
+            in_package_block=1
+            queue_total="${BASH_REMATCH[1]}"
+            PACKAGE_QUEUE=()
+            # shellcheck disable=SC2206
+            local first_line_tokens=( ${BASH_REMATCH[2]} )
+            add_package_tokens "${first_line_tokens[@]}"
+            continue
+        fi
+
+        if (( in_package_block )); then
+            if [[ -z "$line" || "$line" =~ ^(Total|Net|Download|Installed|Optional|::)[[:space:]] ]]; then
+                print_package_queue "$queue_total" "${PACKAGE_QUEUE[@]}"
+                in_package_block=0
+            else
+                # shellcheck disable=SC2206
+                local package_tokens=( $line )
+                add_package_tokens "${package_tokens[@]}"
+                continue
+            fi
+        fi
+
+        if [[ "$line" =~ ^[[:space:]]*[0-9]+[[:space:]]+aur/([^[:space:]]+) ]]; then
+            echo -e "${CYAN}  AUR queued${RESET} ${BOLD}${BASH_REMATCH[1]}${RESET}"
+        elif [[ "$line" =~ ^==\>[[:space:]]Making[[:space:]]package:[[:space:]]([^[:space:]]+) ]]; then
+            echo -e "${CYAN}  Building${RESET} ${BOLD}${BASH_REMATCH[1]}${RESET}"
+        elif [[ "$line" =~ ^==\>[[:space:]]Starting[[:space:]](build|check|package)\(\) ]]; then
+            echo -e "${DIM}    ${BASH_REMATCH[1]} phase started${RESET}"
+        elif [[ "$line" =~ ^\(([0-9]+)/([0-9]+)\)[[:space:]]+(installing|upgrading|reinstalling|downgrading|removing)[[:space:]]+([^[:space:]]+) ]]; then
+            current="${BASH_REMATCH[1]}"
+            total="${BASH_REMATCH[2]}"
+            action="${BASH_REMATCH[3]}"
+            package="${BASH_REMATCH[4]}"
+            printf "  "
+            show_bar "$current" "$total"
+            printf " ${CYAN}[%s/%s]${RESET} ${BOLD}%-12s${RESET} %s\n" "$current" "$total" "${action^}" "$package"
+        elif [[ "$line" == *"there is nothing to do"* ]]; then
+            info "No package changes were required."
+        elif [[ "$line" =~ ^::[[:space:]]Proceed[[:space:]]with ]]; then
+            echo -e "${DIM}  Applying package transaction...${RESET}"
+        fi
+    done
+
+    if (( in_package_block )); then
+        print_package_queue "$queue_total" "${PACKAGE_QUEUE[@]}"
+    fi
+}
+
+show_failure_details() {
+    local log="$1"
+    local details
+
+    details="$(strip_ansi < "$log" | grep -iE 'error:|failed|could not|unable to|invalid' | tail -n 5 || true)"
+    if [[ -z "$details" ]]; then
+        details="$(strip_ansi < "$log" | tail -n 5)"
+    fi
+    if [[ -n "$details" ]]; then
+        echo -e "${DIM}  Details:${RESET}"
+        while IFS= read -r line; do
+            echo -e "${DIM}    $line${RESET}"
+        done <<< "$details"
+    fi
+}
+
+run_update() {
+    local label="$1"
+    shift
+    local log status had_errexit=0
+
+    header "$label"
+    info "Resolving packages and applying changes..."
+    log="$(mktemp -t p1zz4-dots-update.XXXXXX)"
+    UPDATE_LOGS+=("$log")
+    [[ "$-" == *e* ]] && had_errexit=1
+    set +e
+    "$@" 2>&1 | tee "$log" | show_live_progress
+    status=${PIPESTATUS[0]}
+    if (( had_errexit )); then
+        set -e
+    else
+        set +e
+    fi
+    if (( status == 0 )); then
+        success "$label completed"
+        show_success_details "$log"
+    else
+        error "$label failed (exit code $status); continuing with the remaining updates."
+        show_failure_details "$log"
+        FAILED_STEPS+=("$label (exit code $status)")
+        return "$status"
+    fi
+}
+
+main() {
+clear
+echo -e "${BOLD}${MAGENTA}"
+cat << 'EOF'
+
+██████╗  ██╗███████╗███████╗██╗  ██╗        ██████╗  ██████╗ ████████╗███████╗
+██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║        ██╔══██╗██╔═████╗╚══██╔══╝██╔════╝
+██████╔╝╚██║  ███╔╝   ███╔╝ ███████║        ██║  ██║██║██╔██║   ██║   ███████╗
+██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║        ██║  ██║████╔╝██║   ██║   ╚════██║
+██║      ██║███████╗███████╗     ██║███████╗██████╔╝╚██████╔╝   ██║   ███████║
+╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚══════╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
+
+EOF
+echo -e "${BOLD}${BLUE}  P1ZZ4_D0TS update service${RESET}"
+echo -e "${DIM}  $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
+
+if ! command -v pacman >/dev/null 2>&1; then
+    error "pacman was not found. This update service requires Arch Linux."
+    exit 1
+fi
+
+run_update "Official packages (pacman)" sudo pacman -Syu --noconfirm
+
+if command -v yay >/dev/null 2>&1; then
+    run_update "AUR packages (yay)" yay -Syu --noconfirm
+else
+    warn "yay is not installed; skipping AUR updates."
+fi
+
+if command -v hyprpm >/dev/null 2>&1; then
+    run_update "Hyprland plugin headers (hyprpm)" hyprpm update
+else
+    warn "hyprpm is not installed; skipping plugin header updates."
+fi
+
+header "Update summary"
+if (( ${#FAILED_STEPS[@]} == 0 )); then
+    success "System update completed successfully."
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send --app-name="system-update" --icon="system-software-update" \
+            "System is up to date" "Pacman, AUR, and Hyprland updates have completed."
+    fi
+    exit 0
+fi
+
+error "The following update step(s) failed:"
+printf '  %s\n' "${FAILED_STEPS[@]}"
+if command -v notify-send >/dev/null 2>&1; then
+    notify-send --urgency=critical --app-name="system-update" --icon="dialog-error" \
+        "System update completed with errors" "See the terminal for the failed update steps."
+fi
+exit 1
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

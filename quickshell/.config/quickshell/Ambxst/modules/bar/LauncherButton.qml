@@ -18,7 +18,7 @@ ToggleButton {
     Process {
         id: updateProcess
         running: false
-        command: ["ghostty", "-e", "bash", "-c", "sudo pacman -Syu --noconfirm && notify-send --app-name=system-update 'System is up to date'"]
+        command: ["ghostty", "-e", "bash", "-lc", "exec \"$HOME/.config/scripts/system/update-service\""]
         onExited: PackageUpdateService.refresh()
     }
 

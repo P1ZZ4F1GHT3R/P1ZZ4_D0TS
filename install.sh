@@ -61,7 +61,12 @@ CONFIG_BACKUP="$BACKUP_ROOT/config-$TIMESTAMP"
 STOWALLINSTALL="./scripts/.config/scripts/system/stowall-install.sh"
 STOWALL="./scripts/.config/scripts/system/stowall.sh"
 SCRIPTS_DIR="./scripts/.config/scripts"
+UPDATE_SERVICE="./scripts/.config/scripts/system/update-service"
 INSTALL_LOG="$HOME/hyprland-install-$TIMESTAMP.log"
+
+# Reuse update-service's quiet, package-by-package progress wrapper for the
+# installer package transactions. Its main routine only runs when executed.
+source "$UPDATE_SERVICE"
 
 # Log everything to file without suppressing terminal output
 exec > >(tee -a "$INSTALL_LOG") 2>&1
@@ -130,10 +135,13 @@ fi
 # ============================================================
 header "System update"
 
-step "Running pacman -Syu..."
+step "Running update-service..."
 if confirm "Update the system now? (recommended)" "y"; then
-    sudo pacman -Syu --noconfirm
-    success "System updated"
+    if "$UPDATE_SERVICE"; then
+        success "System updated"
+    else
+        warn "One or more update steps failed. Review the summary above; installation will continue."
+    fi
 else
     warn "Skipping system update. Things may break if packages are stale."
 fi
@@ -143,14 +151,18 @@ fi
 # ============================================================
 header "Base tools"
 
-step "Installing git, base-devel, stow, curl, wget..."
-sudo pacman -S --needed --noconfirm \
+step "Installing git, base-devel, stow, curl, wget, pacman-contrib..."
+if run_update "Base tools (pacman)" sudo pacman -S --needed --noconfirm \
     git \
     base-devel \
     stow \
     curl \
-    wget
-success "Base tools ready"
+    wget \
+    pacman-contrib; then
+    success "Base tools ready"
+else
+    warn "Some base tools failed to install. Review the errors above."
+fi
 
 # ============================================================
 #   yay (AUR helper)
@@ -165,7 +177,7 @@ else
         YAY_TMP="/tmp/yay-install-$$"
         git clone https://aur.archlinux.org/yay.git "$YAY_TMP"
         cd "$YAY_TMP"
-        makepkg -si --noconfirm
+        run_update "AUR helper (makepkg)" makepkg -si --noconfirm
         cd -
         rm -rf "$YAY_TMP"
         success "yay installed"
@@ -194,8 +206,11 @@ printf '    %s\n' "${PACMAN_PACKAGES[@]}"
 echo -e "${RESET}"
 
 if confirm "Install these packages?" "y"; then
-    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
-    success "Official packages installed"
+    if run_update "Official packages (pacman)" sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"; then
+        success "Official packages installed"
+    else
+        warn "Some official packages failed to install. Review the errors above."
+    fi
 else
     warn "Skipping official packages. The dotfiles may not work correctly."
 fi
@@ -209,7 +224,7 @@ AUR_PACKAGES=(
     vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
-    plymouth
+    plymouth 
 )
 
 if command -v yay >/dev/null 2>&1; then
@@ -219,11 +234,7 @@ if command -v yay >/dev/null 2>&1; then
     echo -e "${RESET}"
 
     if confirm "Install AUR packages?" "y"; then
-        set +e
-        yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
-        AUR_EXIT=$?
-        set -e
-        if [ $AUR_EXIT -ne 0 ]; then
+        if ! run_update "AUR packages (yay)" yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"; then
             warn "Some AUR packages failed to install. Continuing anyway."
         else
             success "AUR packages installed"
@@ -322,22 +333,28 @@ else
 fi
 
 # ============================================================
-#   Replace username in config
+#   Replace username in absolute paths
 # ============================================================
-header "Patching config — skwd-wall"
+header "Patching absolute home paths"
 
-TARGET_FILE="./skwd-wall/.config/skwd-wall/config.json"
-step "Replacing hardcoded user 'p1zz4f1ght3r' → '${USER}' in $TARGET_FILE"
+PATH_PATCH_FILES=(
+    "./hypr/.config/hypr/hyprlock.conf"
+    "./hypr/.config/hypr/hyprlock.conf.save"
+    "./.zshrc/.zshrc"
+)
 
-if [ -f "$TARGET_FILE" ]; then
-    if confirm "Apply path patch to skwd-wall config?" "y"; then
-        sed -i "s/p1zz4f1ght3r/$USER/g" "$TARGET_FILE"
-        success "Paths updated to /home/$USER"
-    else
-        warn "Skipping patch. skwd-wall will likely fail to find wallpapers."
-    fi
+step "Replacing /home/p1zz4f1ght3r with $HOME in current path-sensitive configs"
+if confirm "Apply the home-path patch?" "y"; then
+    for target_file in "${PATH_PATCH_FILES[@]}"; do
+        if [ -f "$target_file" ]; then
+            sed -i "s|/home/p1zz4f1ght3r|$HOME|g" "$target_file"
+            success "Patched $target_file"
+        else
+            warn "Target file not found at $target_file — skipping."
+        fi
+    done
 else
-    warn "Target file not found at $TARGET_FILE — skipping patch."
+    warn "Skipping home-path patch. Hyprlock or shell paths may not work correctly."
 fi
 
 # ============================================================
@@ -351,6 +368,13 @@ if [ -d "$SCRIPTS_DIR" ]; then
     success "Scripts marked executable"
 else
     warn "Scripts directory not found at $SCRIPTS_DIR"
+fi
+
+if [ -f "./manager.sh" ]; then
+    chmod +x ./manager.sh
+    success "manager.sh marked executable"
+else
+    warn "manager.sh not found at ./manager.sh"
 fi
 
 # ============================================================

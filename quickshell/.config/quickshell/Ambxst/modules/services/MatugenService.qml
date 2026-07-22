@@ -14,8 +14,8 @@ Singleton {
     readonly property string userConfigDir: Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")
     readonly property string liveMatugenConfig: userConfigDir + "/matugen/config.toml"
     readonly property string liveWallustConfig: userConfigDir + "/wallust/wallust.toml"
-    readonly property string dotfilesMatugenConfig: Quickshell.env("HOME") + "/P1ZZ4F1GHT3RS-Hyprland-Dotfiles/matugen/.config/matugen/config.toml"
-    readonly property string dotfilesWallustConfig: Quickshell.env("HOME") + "/P1ZZ4F1GHT3RS-Hyprland-Dotfiles/wallust/.config/wallust/wallust.toml"
+    readonly property string dotfilesMatugenConfig: Quickshell.env("HOME") + "/.config/matugen/config.toml"
+    readonly property string dotfilesWallustConfig: Quickshell.env("HOME") + "/.config/wallust/wallust.toml"
 
     property string lastSource: ""
     property string scheme: "scheme-tonal-spot"

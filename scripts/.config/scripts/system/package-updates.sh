@@ -38,14 +38,35 @@ check_database_locks() {
 }
 
 get_update_count() {
-    local arch_updates aur_updates=0 updates
+    local arch_updates=0 aur_updates=0 updates
+    local arch_output aur_output status
 
     # Arch repo updates
-    arch_updates=$(checkupdates 2>/dev/null | wc -l)
+    # checkupdates returns 2 when updates are available, which is not an error.
+    set +e
+    arch_output=$(checkupdates 2>/dev/null)
+    status=$?
+    set -e
+    if (( status != 0 && status != 2 )); then
+        return "$status"
+    fi
+    if [[ -n "$arch_output" ]]; then
+        arch_updates=$(printf '%s\n' "$arch_output" | wc -l)
+    fi
 
     # AUR updates (if yay is installed)
     if command -v yay >/dev/null 2>&1; then
-        aur_updates=$(yay -Qua 2>/dev/null | wc -l)
+        # yay commonly returns 1 when there are no AUR updates.
+        set +e
+        aur_output=$(yay -Qua 2>/dev/null)
+        status=$?
+        set -e
+        if (( status != 0 && status != 1 )); then
+            return "$status"
+        fi
+        if [[ -n "$aur_output" ]]; then
+            aur_updates=$(printf '%s\n' "$aur_output" | wc -l)
+        fi
     fi
 
     updates=$((arch_updates + aur_updates))
