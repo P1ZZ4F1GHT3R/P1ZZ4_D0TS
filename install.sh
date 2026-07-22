@@ -249,13 +249,56 @@ fi
 # ============================================================
 #   Hyprland Plugins
 # ============================================================
-    header "Updating Hyprpm Headers"
-    hyprpm update
-    header "Installing Hyprland Plugins"
-    hyprpm add https://github.com/virtcode/hypr-dynamic-cursors
-    hyprpm enable dynamic-cursors
-    hyprpm add https://github.com/yayuuu/hyprland-scroll-overview
-    hyprpm enable scrolloverview
+header "Hyprland plugins"
+
+HYPRPM_FAILED=()
+
+run_hyprpm_step() {
+    local label="$1"
+    shift
+    local log status had_errexit=0
+
+    step "$label"
+    log="$(mktemp -t p1zz4-dots-hyprpm.XXXXXX)"
+    [[ "$-" == *e* ]] && had_errexit=1
+    set +e
+    "$@" >"$log" 2>&1
+    status=$?
+    if (( had_errexit )); then
+        set -e
+    else
+        set +e
+    fi
+
+    if (( status == 0 )); then
+        success "$label"
+        rm -f "$log"
+        return 0
+    fi
+
+    warn "$label failed (exit code $status); continuing."
+    show_failure_details "$log"
+    HYPRPM_FAILED+=("$label")
+    rm -f "$log"
+    return 1
+}
+
+if command -v hyprpm >/dev/null 2>&1; then
+    run_hyprpm_step "Updating Hyprpm headers" hyprpm update || true
+    run_hyprpm_step "Adding dynamic-cursors plugin" hyprpm add https://github.com/virtcode/hypr-dynamic-cursors || true
+    run_hyprpm_step "Enabling dynamic-cursors plugin" hyprpm enable dynamic-cursors || true
+    run_hyprpm_step "Adding scroll overview plugin" hyprpm add https://github.com/yayuuu/hyprland-scroll-overview || true
+    run_hyprpm_step "Enabling scrolloverview plugin" hyprpm enable scrolloverview || true
+
+    if (( ${#HYPRPM_FAILED[@]} == 0 )); then
+        success "Hyprland plugins installed"
+    else
+        warn "Some Hyprland plugin steps failed:"
+        printf '  %s\n' "${HYPRPM_FAILED[@]}"
+    fi
+else
+    warn "hyprpm is not installed; skipping Hyprland plugin setup."
+fi
 
 # ============================================================
 #   GTK themes — Colloid variants
