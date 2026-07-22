@@ -38,7 +38,7 @@ get_wallpaper_folder() {
     local wallpaper_path
     wallpaper_path=$(<"$WALLPAPER_FILE") || die "Failed to read wallpaper file"
     
-    if [[ "$wallpaper_path" =~ Wallpapers/([^/]+)/ ]]; then
+    if [[ "$wallpaper_path" =~ Wallpapers/([^/]+) ]]; then
         echo "${BASH_REMATCH[1]}"
     else
         die "Invalid wallpaper path pattern: $wallpaper_path"

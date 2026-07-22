@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Wayland
-import qs.modules.bar.workspaces
 import qs.modules.theme
 import qs.modules.bar.clock
 import qs.modules.widgets.powermenu
@@ -28,34 +27,8 @@ Item {
     // Portable build: the bar is always pinned during normal use and only hides for fullscreen windows.
     readonly property bool pinned: true
 
-    // Monitor reference and reference to toplevels on monitor
-    readonly property var compositorMonitor: AxctlService.monitorFor(screen)
-    readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !AxctlService.clients.values) ? [] : AxctlService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
-
-    // Fullscreen detection is scoped to this bar's monitor so a fullscreen window
-    // on another output does not hide this bar.
-    readonly property bool activeWindowFullscreen: {
-        if (fullscreenActive)
-            return true;
-
-        if (!compositorMonitor || !compositorMonitor.activeWorkspace)
-            return false;
-
-        const activeWorkspaceId = compositorMonitor.activeWorkspace.id;
-        const monId = compositorMonitor.id;
-
-        const focused = AxctlService.focusedClient;
-        if (focused && focused.monitor === monId && focused.fullscreen)
-            return true;
-
-        // Check all windows on this monitor's active workspace (robust path).
-        const wins = CompositorData.windowList;
-        for (let i = 0; i < wins.length; i++) {
-            if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId)
-                return true;
-        }
-        return false;
-    }
+    // Fullscreen state is supplied per monitor by Quickshell's Hyprland IPC.
+    readonly property bool activeWindowFullscreen: fullscreenActive
 
 
     // Fullscreen is the only hide path; hover auto-hide is intentionally removed.

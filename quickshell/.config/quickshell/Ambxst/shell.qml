@@ -5,6 +5,7 @@
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.modules.bar
@@ -26,25 +27,10 @@ import "modules/tools"
 
 ShellRoot {
     id: root
-    property int fullscreenRefreshSerial: 0
 
     Process {
         running: true
         command: ["bash", Quickshell.shellDir + "/scripts/daemon_priority.sh"]
-    }
-
-    Process {
-        id: hyprFullscreenEvents
-        running: true
-        command: ["bash", "-lc", "while true; do sock=\"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock\"; if command -v socat >/dev/null 2>&1 && [ -S \"$sock\" ]; then socat - UNIX-CONNECT:\"$sock\"; fi; sleep 1; done"]
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                const eventName = data.split(">>")[0];
-                if (["fullscreen", "fullscreenstate", "openwindow", "closewindow", "movewindow", "movewindowv2", "workspace", "workspacev2", "focusedmon"].indexOf(eventName) !== -1)
-                    root.fullscreenRefreshSerial++;
-            }
-        }
     }
 
     function configuredBarScreens() {
@@ -73,44 +59,10 @@ ShellRoot {
         Item {
             id: screenShellContainer
             required property ShellScreen modelData
-            property bool screenHasFullscreen: false
-            property bool fullscreenCheckPending: false
-            property int fullscreenRefreshSerial: root.fullscreenRefreshSerial
-
-            function requestFullscreenCheck() {
-                if (fullscreenChecker.running) {
-                    fullscreenCheckPending = true;
-                    return;
-                }
-                fullscreenChecker.running = true;
+            readonly property bool screenHasFullscreen: {
+                const monitor = Hyprland.monitorFor(modelData);
+                return !!(monitor && monitor.activeWorkspace && monitor.activeWorkspace.hasFullscreen);
             }
-
-            onFullscreenRefreshSerialChanged: requestFullscreenCheck()
-
-            Process {
-                id: fullscreenChecker
-                running: false
-                command: ["bash", "-lc", "screen=\"$1\"; monitors=$(hyprctl -j monitors 2>/dev/null) || exit 0; clients=$(hyprctl -j clients 2>/dev/null) || exit 0; jq -n -c --arg screen \"$screen\" --argjson monitors \"$monitors\" --argjson clients \"$clients\" '(($monitors[]? | select(.name == $screen)) // null) as $m | if $m == null then false else any($clients[]?; ((.fullscreen // 0) > 0) and ((.monitor == $m.id) or (.monitor == $m.name)) and ((.workspace.id // -999999) == ($m.activeWorkspace.id // -999998))) end'", "ambxst-fullscreen-check", screenShellContainer.modelData.name]
-                stdout: SplitParser {
-                    splitMarker: "\n"
-                    onRead: output => {
-                        const trimmed = output.trim();
-                        if (trimmed === "true")
-                            screenShellContainer.screenHasFullscreen = true;
-                        else if (trimmed === "false")
-                            screenShellContainer.screenHasFullscreen = false;
-                    }
-                }
-
-                onExited: {
-                    if (screenShellContainer.fullscreenCheckPending) {
-                        screenShellContainer.fullscreenCheckPending = false;
-                        fullscreenChecker.running = true;
-                    }
-                }
-            }
-
-            Component.onCompleted: requestFullscreenCheck()
 
             // Panel components (Bar, Notch, Dock, Frame, Corners)
             UnifiedShellPanel {
@@ -123,6 +75,7 @@ ShellRoot {
                 active: Config.theme.enableCorners && Config.roundness > 0
                 sourceComponent: ScreenCorners {
                     screen: screenShellContainer.modelData
+                    fullscreenActive: screenShellContainer.screenHasFullscreen
                 }
             }
 
@@ -137,6 +90,7 @@ ShellRoot {
                 }
                 barPosition: unifiedPanel.barPosition
                 barPinned: unifiedPanel.pinned
+                barFullscreenActive: screenShellContainer.screenHasFullscreen
                 barSize: (unifiedPanel.barPosition === "left" || unifiedPanel.barPosition === "right") ? unifiedPanel.barTargetWidth : unifiedPanel.barTargetHeight
                 barOuterMargin: unifiedPanel.barOuterMargin
 

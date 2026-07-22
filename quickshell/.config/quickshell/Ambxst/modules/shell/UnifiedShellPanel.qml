@@ -3,7 +3,6 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.bar
-import qs.modules.bar.workspaces
 import qs.modules.notch
 import qs.modules.frame
 import qs.modules.sidebar
@@ -77,31 +76,7 @@ PanelWindow {
 
     readonly property bool unifiedEffectActive: false // Flag to notify children to disable internal borders
 
-    readonly property var compositorMonitor: AxctlService.monitorFor(targetScreen)
-    readonly property bool hasFullscreenWindow: {
-        if (fullscreenActive)
-            return true;
-
-        if (!compositorMonitor)
-            return false;
-
-        const activeWorkspaceId = compositorMonitor.activeWorkspace.id;
-        const monId = compositorMonitor.id;
-
-        const focused = AxctlService.focusedClient;
-        if (focused && focused.monitor === monId && focused.fullscreen) {
-            return true;
-        }
-
-        // Check all windows on this monitor's active workspace.
-        const wins = CompositorData.windowList;
-        for (let i = 0; i < wins.length; i++) {
-            if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId) {
-                return true;
-            }
-        }
-        return false;
-    }
+    readonly property bool hasFullscreenWindow: fullscreenActive
 
     // Proxy properties for Bar/Notch synchronization
     // Note: BarContent and NotchContent already handle their internal sync using Visibilities.

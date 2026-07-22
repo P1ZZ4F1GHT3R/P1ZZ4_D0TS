@@ -12,6 +12,7 @@ Item {
     property bool barEnabled: true
     property string barPosition: "top"
     property bool barPinned: true
+    property bool barFullscreenActive: false
     property int barSize: 0
     property int barOuterMargin: 0
     property bool containBar: false
@@ -32,6 +33,7 @@ Item {
     readonly property int sidebarMargin: 4
 
     readonly property int actualFrameSize: frameEnabled ? frameThickness : 0
+    readonly property bool barHiddenForFullscreen: barFullscreenActive && !(Config.bar && Config.bar.availableOnFullscreen !== undefined ? Config.bar.availableOnFullscreen : false)
 
     Item {
         id: noInputRegion
@@ -58,7 +60,7 @@ Item {
         exclusiveZone: {
             if (!Config.barReady) return 0;
             let zone = actualFrameSize;
-            if (barEnabled && barPosition === "top" && barPinned) {
+            if (barEnabled && barPosition === "top" && barPinned && !barHiddenForFullscreen) {
                 zone += barSize + barOuterMargin;
                 if (containBar && frameEnabled) zone += actualFrameSize;
             }
@@ -90,7 +92,7 @@ Item {
         exclusiveZone: {
             if (!Config.barReady) return 0;
             let zone = actualFrameSize;
-            if (barEnabled && barPosition === "bottom" && barPinned) {
+            if (barEnabled && barPosition === "bottom" && barPinned && !barHiddenForFullscreen) {
                 zone += barSize + barOuterMargin;
                 if (containBar && frameEnabled) zone += actualFrameSize;
             }
@@ -122,7 +124,7 @@ Item {
         exclusiveZone: {
             if (!Config.barReady) return 0;
             let zone = actualFrameSize;
-            if (barEnabled && barPosition === "left" && barPinned) {
+            if (barEnabled && barPosition === "left" && barPinned && !barHiddenForFullscreen) {
                 zone += barSize + barOuterMargin;
                 if (containBar && frameEnabled) zone += actualFrameSize;
             }
@@ -158,7 +160,7 @@ Item {
         exclusiveZone: {
             if (!Config.barReady) return 0;
             let zone = actualFrameSize;
-            if (barEnabled && barPosition === "right" && barPinned) {
+            if (barEnabled && barPosition === "right" && barPinned && !barHiddenForFullscreen) {
                 zone += barSize + barOuterMargin;
                 if (containBar && frameEnabled) zone += actualFrameSize;
             }
