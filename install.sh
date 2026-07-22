@@ -192,11 +192,11 @@ fi
 header "Official packages (pacman)"
 
 PACMAN_PACKAGES=(
-    hyprland-git bash zsh
+    bash zsh
     thunar fastfetch
     yazi
     btop ghostty swww vscodium
-    sddm neovim python python-edev python-pip
+    sddm neovim python python-pip
     zen-browser quickshell-git matugen
 )
 
@@ -224,7 +224,7 @@ AUR_PACKAGES=(
     vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
-    plymouth 
+    plymouth python-edev hyprland-git
 )
 
 if command -v yay >/dev/null 2>&1; then
