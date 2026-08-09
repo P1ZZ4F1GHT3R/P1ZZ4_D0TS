@@ -10,6 +10,7 @@ hl.window_rule({ match = {title = "Library"}, float = true})
 hl.window_rule({ match = {title = "File Upload"}, float = true})
 hl.window_rule({ match = {title = "File Operation Progress"}, float = true})
 hl.window_rule({ match = {title = "Confirm to replace files"}, float = true})
+hl.window_rule({ match = {title = "Extension: (Bitwarden Password Manager) - Bitwarden — Zen Browser"}, float = true})
 
 -- File dialogs with specific sizes
 hl.window_rule({ match = {class = browser}, match = {title = "Save As"}, size = {800, 600}})
