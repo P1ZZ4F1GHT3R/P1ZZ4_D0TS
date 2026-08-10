@@ -176,8 +176,8 @@ execute_ambxst_matugen_generation() {
         die "Matugen config not found: $matugen_config"
     fi
 
-    if ! matugen image "$wallpaper" --source-color-index 0 -c "$matugen_config" -t scheme-tonal-spot 2>/dev/null; then
-        die "Ambxst matugen generation failed for: $wallpaper"
+if ! matugen image "$wallpaper" --source-color-index 0 -c "$matugen_config" -t scheme-tonal-spot; then
+        log_error "Ambxst matugen generation failed for: $wallpaper, but continuing script..."
     fi
 
     log_success "Ambxst matugen theme generation completed"
@@ -193,7 +193,6 @@ execute_ghostty_update() {
 
     log_success "Ghostty color update completed"
 }
-
 
 execute_theme_scripts() {
     local -r wallpaper="$1"
@@ -241,6 +240,14 @@ reload_ghostty() {
     hyprctl dispatch 'hl.dsp.focus({workspace = "previous"})'
 }
 
+vicinae_update(){
+        if command -v vicinae > /dev/null 2>&1; then
+        vicinae theme set wallust || log_info "Failed to set vicinae theme"
+        else
+        log_info "vicinae not found, skipping vicinae theme update"
+        fi
+}
+
 reload_system_components() {
     log_info "Reloading system components"
     
@@ -248,6 +255,7 @@ reload_system_components() {
     reload_hyprland
     reload_hyprland_plugins
     #`reload_ghostty
+    vicinae_update
     
     log_success "All system components reloaded successfully"
 }

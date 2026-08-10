@@ -75,3 +75,5 @@ swaync = { src = "swaync.css", dst = "~/.config/swaync/colors.css" }
 colloid = { src = "color-palette-wallust.scss", dst = "~/.local/share/colloid-src/src/sass/_color-palette-wallust.scss"}
 
 ghostty = { src = "ghostty.conf", dst = "~/.config/ghostty/themes/wallust.conf" }
+
+vicinae = { src = 'vicinae.toml', dst = '~/.local/share/vicinae/themes/wallust.toml'}

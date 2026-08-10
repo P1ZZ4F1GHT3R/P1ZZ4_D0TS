@@ -198,6 +198,7 @@ PACMAN_PACKAGES=(
     btop ghostty swww vscodium
     sddm neovim python python-pip
     zen-browser quickshell-git matugen
+    rsync
 )
 
 step "The following packages will be installed:"
@@ -350,7 +351,7 @@ if confirm "Install Vimix hyprcursor theme?" "y"; then
     tar -xzf "$CURSOR_ARCHIVE" -C "$CURSOR_TMP"
     info "Installing to /usr/share/icons..."
     sudo cp -r "$CURSOR_TMP/Vimix Hyprcursors - Dark" /usr/share/icons/
-    sudo chmod -R a+rX "/usr/share/icons/Vimix"
+    sudo chmod -R a+rX "/usr/share/icons/Vimix Hyprcursors - Dark"
     rm -rf "$CURSOR_TMP"
     success "Vimix hyprcursor theme installed"
 else

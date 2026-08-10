@@ -1,10 +1,6 @@
 [config]
 reload_apps = true
 
-[templates.quickshell]
-input_path = "~/.config/quickshell/colors.json.template"
-output_path = "~/.config/quickshell/qs_colors.json"
-
 [templates.kitty]
 input_path = "~/.config/matugen/templates/kitty-colors.conf.template"
 output_path = "~/.config/kitty/kitty-matugen-colors.conf"
