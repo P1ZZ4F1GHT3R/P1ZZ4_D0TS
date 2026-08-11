@@ -4,7 +4,7 @@
 mainMod = "SUPER"
 secondMod = "ALT"
 terminal = "ghostty"
-fileManager = "thunar"
+fileManager = "nautilus"
 browser = "zen-browser"
 launcher = "vicinae"
 volumeBrightness = os.getenv("HOME") .. "/.config/scripts/media/volume-brightness.sh"
@@ -24,8 +24,8 @@ fontMono = "Ligma SFMono Nerd Font"
 -- Layout Variables
 gapsIn = 5
 gapsOut = 10
-borderSize = 3
-rounding = 10
+borderSize = 2
+rounding = 22
 masterRatio = 0.6
 scrollingRatio = 0.6
 
@@ -35,11 +35,11 @@ animSpeedFast = 2
 animSpeedSlow = 5
 
 -- Opacity Values
-opacityActive = 1.0
+opacityActive = 0.8
 opacityInactive = 0.8
 opacityFloat = 0.90
 opacitySpecial = 0.6
-scrollingRatio = 0.6
+opacityFull = 1
 
 -- Timeout values in seconds
 timeoutDim = 300000      -- 5 minutes

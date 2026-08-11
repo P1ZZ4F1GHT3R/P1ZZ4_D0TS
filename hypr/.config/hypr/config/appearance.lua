@@ -17,7 +17,7 @@ hl.config({
         hide_on_key_press = true,
         inactive_timeout = 4,
         warp_on_toggle_special = 1,
-        default_monitor = "DP-2",
+        default_monitor = "DP-1",
         no_hardware_cursors = 0,
     },
 
@@ -25,7 +25,7 @@ hl.config({
         rounding = rounding,
         active_opacity = opacityActive,
         inactive_opacity = opacityInactive,
-        fullscreen_opacity = opacityActive,
+        fullscreen_opacity = opacityFull,
         dim_special = opacitySpecial,
 
         shadow = {
@@ -41,7 +41,7 @@ hl.config({
             noise = 0.03,
             passes = 2,
             vibrancy = 0,
-            xray = false,
+            xray = true,
             special = true,
             popups = true,
             input_methods = true,

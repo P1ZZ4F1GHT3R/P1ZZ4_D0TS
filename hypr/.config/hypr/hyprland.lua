@@ -10,6 +10,7 @@ require("config/animations")
 require("config/layouts")
 require("config/input")
 require("config/plugins")
+require("hyprcolors")
 
 -- Keybinds
 require("keybinds/applications")

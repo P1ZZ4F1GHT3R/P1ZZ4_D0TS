@@ -288,8 +288,10 @@ if command -v hyprpm >/dev/null 2>&1; then
     run_hyprpm_step "Updating Hyprpm headers" hyprpm update || true
     run_hyprpm_step "Adding dynamic-cursors plugin" hyprpm add https://github.com/virtcode/hypr-dynamic-cursors || true
     run_hyprpm_step "Enabling dynamic-cursors plugin" hyprpm enable dynamic-cursors || true
-    run_hyprpm_step "Adding scroll overview plugin" hyprpm add https://github.com/yayuuu/hyprland-scroll-overview || true
+    run_hyprpm_step "Adding scrolloverview plugin" hyprpm add https://github.com/yayuuu/hyprland-scroll-overview || true
     run_hyprpm_step "Enabling scrolloverview plugin" hyprpm enable scrolloverview || true
+    run_hyprpm_step "Adding hyprglass plugin" hyprpm add https://github.com/hyprnux/hyprglass || true
+    run_hyprpm_step "Enabling hyprglass plugin" hyprpm enable hyprglass || true
 
     if (( ${#HYPRPM_FAILED[@]} == 0 )); then
         success "Hyprland plugins installed"
