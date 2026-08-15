@@ -24,7 +24,7 @@ PACKAGES=(
     ".zshenv"
     "matugen"
     "waybound"
-    "cli.sh"
+    "cava"
 )
 
 # These packages may have real files at target (themer overwrites symlinks).

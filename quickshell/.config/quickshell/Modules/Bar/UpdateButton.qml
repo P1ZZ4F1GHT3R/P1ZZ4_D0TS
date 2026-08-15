@@ -1,0 +1,42 @@
+import Quickshell
+import QtQuick
+import QtQuick.Layouts
+import Quickshell.Hyprland
+import Quickshell.Io
+import "../../"
+import "./"
+
+Rectangle {
+    id: updateButton
+    implicitHeight: Variables.circleHeight * 1.7
+    implicitWidth: Variables.circleWidth * 1.7
+    color: Variables.uiColor
+    radius: Variables.radius
+    border.color: Variables.borderColor
+    border.width: Variables.borderWidth
+
+    Text {
+        anchors.fill: parent
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        text: "󰣇"
+        color: Variables.iconColor
+        font.pixelSize: Variables.fontSize
+    }
+
+    Process {
+        id: updateProc
+
+        command: ["ghostty", "-e", "sh", "-c", "sudo pacman -Syu --noconfirm && notify-send --app-name=system-update 'System is up to date'; read -p 'Press enter to exit...'1"]
+    }
+
+        MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+            if (!updateProc.running) {
+                updateProc.running = true
+            }
+        }
+    }
+}

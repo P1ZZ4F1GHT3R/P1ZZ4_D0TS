@@ -20,7 +20,7 @@ general {
 }
 
 input-field {
-    monitor = DP-2
+    monitor = DP-1
     size = 250, 60
     outline_thickness = 2
     dots_size = 0.3

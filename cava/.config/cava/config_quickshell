@@ -1,0 +1,13 @@
+[general]
+bars = 4
+framerate = 60
+
+[smoothing]
+# Keep these so Cava handles the smooth movements
+gravity = 100
+integral = 77
+
+[output]
+method = raw
+data_format = ascii
+bar_delimiter = 59

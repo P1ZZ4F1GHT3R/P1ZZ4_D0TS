@@ -4,7 +4,7 @@
 mainMod = "SUPER"
 secondMod = "ALT"
 terminal = "ghostty"
-fileManager = "nautilus"
+fileManager = "thunar"
 browser = "zen-browser"
 launcher = "vicinae"
 volumeBrightness = os.getenv("HOME") .. "/.config/scripts/media/volume-brightness.sh"

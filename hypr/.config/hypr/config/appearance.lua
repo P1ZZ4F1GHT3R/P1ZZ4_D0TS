@@ -41,7 +41,7 @@ hl.config({
             noise = 0.03,
             passes = 2,
             vibrancy = 0,
-            xray = true,
+            xray = false,
             special = true,
             popups = true,
             input_methods = true,

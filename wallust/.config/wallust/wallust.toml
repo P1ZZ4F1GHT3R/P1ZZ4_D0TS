@@ -79,3 +79,5 @@ ghostty = { src = "ghostty.conf", dst = "~/.config/ghostty/themes/wallust.conf" 
 vicinae = { src = 'vicinae.toml', dst = '~/.local/share/vicinae/themes/wallust.toml'}
 
 hyprcolors = { src = 'hyprcolors.lua', dst = '~/.config/hypr/hyprcolors.lua'}
+
+Colors = { src = 'Colors.qml', dst = '~/Downloads/TESTSHELL/Colors.qml'}
