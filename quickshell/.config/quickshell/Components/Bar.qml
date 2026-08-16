@@ -15,8 +15,14 @@ PanelWindow {
     }
 
     color: "transparent"
-    implicitHeight: 48
+    implicitHeight: 150
     exclusiveZone: Variables.exclusiveZone
+
+    mask: Region {
+        item: left
+        Region { item: center }
+        Region { item: right }
+    }
 
     RowLayout {
         id: left

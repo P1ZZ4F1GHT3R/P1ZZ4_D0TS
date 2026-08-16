@@ -3,6 +3,4 @@ import QtQuick
 import QtQuick.Layouts
 import "./Components"
 
-Bar {
-
-}
+Bar {}

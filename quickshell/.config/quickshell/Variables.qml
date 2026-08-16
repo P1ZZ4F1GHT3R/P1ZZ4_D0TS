@@ -19,20 +19,25 @@ QtObject {
     readonly property int animationDuration: 200
     readonly property int borderWidth: 2
     readonly property int systemPoll: 2000
-    readonly property int imgHeight: height
-    readonly property int imgWidth: height
+    readonly property int imgHeight: 24
+    readonly property int imgWidth: imgHeight
     readonly property int imgRadius: 8
     readonly property int animationTypeUI: Easing.InOutQuad
-    readonly property int animationDurationUI: 400
+    readonly property int animationDurationUI: 250
+    readonly property int hoverTimer: 500
+    readonly property int barRadius: 4
 
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground
     readonly property color iconColor: Colors.color14
     readonly property color borderColor: Colors.color13
+    readonly property color buttonColor: Colors.color10
 
 
 
     
     property string currentProfile: "balanced"
+    property bool expandedState: false
+    property bool isPlaying: false 
 }
