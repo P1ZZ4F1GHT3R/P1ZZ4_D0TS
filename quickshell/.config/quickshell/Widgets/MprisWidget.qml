@@ -45,14 +45,52 @@ RowLayout {
     ColumnLayout {
         visible: mpris.activePlayer !== null && Variables.expandedState
 
-        Text {
-            text: mpris.activePlayer ? (mpris.activePlayer.trackArtist + " - " + mpris.activePlayer.trackTitle) : ""
-            color: Variables.textColor
-            font.bold: true
-            elide: Text.ElideRight
-            width: parent.width - 20
-            horizontalAlignment: Text.AlignHCenter
+        Item {
+            id: textContainer
+            clip: true
+            Layout.fillWidth: true
+            implicitHeight: trackText.implicitHeight
+
+            Text {
+                id: trackText
+                text: {
+                    const player = mprisWidget?.activePlayer
+                    if (!player) return ""
+                    return `${player.trackTitle || "Unknown"} - ${player.trackArtist || "Unknown"}`
+                }
+                color: Variables.textColor
+                font.bold: true
+
+                SequentialAnimation on x {
+                    running: trackText.text.length > Variables.trackTitleLength && Variables.expandedState === true
+                    loops: Animation.Infinite
+
+                    PauseAnimation { duration: 1500 }
+
+                    NumberAnimation {
+                        to: -(trackText.implicitWidth - textContainer.width)
+                        duration: 4000
+                        easing.type: Easing.linear
+                    }
+                    
+                    PauseAnimation { duration: 1500 }
+                    
+                    NumberAnimation {
+                        to: 0
+                        duration: 600
+                        easing.type: Easing.linear
+                    }
+
+                    onRunningChanged: {
+                        if (!running) {
+                            trackText.x = 0
+                            }
+                    }
+                }
+            }
         }
+
+
         Rectangle {
             id: progressBarBackground
 
@@ -84,7 +122,8 @@ RowLayout {
         }
 
         Row {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.alignment: Qt.AlignHCenter 
+            Layout.topMargin: 10
             spacing: Variables.spacing * 2
 
             visible: mpris.activePlayer !== null && Variables.expandedState 

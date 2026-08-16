@@ -8,6 +8,11 @@ import "./"
 
 Rectangle {
     id: updateButton
+
+    Layout.alignment: Qt.AlignTop
+    Layout.topMargin: Variables.topMargin
+    Layout.leftMargin: -(Variables.topMargin)
+    
     implicitHeight: Variables.circleHeight * 1.7
     implicitWidth: Variables.circleWidth * 1.7
     color: Variables.uiColor
@@ -27,7 +32,7 @@ Rectangle {
     Process {
         id: updateProc
 
-        command: ["ghostty", "-e", "sh", "-c", "sudo pacman -Syu --noconfirm && notify-send --app-name=system-update 'System is up to date'; read -p 'Press enter to exit...'1"]
+        command: ["ghostty", "-e", "sh", "-c", "sudo pacman -Syu --noconfirm && notify-send --app-name=system-update 'System is up to date'; read -p 'Press enter to exit...'"]
     }
 
         MouseArea {

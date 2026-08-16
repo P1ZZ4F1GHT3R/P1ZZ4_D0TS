@@ -3,15 +3,13 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Io
+import QtQuick.Shapes
 import "../../"
 
 Rectangle {
     id: system
 
-    anchors {
-        verticalCenter: parent.verticalCenter
-        right: parent.right
-    }
+    Layout.alignment: Qt.AlignTop
     implicitHeight: rowLayout.implicitHeight + Variables.height
     implicitWidth: rowLayout.implicitWidth + Variables.width
     color: Variables.uiColor
@@ -46,6 +44,52 @@ Rectangle {
                     system.diskUsage = parts[2] + " " + parts[3];
                 }
             }
+        }
+    }
+
+    Shape {
+        id: leftConcave
+
+        width: Variables.radius
+        height: Variables.radius
+        anchors.top: parent.top
+        anchors.right: parent.left
+
+        ShapePath {
+            fillColor: Variables.uiColor
+            strokeWidth: 0
+
+            PathMove { x: Variables.radius; y: 0 }
+            PathLine { x: Variables.radius; y: Variables.radius }
+            PathArc {
+                x: 0; y: 0
+                radiusX: Variables.radius
+                radiusY: Variables.radius
+                direction: PathArc.Counterclockwise
+            }
+            PathLine { x: Variables.radius; y: 0 }
+        }
+    }
+
+    Shape {
+        width: Variables.radius
+        height: Variables.radius
+        anchors.top: parent.bottom
+        anchors.right: parent.right
+
+        ShapePath {
+            fillColor: Variables.uiColor
+            strokeWidth: 0
+
+            PathMove { x: Variables.radius; y: 0 }
+            PathLine { x: Variables.radius; y: Variables.radius }
+            PathArc {
+                x: 0; y: 0
+                radiusX: Variables.radius
+                radiusY: Variables.radius
+                direction: PathArc.Counterclockwise
+            }
+            PathLine { x: Variables.radius; y: 0 }
         }
     }
 

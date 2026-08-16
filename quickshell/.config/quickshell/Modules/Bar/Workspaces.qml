@@ -3,10 +3,13 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Io
+import QtQuick.Shapes
 import "../../"
 import "./"
 
 Rectangle {
+
+  Layout.alignment: Qt.AlignTop
   implicitHeight: rowLayout.implicitHeight + Variables.height
   implicitWidth: rowLayout.implicitWidth + Variables.width
   color: Variables.uiColor
@@ -16,6 +19,52 @@ Rectangle {
   bottomRightRadius: Variables.radius
   //border.color: Variables.borderColor
   //border.width: Variables.borderWidth
+
+  Shape {
+      id: rightConcave
+
+      width: Variables.radius
+      height: Variables.radius
+      anchors.top: parent.top
+      anchors.left: parent.right
+
+      ShapePath {
+          fillColor: Variables.uiColor
+          strokeWidth: 0
+
+          PathMove { x: 0; y: 0 }
+          PathLine { x: 0; y: Variables.radius }
+          PathArc {
+              x: Variables.radius; y: 0
+              radiusX: Variables.radius
+              radiusY: Variables.radius
+              direction: PathArc.Clockwise
+          }
+          PathLine { x: 0; y: 0 }
+      }
+  }
+
+  Shape {
+      width: Variables.radius
+      height: Variables.radius
+      anchors.top: parent.bottom
+      anchors.left: parent.left
+
+      ShapePath {
+          fillColor: Variables.uiColor
+          strokeWidth: 0
+
+          PathMove { x: 0; y: 0 }
+          PathLine { x: 0; y: Variables.radius }
+          PathArc {
+              x: Variables.radius; y: 0
+              radiusX: Variables.radius
+              radiusY: Variables.radius
+              direction: PathArc.Clockwise
+          }
+          PathLine { x: 0; y: 0 }
+      }
+  }
 
   Rectangle {
     id: focus

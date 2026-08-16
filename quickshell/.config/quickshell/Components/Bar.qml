@@ -33,7 +33,6 @@ PanelWindow {
         spacing: Variables.spacing
 
         Workspaces {}
-
         UpdateButton {}
 
     }
@@ -53,6 +52,7 @@ PanelWindow {
             right: parent.right
         }
         PowerProfiles{}
+        Item { Layout.fillWidth: true }
         System {}
     }
 }

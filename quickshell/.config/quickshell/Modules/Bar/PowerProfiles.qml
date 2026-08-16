@@ -9,6 +9,9 @@ import "./"
 Rectangle {
     id: powerProfiles
 
+
+    Layout.alignment: Qt.AlignTop
+    Layout.topMargin: Variables.topMargin
     implicitHeight: Variables.circleHeight * 1.7
     implicitWidth: Variables.circleWidth * 1.7
     color: Variables.uiColor

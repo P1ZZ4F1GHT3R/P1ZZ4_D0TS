@@ -8,9 +8,10 @@ QtObject {
     readonly property int width: 64
     readonly property int leftMargin: rightMargin * 1.5
     readonly property int rightMargin: 12
+    readonly property int topMargin: 4
     readonly property int fontSize: 18
     readonly property int spacing: 12
-    readonly property int exclusiveZone: 40
+    readonly property int exclusiveZone: 48
     readonly property int workspaceCount: 5
     readonly property int circleHeight: fontSize * (1 + 1/3)
     readonly property int circleWidth: circleHeight
@@ -24,8 +25,10 @@ QtObject {
     readonly property int imgRadius: 8
     readonly property int animationTypeUI: Easing.InOutQuad
     readonly property int animationDurationUI: 250
-    readonly property int hoverTimer: 500
+    readonly property int hoverTimer: 750
     readonly property int barRadius: 4
+    readonly property int trackTitleLength: 32
+
 
 
     readonly property color uiColor: Colors.background
