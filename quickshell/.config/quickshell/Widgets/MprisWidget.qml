@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
-import "../"      
+import "../"   
+import "../Modules/Bar"   
             
         
 RowLayout {
@@ -70,7 +71,7 @@ RowLayout {
                     NumberAnimation {
                         to: -(trackText.implicitWidth - textContainer.width)
                         duration: 4000
-                        easing.type: Easing.linear
+                        easing.type: Linear
                     }
                     
                     PauseAnimation { duration: 1500 }
@@ -78,7 +79,7 @@ RowLayout {
                     NumberAnimation {
                         to: 0
                         duration: 600
-                        easing.type: Easing.linear
+                        easing.type: Linear
                     }
 
                     onRunningChanged: {
@@ -126,7 +127,13 @@ RowLayout {
             Layout.topMargin: 10
             spacing: Variables.spacing * 2
 
-            visible: mpris.activePlayer !== null && Variables.expandedState 
+            opacity: !Variables.expandedState ? 0.0 : 1.0
+
+            visible: mpris.activePlayer !== null && Variables.expandedState
+
+            Behavior on opacity {
+                NumberAnimation { duration: 200 }
+            } 
 
             Rectangle {
                 width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.buttonColor
@@ -134,6 +141,7 @@ RowLayout {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: mpris.activePlayer && mpris.activePlayer.previous()
+                    cursorShape: Qt.PointingHandCursor
                 }
             }
 
@@ -149,6 +157,7 @@ RowLayout {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
+                    cursorShape: Qt.PointingHandCursor
                 }
             }
 
@@ -158,10 +167,12 @@ RowLayout {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: mpris.activePlayer && mpris.activePlayer.next()
+                    cursorShape: Qt.PointingHandCursor
                 }
             }
         }
     }
     Item { Layout.fillWidth: Variables.expandedState 
-        visible: mpris.activePlayer !== null && Variables.expandedState ? true : false}
+    visible: mpris.activePlayer !== null && Variables.expandedState ? true : false
+    }
 }

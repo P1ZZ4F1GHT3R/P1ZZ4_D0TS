@@ -2,14 +2,29 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
-import Quickshell.Services.Mpris
 import Quickshell.Io
-import Quickshell.Widgets
 import QtQuick.Shapes
 import "../../"
 import "../../Widgets"
 
 Rectangle {
+    id: notchRoot
+
+    IpcHandler {
+        target: "powermenu"
+
+        function toggle(): void {
+            powerMenuLoader.active = !powerMenuLoader.active
+            if (powerMenuLoader.active) {
+                Variables.powerMenu = true;
+                Variables.expandedState = false;
+            }
+            else {
+                Variables.powerMenu = false;
+            }
+        }
+    }
+
     implicitHeight: notch.implicitHeight + Variables.height
     implicitWidth: Variables.expandedState ? notch.implicitWidth + Variables.width * 3 : notch.implicitWidth + Variables.width
     bottomLeftRadius: Variables.radius
@@ -67,11 +82,12 @@ Rectangle {
     }
 
      Behavior on implicitWidth {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
+        NumberAnimation { id: widthAnim; duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
+        id: heightAnim
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
     }
 
 
@@ -80,9 +96,10 @@ Rectangle {
 
         anchors.fill: parent
         hoverEnabled: true
-        
-        onEntered: hovertimer.start()
-        onExited: Variables.expandedState = false, hovertimer.stop()
+
+        onClicked: Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu ? Variables.expandedState = true : Variables.expandedState = false
+        onEntered: Variables.hoverEnabled && !Variables.powerMenu ? hovertimer.start() : null
+        onExited: Variables.hoverEnabled ? (Variables.expandedState = false, hovertimer.stop()) : null
     }
 
     Timer {
@@ -97,6 +114,8 @@ Rectangle {
     RowLayout {
         id: notch
 
+        clip: true
+
         anchors {
             fill: parent
             leftMargin: Variables.leftMargin
@@ -105,6 +124,7 @@ Rectangle {
 
         MprisWidget{
             id: mprisWidget
+            visible: !Variables.powerMenu
         }
 
         ClockWidget {
@@ -112,12 +132,22 @@ Rectangle {
             
             Layout.alignment: Qt.AlignHCenter
 
-            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState)
+            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu
+        }
+
+        Loader {
+            id: powerMenuLoader
+            active: false
+            visible: active
+            source: "../../Widgets/PowerMenuWidget.qml"
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            focus: true
         }
 
         VisualizerWidget {
             id: visualizerWidget 
             activePlayer: mprisWidget.activePlayer
+            visible: !Variables.powerMenu 
         }
     }
 }

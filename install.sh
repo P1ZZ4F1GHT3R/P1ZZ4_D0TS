@@ -197,8 +197,8 @@ PACMAN_PACKAGES=(
     yazi
     btop ghostty swww vscodium
     sddm neovim python python-pip
-    zen-browser quickshell-git matugen
-    rsync nautilus
+    zen-browser quickshell matugen
+    rsync
 )
 
 step "The following packages will be installed:"

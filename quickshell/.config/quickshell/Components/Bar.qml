@@ -2,11 +2,17 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
+import Quickshell.Io
 import "../Modules/Bar"
 import "../"
 
 PanelWindow {
     id: bar 
+
+    HyprlandFocusGrab {
+        active: Variables.powerMenu
+        windows: [ bar ] 
+    }
 
     anchors {
         top: true

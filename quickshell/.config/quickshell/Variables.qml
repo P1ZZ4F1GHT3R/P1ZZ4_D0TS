@@ -24,12 +24,13 @@ QtObject {
     readonly property int imgWidth: imgHeight
     readonly property int imgRadius: 8
     readonly property int animationTypeUI: Easing.InOutQuad
-    readonly property int animationDurationUI: 250
-    readonly property int hoverTimer: 750
+    readonly property int animationDurationUI: 200
+    readonly property int hoverTimer: 500
     readonly property int barRadius: 4
-    readonly property int trackTitleLength: 32
+    readonly property int trackTitleLength: 28
 
-
+    readonly property bool hoverEnabled: false
+    readonly property bool clickEnabled: hoverEnabled ? false : true
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground
@@ -42,5 +43,5 @@ QtObject {
     
     property string currentProfile: "balanced"
     property bool expandedState: false
-    property bool isPlaying: false 
+    property bool powerMenu: false
 }
