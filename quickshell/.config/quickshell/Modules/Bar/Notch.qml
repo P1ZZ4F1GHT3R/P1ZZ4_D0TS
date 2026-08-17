@@ -86,7 +86,6 @@ Rectangle {
     }
 
     Behavior on implicitHeight {
-        id: heightAnim
         NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
     }
 

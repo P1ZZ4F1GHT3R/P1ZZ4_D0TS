@@ -22,7 +22,17 @@ Rectangle {
 
     property string cpuUsage: "0%"
     property string ramUsage: "0%"
-    property string diskUsage: "0G"
+    property string diskUsage: "0 GB"
+
+    
+    Behavior on implicitWidth {
+        NumberAnimation { id: widthAnim; duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+    }
+
+    Behavior on implicitHeight {
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+    }
+
     Process {
         id: sysProc
             command: [
