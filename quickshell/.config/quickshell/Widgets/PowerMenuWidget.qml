@@ -71,6 +71,11 @@ RowLayout {
             radius: Variables.radius
             color: powermenu.selectedIndex === index ? Variables.borderColor : "transparent"
 
+            Behavior on color{
+                ColorAnimation {duration: Variables.animationDurationUI}
+
+            }
+
             Text {
                 id: iconText
 
@@ -84,6 +89,8 @@ RowLayout {
                 anchors.fill: parent
                 onClicked: powermenu[modelData.action]()
                 cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onEntered: powermenu.selectedIndex = index
             }
         }
     }

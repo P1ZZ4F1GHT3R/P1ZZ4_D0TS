@@ -82,7 +82,7 @@ Rectangle {
     }
 
      Behavior on implicitWidth {
-        NumberAnimation { id: widthAnim; duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
     }
 
     Behavior on implicitHeight {
