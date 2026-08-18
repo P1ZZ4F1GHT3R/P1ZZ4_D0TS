@@ -3,62 +3,75 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Services.Notifications
 import "../Modules/Bar"
+import "../Services"
+import "../Widgets"
 import "../"
 
-PanelWindow {
-    id: bar 
+Scope {
+    id: root
 
-    HyprlandFocusGrab {
-        active: Variables.powerMenu
-        windows: [ bar ] 
+    NotificationDaemon {
+        id: notifDaemon
     }
 
-    anchors {
-        top: true
-        left: true
-        right: true
-    }
+    PanelWindow {
+        id: bar 
 
-    color: "transparent"
-    implicitHeight: 150
-    exclusiveZone: Variables.exclusiveZone
-
-    mask: Region {
-        item: left
-        Region { item: center }
-        Region { item: right }
-    }
-
-    RowLayout {
-        id: left
+        HyprlandFocusGrab {
+            active: Variables.powerMenu
+            windows: [ bar ] 
+        }
 
         anchors {
-            left: parent.left
+            top: true
+            left: true
+            right: true
         }
-        spacing: Variables.spacing
 
-        Workspaces {}
-        UpdateButton {}
+        color: "transparent"
+        implicitHeight: 150
+        exclusiveZone: Variables.exclusiveZone
 
-    }
-
-    RowLayout {
-        id: center
-
-        anchors.horizontalCenter: parent.horizontalCenter
-
-            Notch {}
-    }
-
-    RowLayout {
-        id: right
-
-        anchors {
-            right: parent.right
+        mask: Region {
+            item: left
+            Region { item: center }
+            Region { item: right }
         }
-        PowerProfiles{}
-        Item { Layout.fillWidth: true }
-        System {}
+
+        RowLayout {
+            id: left
+
+            anchors {
+                left: parent.left
+            }
+            spacing: Variables.spacing
+
+            Workspaces {}
+            UpdateButton {}
+
+        }
+
+        RowLayout {
+            id: center
+
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            Notch {
+                notifServer: notifDaemon
+            }
+        }
+
+        RowLayout {
+            id: right
+
+            anchors {
+                right: parent.right
+            }
+            PowerProfiles{}
+            Item { Layout.fillWidth: true }
+            System {}
+        }
     }
 }

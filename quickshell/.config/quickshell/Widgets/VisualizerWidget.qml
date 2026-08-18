@@ -9,10 +9,15 @@ Item {
     property var activePlayer: null
     property var audioData: [0, 0, 0, 0]
 
-    visible: activePlayer !== null 
     Layout.preferredWidth: Variables.width / 16 * 7
     Layout.preferredHeight: Variables.height / 2
     Layout.alignment: Qt.AlignVCenter
+
+    opacity: Variables.expandedState ? 0.0 : 1.0
+    
+    Behavior on opacity {
+        NumberAnimation { duration: 200 }
+    } 
 
     Process {
         id: cavaProc

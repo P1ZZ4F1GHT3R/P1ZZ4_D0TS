@@ -28,9 +28,12 @@ QtObject {
     readonly property int hoverTimer: 500
     readonly property int barRadius: 4
     readonly property int trackTitleLength: 28
+    readonly property int notifTimer: 3000
+    readonly property int fadeAnimation: 300
 
     readonly property bool hoverEnabled: false
     readonly property bool clickEnabled: hoverEnabled ? false : true
+    readonly property bool scrollingNotifs: false
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground
@@ -44,4 +47,7 @@ QtObject {
     property string currentProfile: "balanced"
     property bool expandedState: false
     property bool powerMenu: false
+    property bool notifWidget: false
+    property var currentNotif: null
+    
 }

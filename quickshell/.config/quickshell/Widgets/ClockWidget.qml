@@ -10,6 +10,12 @@ Text {
     text: new Date().toLocaleTimeString(Qt.locale(), showSeconds ? format + ":ss" : format)
     font.pixelSize: Variables.fontSize
     color: Variables.textColor
+    opacity: mprisWidget.activePlayer && Variables.expandedState ? 0.0 : 1.0
+
+    Behavior on opacity {
+        NumberAnimation { duration: 200 }
+    } 
+
 
     Timer {
         interval: 1000

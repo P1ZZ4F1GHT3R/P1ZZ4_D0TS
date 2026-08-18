@@ -23,11 +23,19 @@ RowLayout {
     visible: mpris.activePlayer !== null
 
     ClippingWrapperRectangle{
+        id: musicIcon
 
-        Layout.topMargin: -4
+        Layout.topMargin: -(Variables.topMargin)
         Layout.preferredHeight: Variables.imgHeight
         Layout.preferredWidth: Variables.imgWidth
         radius: Variables.imgRadius
+
+        opacity: Variables.expandedState ? 0.0 : 1.0
+        visible: !Variables.expandedState
+    
+        Behavior on opacity {
+            NumberAnimation { duration: Variables.fadeAnimation }
+        }
 
         Image {
             source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
@@ -38,13 +46,13 @@ RowLayout {
 
     }
 
-    Item {  
-        Layout.preferredWidth: Variables.spacing / 2
-        visible: mpris.activePlayer !== null && Variables.expandedState ? true : false
-    }
-
     ColumnLayout {
         visible: mpris.activePlayer !== null && Variables.expandedState
+        opacity: !Variables.expandedState ? 0.0 : 1.0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Variables.fadeAnimation }
+        }
 
         Item {
             id: textContainer
@@ -118,7 +126,7 @@ RowLayout {
                     return 0
                 }
 
-                Behavior on width { NumberAnimation { duration: 200 } }
+                Behavior on width { NumberAnimation { duration: Variables.fadeAnimation } }
             }
         }
 
@@ -132,7 +140,7 @@ RowLayout {
             visible: mpris.activePlayer !== null && Variables.expandedState
 
             Behavior on opacity {
-                NumberAnimation { duration: 200 }
+                NumberAnimation { duration: Variables.fadeAnimation }
             } 
 
             Rectangle {
@@ -164,6 +172,7 @@ RowLayout {
             Rectangle {
                 width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.buttonColor
                 Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor }
+
                 MouseArea {
                     anchors.fill: parent
                     onClicked: mpris.activePlayer && mpris.activePlayer.next()

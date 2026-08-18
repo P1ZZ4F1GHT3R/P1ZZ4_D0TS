@@ -10,6 +10,8 @@ import "../../Widgets"
 Rectangle {
     id: notchRoot
 
+    property var notifServer
+
     IpcHandler {
         target: "powermenu"
 
@@ -96,8 +98,8 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
 
-        onClicked: Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu ? Variables.expandedState = true : Variables.expandedState = false
-        onEntered: Variables.hoverEnabled && !Variables.powerMenu ? hovertimer.start() : null
+        onClicked: Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu && !Variables.notifWidget ? Variables.expandedState = true : Variables.expandedState = false
+        onEntered: Variables.hoverEnabled && !Variables.powerMenu && !Variables.notifWidget ? hovertimer.start() : null
         onExited: Variables.hoverEnabled ? (Variables.expandedState = false, hovertimer.stop()) : null
     }
 
@@ -121,9 +123,9 @@ Rectangle {
             rightMargin: Variables.rightMargin
         } 
 
-        MprisWidget{
+        MprisWidget {
             id: mprisWidget
-            visible: !Variables.powerMenu
+            visible: !Variables.powerMenu && !(notifServer && notifServer.popupCount > 0)
         }
 
         ClockWidget {
@@ -131,7 +133,13 @@ Rectangle {
             
             Layout.alignment: Qt.AlignHCenter
 
-            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu
+            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !(notifServer && notifServer.popupCount > 0)
+        }
+
+        NotificationWidget {
+            id: notificationWidget
+            daemon: notchRoot.notifServer
+            visible: notifServer && notifServer.popupCount > 0 && !Variables.powerMenu
         }
 
         Loader {
@@ -146,7 +154,7 @@ Rectangle {
         VisualizerWidget {
             id: visualizerWidget 
             activePlayer: mprisWidget.activePlayer
-            visible: !Variables.powerMenu 
+            visible: !Variables.powerMenu && !Variables.expandedState && !(notifServer && notifServer.popupCount > 0)
         }
     }
 }
