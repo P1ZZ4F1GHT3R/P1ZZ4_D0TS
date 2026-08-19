@@ -92,14 +92,14 @@ Rectangle {
 
         readonly property int activeId: Hyprland.focusedWorkspace?.id ?? 1
         readonly property int targetIndex: activeId - 1
-        readonly property bool isOutOfRange: activeId > rowLayout.children.length - 1
+        readonly property bool isOutOfRange: activeId > rowLayout.children.length - 2
         readonly property Item targetItem: (!isOutOfRange && targetIndex >= 0) ? rowLayout.children[targetIndex] : null
 
         anchors.verticalCenter: parent.verticalCenter 
         x: targetItem ? (rowLayout.x + targetItem.x) - ((width - targetItem.width) / 2) : x
         implicitHeight: Variables.circleHeight
         implicitWidth: Variables.circleWidth
-        color: (!isOutOfRange && targetItem) ? Colors.color10 : "transparent"
+        color: (!isOutOfRange && targetItem) ? Variables.buttonColor : "transparent"
         radius: Variables.circleRadius
 
         Behavior on x {

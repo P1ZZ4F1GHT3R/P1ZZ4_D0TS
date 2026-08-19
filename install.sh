@@ -225,7 +225,7 @@ AUR_PACKAGES=(
     vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
-    plymouth python-edev hyprland-git
+    plymouth python-edev hyprland-git papirus-icon-theme
 )
 
 if command -v yay >/dev/null 2>&1; then

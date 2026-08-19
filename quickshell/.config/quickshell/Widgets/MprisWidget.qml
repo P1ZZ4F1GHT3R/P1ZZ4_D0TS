@@ -30,7 +30,7 @@ RowLayout {
         Layout.preferredWidth: Variables.imgWidth
         radius: Variables.imgRadius
 
-        opacity: Variables.expandedState ? 0.0 : 1.0
+        opacity: Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
         visible: !Variables.expandedState
     
         Behavior on opacity {

@@ -16,6 +16,11 @@ Scope {
         id: notifDaemon
     }
 
+    PackageUpdateService{
+        id: packageUpdateService
+        
+    }
+
     PanelWindow {
         id: bar 
 

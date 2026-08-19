@@ -125,7 +125,7 @@ Rectangle {
 
         MprisWidget {
             id: mprisWidget
-            visible: !Variables.powerMenu && !(notifServer && notifServer.popupCount > 0)
+            visible: !Variables.powerMenu && !Variables.notifWidget && mprisWidget.activePlayer !== null
         }
 
         ClockWidget {
@@ -133,13 +133,13 @@ Rectangle {
             
             Layout.alignment: Qt.AlignHCenter
 
-            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !(notifServer && notifServer.popupCount > 0)
+            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget
         }
 
         NotificationWidget {
             id: notificationWidget
             daemon: notchRoot.notifServer
-            visible: notifServer && notifServer.popupCount > 0 && !Variables.powerMenu
+            visible: Variables.notifWidget && !Variables.powerMenu
         }
 
         Loader {
@@ -154,7 +154,7 @@ Rectangle {
         VisualizerWidget {
             id: visualizerWidget 
             activePlayer: mprisWidget.activePlayer
-            visible: !Variables.powerMenu && !Variables.expandedState && !(notifServer && notifServer.popupCount > 0)
+            visible: !Variables.powerMenu && !Variables.expandedState && !Variables.notifWidget && mprisWidget.activePlayer !== null
         }
     }
 }

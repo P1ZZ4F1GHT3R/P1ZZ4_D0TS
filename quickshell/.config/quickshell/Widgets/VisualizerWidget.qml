@@ -13,7 +13,7 @@ Item {
     Layout.preferredHeight: Variables.height / 2
     Layout.alignment: Qt.AlignVCenter
 
-    opacity: Variables.expandedState ? 0.0 : 1.0
+    opacity: Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
     
     Behavior on opacity {
         NumberAnimation { duration: 200 }

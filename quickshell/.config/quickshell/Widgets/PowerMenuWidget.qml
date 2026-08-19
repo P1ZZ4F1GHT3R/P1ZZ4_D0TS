@@ -56,6 +56,7 @@ RowLayout {
 
     Repeater {
         id: repeater
+
         model: [            
             { icon: "", label: "Lock", action: "lockscreen" },
             { icon: "󰍃", label: "Log Out", action: "logout" },
@@ -70,6 +71,12 @@ RowLayout {
             Layout.preferredHeight: iconText.implicitHeight + Variables.height / 8 * 5
             radius: Variables.radius
             color: powermenu.selectedIndex === index ? Variables.borderColor : "transparent"
+
+            opacity: Variables.powerMenu ? 1.0 : 0.0
+
+            Behavior on opacity{
+                NumberAnimation{ duration: Variables.fadeAnimation}
+            }
 
             Behavior on color{
                 ColorAnimation {duration: Variables.animationDurationUI}
