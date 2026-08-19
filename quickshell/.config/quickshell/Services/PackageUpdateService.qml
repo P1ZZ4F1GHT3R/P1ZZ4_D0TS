@@ -61,7 +61,7 @@ Item {
             "System Updates", 
             root.count + " packages are ready to update", 
             "--app-name= " + Quickshell.env("USER"), 
-            "--icon=update-medium"
+            "--icon=pamac-updater"
         ];
         notifyProc.running = true;
         }
