@@ -32,7 +32,7 @@ Rectangle {
     Process {
         id: updateProc
 
-        command: ["ghostty", "-e", "sh", "-c", "sudo pacman -Syu && notify-send --app-name=$USER --icon=pamac-updater 'System is up to date' 'All packages have been successfully checked and updated.'; read -p 'Press enter to exit...'"]
+        command: ["ghostty", "-e", "sh", "-c", "sudo pacman -Syu --noconfirm && notify-send --app-name=$USER --icon=pamac-updater 'System is up to date' 'All packages have been successfully checked and updated.'; read -p 'Press enter to exit...'"]
     }
 
         MouseArea {
