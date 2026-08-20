@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
+import Quickshell
 import "../"
 
 Item {
@@ -18,10 +19,7 @@ Item {
 
         function onNotifWidgetChanged() {
             if (Variables.notifWidget) {
-                notifTimer.restart();
                 Variables.expandedState = false
-            } else {
-                notifTimer.stop()
             }
         }
     }
@@ -163,9 +161,9 @@ Item {
         id: notifTimer
 
         interval: Variables.notifTimer
-        running: false
+        running: Variables.notifWidget && !expanded
         repeat: false
         triggeredOnStart: false
-        onTriggered: daemon.dismissNotification(notification)
+        onTriggered: Variables.notifWidget = false 
     }
 }

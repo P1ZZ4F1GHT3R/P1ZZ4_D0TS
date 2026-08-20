@@ -11,7 +11,7 @@ Rectangle {
 
     Layout.alignment: Qt.AlignTop
     implicitHeight: rowLayout.implicitHeight + Variables.height
-    implicitWidth: rowLayout.implicitWidth + Variables.width
+    implicitWidth: Variables.systemHidden ? 0 : rowLayout.implicitWidth + Variables.width
     color: Variables.uiColor
     topLeftRadius: 0
     topRightRadius: 0
@@ -26,11 +26,11 @@ Rectangle {
 
     
     Behavior on implicitWidth {
-        NumberAnimation { id: widthAnim; duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+        NumberAnimation { id: widthAnim; duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
 
     Process {

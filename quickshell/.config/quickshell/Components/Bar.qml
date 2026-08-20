@@ -18,7 +18,10 @@ Scope {
 
     PackageUpdateService{
         id: packageUpdateService
-        
+    }
+
+    Lockscreen{
+        id: lockScreen
     }
 
     PanelWindow {

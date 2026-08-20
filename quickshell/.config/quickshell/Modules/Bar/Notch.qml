@@ -12,6 +12,15 @@ Rectangle {
 
     property var notifServer
 
+    implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height
+    implicitWidth: {
+        if (Variables.notchHidden) return 0; 
+        return Variables.expandedState ? notch.implicitWidth + Variables.width * 3 : notch.implicitWidth + Variables.width;
+        }
+    bottomLeftRadius: Variables.radius
+    bottomRightRadius: Variables.radius
+    color: Variables.uiColor
+
     IpcHandler {
         target: "powermenu"
 
@@ -27,13 +36,29 @@ Rectangle {
         }
     }
 
-    implicitHeight: notch.implicitHeight + Variables.height
-    implicitWidth: Variables.expandedState ? notch.implicitWidth + Variables.width * 3 : notch.implicitWidth + Variables.width
-    bottomLeftRadius: Variables.radius
-    bottomRightRadius: Variables.radius
-    color: Variables.uiColor
-    //border.color: Variables.borderColor
-    //border.width: Variables.borderWidth
+    Connections {
+        target: Variables
+        
+        function onlockScreenChanged() {
+            if (Variables.lockScreen) {
+                Variables.powerMenu = false;
+                powerMenuLoader.active = false;
+                Variables.expandedState = false;
+                Variables.notchHidden = true;
+                Variables.workspacesHidden = true;
+                Variables.systemHidden = true;
+                hovertimer.stop();
+            }
+            else {
+                Variables.activeAnimationUI = Variables.bouncingAnimationUI;
+                Variables.activeDurationUI = Variables.bouncingDurationUI;
+                Variables.notchHidden = false;
+                Variables.workspacesHidden = false;
+                Variables.systemHidden = false;
+                animationSwitch.start();
+            }
+        }
+    }
 
     Shape {
         id: leftConcave
@@ -84,11 +109,11 @@ Rectangle {
     }
 
      Behavior on implicitWidth {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
 
 
@@ -110,6 +135,17 @@ Rectangle {
         repeat: false
         triggeredOnStart: false
         onTriggered: Variables.expandedState = true
+    }
+
+    Timer {
+        id: animationSwitch
+        interval: 200
+        running: false
+        repeat: false
+        onTriggered: {
+            Variables.activeDurationUI = Variables.animationDurationUI;
+            Variables.activeAnimationUI = Variables.animationTypeUI;
+        }
     }
 
     RowLayout {
@@ -144,7 +180,7 @@ Rectangle {
 
         Loader {
             id: powerMenuLoader
-            active: false
+            active: Variables.powerMenu
             visible: active
             source: "../../Widgets/PowerMenuWidget.qml"
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter

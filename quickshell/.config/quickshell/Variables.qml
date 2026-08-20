@@ -33,6 +33,8 @@ QtObject {
     readonly property int updateNotifStart: 300000
     readonly property int updateNotifRunning: 900000
     readonly property int updateTreshold: 50
+    readonly property int bouncingAnimationUI: Easing.OutElastic
+    readonly property int bouncingDurationUI: 2000
 
     
     readonly property bool hoverEnabled: false
@@ -44,7 +46,7 @@ QtObject {
     readonly property color iconColor: Colors.color14
     readonly property color borderColor: Colors.color13
     readonly property color buttonColor: Colors.color10
-
+    readonly property color lockscreenColor: Colors.color5
 
 
     
@@ -52,6 +54,12 @@ QtObject {
     property bool expandedState: false
     property bool powerMenu: false
     property bool notifWidget: false
+    property bool lockScreen: false
     property var currentNotif: null
+    property int activeAnimationUI: animationTypeUI
+    property int activeDurationUI: animationDurationUI
+    property bool notchHidden: false
+    property bool workspacesHidden: false
+    property bool systemHidden: false
     
 }

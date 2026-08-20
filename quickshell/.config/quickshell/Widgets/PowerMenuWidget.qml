@@ -35,7 +35,7 @@ RowLayout {
     }
 
     function lockscreen() {
-        Quickshell.execDetached(["hyprlock"])
+        Quickshell.execDetached(["qs", "ipc", "call", "PC", "lock"])
     }
 
     function logout() {

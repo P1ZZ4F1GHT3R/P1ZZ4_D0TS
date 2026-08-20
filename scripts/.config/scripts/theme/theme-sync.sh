@@ -25,8 +25,8 @@ readonly CACHE_DIR="$HOME/.cache"
 
 # File paths
 readonly HYPRLOCK_CONF="$CONFIG_DIR/hypr/hyprlock.conf"
-readonly WALLPAPER_CACHE="$CONFIG_DIR/waytrogen/wallpaper.txt"
-readonly GIF_FRAME="$CONFIG_DIR/waytrogen/gif-frame.jpg"
+readonly WALLPAPER_CACHE="$CONFIG_DIR/wallpaper/wallpaper.txt"
+readonly GIF_FRAME="$CONFIG_DIR/wallpaper/gif-frame.jpg"
 readonly LOG_FILE="$CACHE_DIR/${SCRIPT_NAME%.sh}.log"
 readonly LOCK_FILE="/tmp/${SCRIPT_NAME%.sh}.lock"
 
