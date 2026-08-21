@@ -12,7 +12,7 @@ Rectangle {
 
     property var notifServer
 
-    implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height
+    implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height 
     implicitWidth: {
         if (Variables.notchHidden) return 0; 
         return Variables.expandedState ? notch.implicitWidth + Variables.width * 3 : notch.implicitWidth + Variables.width;

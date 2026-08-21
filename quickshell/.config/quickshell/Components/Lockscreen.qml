@@ -8,10 +8,11 @@ import Quickshell.Widgets
 import QtQuick.Effects
 import QtQuick.Shapes
 import "../"
+import "../Components"
 
 Scope {
     id: lockScreen
-
+    
     property url currentWallpaper: ""
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
 
@@ -50,8 +51,6 @@ Scope {
             }
         }
     }
-
-    
 
     WlSessionLock {
         id: sessionLock
@@ -138,6 +137,7 @@ Scope {
                     anchors{
                         bottom: parent.bottom
                         horizontalCenter: parent.horizontalCenter
+                        bottomMargin: Variables.borderWidth * 4
                     }
 
                     implicitHeight: Variables.lockScreen ? rectangle.height / 12.5 : 0
@@ -230,6 +230,38 @@ Scope {
                                 }
                             }
                         }
+                    }
+                }
+                Shape {
+                    id: screenBorder
+                    anchors.fill: parent
+                    antialiasing: true
+                    
+                    readonly property real bw: Variables.borderWidth * 4
+                    readonly property real r: Variables.radius
+
+                    ShapePath {
+                        id: framePath
+                        fillColor: Variables.uiColor
+                        strokeWidth: -1
+                        fillRule: ShapePath.OddEvenFill
+
+                        startX: 0
+                        startY: 0
+                        PathLine { x: screenBorder.width; y: 0 }
+                        PathLine { x: screenBorder.width; y: screenBorder.height }
+                        PathLine { x: 0; y: screenBorder.height }
+                        PathLine { x: 0; y: 0 }
+
+                        PathMove { x: screenBorder.bw + screenBorder.r; y: screenBorder.bw }
+                        PathLine { x: screenBorder.width - screenBorder.bw - screenBorder.r; y: screenBorder.bw }
+                        PathArc { x: screenBorder.width - screenBorder.bw; y: screenBorder.bw + screenBorder.r; radiusX: screenBorder.r; radiusY: screenBorder.r }
+                        PathLine { x: screenBorder.width - screenBorder.bw; y: screenBorder.height - screenBorder.bw - screenBorder.r }
+                        PathArc { x: screenBorder.width - screenBorder.bw - screenBorder.r; y: screenBorder.height - screenBorder.bw; radiusX: screenBorder.r; radiusY: screenBorder.r }
+                        PathLine { x: screenBorder.bw + screenBorder.r; y: screenBorder.height - screenBorder.bw }
+                        PathArc { x: screenBorder.bw; y: screenBorder.height - screenBorder.bw - screenBorder.r; radiusX: screenBorder.r; radiusY: screenBorder.r }
+                        PathLine { x: screenBorder.bw; y: screenBorder.bw + screenBorder.r }
+                        PathArc { x: screenBorder.bw + screenBorder.r; y: screenBorder.bw; radiusX: screenBorder.r; radiusY: screenBorder.r }
                     }
                 }
             }

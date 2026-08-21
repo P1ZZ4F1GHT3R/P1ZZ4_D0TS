@@ -40,6 +40,7 @@ Item {
             }
         }
     }
+    
 
     Row {
         spacing: Variables.spacing / 6

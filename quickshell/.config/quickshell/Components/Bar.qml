@@ -2,6 +2,8 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
+import Quickshell.Wayland
+import QtQuick.Shapes
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import "../Modules/Bar"
@@ -36,6 +38,12 @@ Scope {
             top: true
             left: true
             right: true
+        }
+
+        margins {
+            top: Variables.borderWidth * 4
+            left: Variables.borderWidth * 4
+            right: Variables.borderWidth * 4
         }
 
         color: "transparent"

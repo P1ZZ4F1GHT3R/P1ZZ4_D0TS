@@ -11,7 +11,7 @@ QtObject {
     readonly property int topMargin: 4
     readonly property int fontSize: 18
     readonly property int spacing: 12
-    readonly property int exclusiveZone: 48
+    readonly property int exclusiveZone: 36
     readonly property int workspaceCount: 5
     readonly property int circleHeight: fontSize * (1 + 1/3)
     readonly property int circleWidth: circleHeight

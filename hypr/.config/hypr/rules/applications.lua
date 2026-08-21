@@ -33,3 +33,5 @@ hl.workspace_rule({
    workspace = "special:Discord",
    ["on_created_empty"] = "discord",
 })
+
+hl.workspace_rule({ workspace = "w[tv1-10]", gaps_out = 15, gaps_in = 5 })
