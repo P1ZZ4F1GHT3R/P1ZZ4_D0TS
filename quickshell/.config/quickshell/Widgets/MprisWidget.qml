@@ -154,7 +154,7 @@ RowLayout {
             }
 
             Rectangle {
-                width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.buttonColor
+                width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.borderColor
             Text { 
                 anchors.fill: parent
                 horizontalAlignment: Text.AlignHCenter

@@ -13,3 +13,5 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(volumeBrightness .. " prev_track"), { l
 
 -- Tools
 hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("quickshell -c QuickSnip -n"))
+hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("~/.config/scripts/utils/screenshot.sh"))
+
