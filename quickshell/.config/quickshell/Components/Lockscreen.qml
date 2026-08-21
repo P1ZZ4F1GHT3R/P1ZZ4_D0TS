@@ -13,6 +13,7 @@ import "../Components"
 Scope {
     id: lockScreen
     
+    property real screenOpacity: 1.0
     property url currentWallpaper: ""
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
 
@@ -28,13 +29,67 @@ Scope {
         }
     }
 
+    SequentialAnimation {
+        id: lockAnimation
+
+        ScriptAction {
+            script: {
+                Variables.lockScreen = true; 
+                lockScreen.screenOpacity = 1.0;
+                Variables.expandedState = false;
+            }
+        }
+
+        PauseAnimation { duration: Variables.pauseDuration}
+
+        ScriptAction {
+            script: {
+                sessionLock.locked = true; 
+                pam.start();
+            }
+        }
+
+        PauseAnimation { duration: Variables.pauseDuration}
+
+        NumberAnimation {
+            target: lockScreen
+            property: "screenOpacity"
+            to: 0.0
+            duration: 200
+            easing.type: Variables.fadeAnimation
+        }
+    }
+
+   SequentialAnimation {
+        id: unlockAnimation
+        
+        ScriptAction {
+            script: {
+                Variables.lockScreen = false; 
+            }
+        }
+
+        PauseAnimation { duration: Variables.pauseDuration } 
+
+        NumberAnimation {
+            target: lockScreen
+            property: "screenOpacity"
+            to: 1.0
+            duration: 200
+            easing.type: Variables.fadeAnimation
+        }
+
+        ScriptAction {
+            script: {
+                sessionLock.locked = false; 
+            }
+        }
+    }
+
     IpcHandler {
         target: "PC" 
         function lock(): void {
-            sessionLock.locked = true;
-            Variables.lockScreen = true;
-            Variables.expandedState = false;
-            pam.start();
+            lockAnimation.start();
         }
     }
 
@@ -44,8 +99,7 @@ Scope {
 
         onCompleted: (result) => {
             if (result === PamResult.Success) {
-                sessionLock.locked = false; 
-                Variables.lockScreen = false;
+                unlockAnimation.start();
             } else {
                 pam.start(); 
             }
@@ -78,6 +132,7 @@ Scope {
                     blurMax: 64
                     blur: 1.0
                 }
+                
                 Rectangle {
                     id: clockRectangle
 
@@ -148,9 +203,12 @@ Scope {
 
                     Shape {
                         id: bottomLeftConcave
+                        
+                        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+                        visible: cornerSize > 0
 
-                        width: Variables.radius
-                        height: Variables.radius
+                        width: cornerSize
+                        height: cornerSize
                         anchors.bottom: parent.bottom
                         anchors.right: parent.left
 
@@ -158,26 +216,26 @@ Scope {
                             fillColor: Variables.uiColor
                             strokeWidth: 0
 
-                            PathMove { x: Variables.radius; y: Variables.radius }
-                            
-                            PathLine { x: 0; y: Variables.radius }
-
+                            PathMove { x: bottomLeftConcave.cornerSize; y: bottomLeftConcave.cornerSize }
+                            PathLine { x: 0; y: bottomLeftConcave.cornerSize }
                             PathArc {
-                                x: Variables.radius; y: 0
-                                radiusX: Variables.radius
-                                radiusY: Variables.radius
+                                x: bottomLeftConcave.cornerSize; y: 0
+                                radiusX: bottomLeftConcave.cornerSize
+                                radiusY: bottomLeftConcave.cornerSize
                                 direction: PathArc.Counterclockwise
                             }
-                            
-                            PathLine { x: Variables.radius; y: Variables.radius }
+                            PathLine { x: bottomLeftConcave.cornerSize; y: bottomLeftConcave.cornerSize }
                         }
                     }
 
                     Shape {
                         id: bottomRightConcave
+                        
+                        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+                        visible: cornerSize > 0
 
-                        width: Variables.radius
-                        height: Variables.radius
+                        width: cornerSize
+                        height: cornerSize
                         anchors.bottom: parent.bottom
                         anchors.left: parent.right
 
@@ -185,18 +243,15 @@ Scope {
                             fillColor: Variables.uiColor
                             strokeWidth: 0
 
-                            PathMove { x: 0; y: Variables.radius }
-                            
-                            PathLine { x: Variables.radius; y: Variables.radius }
-                            
+                            PathMove { x: 0; y: bottomRightConcave.cornerSize }
+                            PathLine { x: bottomRightConcave.cornerSize; y: bottomRightConcave.cornerSize }
                             PathArc {
                                 x: 0; y: 0
-                                radiusX: Variables.radius
-                                radiusY: Variables.radius
+                                radiusX: bottomRightConcave.cornerSize
+                                radiusY: bottomRightConcave.cornerSize
                                 direction: PathArc.Clockwise
                             }
-                            
-                            PathLine { x: 0; y: Variables.radius }
+                            PathLine { x: 0; y: bottomRightConcave.cornerSize }
                         }
                     }
 
@@ -263,6 +318,12 @@ Scope {
                         PathLine { x: screenBorder.bw; y: screenBorder.bw + screenBorder.r }
                         PathArc { x: screenBorder.bw + screenBorder.r; y: screenBorder.bw; radiusX: screenBorder.r; radiusY: screenBorder.r }
                     }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: Variables.uiColor
+                    opacity: lockScreen.screenOpacity
                 }
             }
         }

@@ -34,7 +34,8 @@ QtObject {
     readonly property int updateNotifRunning: 900000
     readonly property int updateTreshold: 50
     readonly property int bouncingAnimationUI: Easing.OutElastic
-    readonly property int bouncingDurationUI: 2000
+    readonly property int bouncingDurationUI: 2400
+    readonly property int pauseDuration: 150
 
     
     readonly property bool hoverEnabled: false

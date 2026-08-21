@@ -63,45 +63,58 @@ Rectangle {
     Shape {
         id: leftConcave
 
-        width: Variables.radius
-        height: Variables.radius
+        // Dynamically track the size: stays at radius, but shrinks if parent gets smaller than the radius
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        
+        // Hide completely to prevent rendering bugs when it hits exactly 0
+        visible: cornerSize > 0
+
+        width: cornerSize
+        height: cornerSize
         anchors.top: parent.top
         anchors.right: parent.left
+        anchors.topMargin: Variables.borderWidth * 4
 
         ShapePath {
             fillColor: Variables.uiColor
             strokeWidth: 0
 
-            PathMove { x: Variables.radius; y: 0 }
-            PathLine { x: Variables.radius; y: Variables.radius }
+            // Replace all Variables.radius inside the path with leftConcave.cornerSize
+            PathMove { x: leftConcave.cornerSize; y: 0 }
+            PathLine { x: leftConcave.cornerSize; y: leftConcave.cornerSize }
             PathArc {
                 x: 0; y: 0
-                radiusX: Variables.radius
-                radiusY: Variables.radius
+                radiusX: leftConcave.cornerSize
+                radiusY: leftConcave.cornerSize
                 direction: PathArc.Counterclockwise
             }
-            PathLine { x: Variables.radius; y: 0 }
+            PathLine { x: leftConcave.cornerSize; y: 0 }
         }
     }
 
     Shape {
         id: rightConcave
 
-        width: Variables.radius
-        height: Variables.radius
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        
+        visible: cornerSize > 0
+        
+        width: cornerSize
+        height: cornerSize
         anchors.top: parent.top
         anchors.left: parent.right
+        anchors.topMargin: Variables.borderWidth * 4
 
         ShapePath {
             fillColor: Variables.uiColor
             strokeWidth: 0
 
             PathMove { x: 0; y: 0 }
-            PathLine { x: 0; y: Variables.radius }
+            PathLine { x: 0; y: rightConcave.cornerSize }
             PathArc {
-                x: Variables.radius; y: 0
-                radiusX: Variables.radius
-                radiusY: Variables.radius
+                x: rightConcave.cornerSize; y: 0
+                radiusX: rightConcave.cornerSize
+                radiusY: rightConcave.cornerSize
                 direction: PathArc.Clockwise
             }
             PathLine { x: 0; y: 0 }

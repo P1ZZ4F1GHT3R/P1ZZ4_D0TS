@@ -40,12 +40,6 @@ Scope {
             right: true
         }
 
-        margins {
-            top: Variables.borderWidth * 4
-            left: Variables.borderWidth * 4
-            right: Variables.borderWidth * 4
-        }
-
         color: "transparent"
         implicitHeight: 150
         exclusiveZone: Variables.exclusiveZone

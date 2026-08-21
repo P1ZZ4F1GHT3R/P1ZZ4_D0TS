@@ -29,6 +29,7 @@ Rectangle {
         NumberAnimation { id: widthAnim; duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
 
+
     Behavior on implicitHeight {
         NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
@@ -59,47 +60,57 @@ Rectangle {
 
     Shape {
         id: leftConcave
+        
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        visible: cornerSize > 0
 
-        width: Variables.radius
-        height: Variables.radius
+        width: cornerSize
+        height: cornerSize
         anchors.top: parent.top
         anchors.right: parent.left
+        anchors.topMargin: Variables.borderWidth * 4
 
         ShapePath {
             fillColor: Variables.uiColor
             strokeWidth: 0
 
-            PathMove { x: Variables.radius; y: 0 }
-            PathLine { x: Variables.radius; y: Variables.radius }
+            PathMove { x: leftConcave.cornerSize; y: 0 }
+            PathLine { x: leftConcave.cornerSize; y: leftConcave.cornerSize }
             PathArc {
                 x: 0; y: 0
-                radiusX: Variables.radius
-                radiusY: Variables.radius
+                radiusX: leftConcave.cornerSize
+                radiusY: leftConcave.cornerSize
                 direction: PathArc.Counterclockwise
             }
-            PathLine { x: Variables.radius; y: 0 }
+            PathLine { x: leftConcave.cornerSize; y: 0 }
         }
     }
 
     Shape {
-        width: Variables.radius
-        height: Variables.radius
+        id: bottomRightConcave
+        
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        visible: cornerSize > 0
+
+        width: cornerSize
+        height: cornerSize
         anchors.top: parent.bottom
         anchors.right: parent.right
+        anchors.rightMargin: Variables.borderWidth * 4
 
         ShapePath {
             fillColor: Variables.uiColor
             strokeWidth: 0
 
-            PathMove { x: Variables.radius; y: 0 }
-            PathLine { x: Variables.radius; y: Variables.radius }
+            PathMove { x: bottomRightConcave.cornerSize; y: 0 }
+            PathLine { x: bottomRightConcave.cornerSize; y: bottomRightConcave.cornerSize }
             PathArc {
                 x: 0; y: 0
-                radiusX: Variables.radius
-                radiusY: Variables.radius
+                radiusX: bottomRightConcave.cornerSize
+                radiusY: bottomRightConcave.cornerSize
                 direction: PathArc.Counterclockwise
             }
-            PathLine { x: Variables.radius; y: 0 }
+            PathLine { x: bottomRightConcave.cornerSize; y: 0 }
         }
     }
 

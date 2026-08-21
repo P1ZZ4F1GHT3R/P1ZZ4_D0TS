@@ -10,15 +10,16 @@ Rectangle {
     id: updateButton
 
     Layout.alignment: Qt.AlignTop
-    Layout.topMargin: Variables.topMargin
+    Layout.topMargin: Variables.borderWidth * 4 + Variables.topMargin
     Layout.leftMargin: -(Variables.topMargin)
     
-    implicitHeight: Variables.circleHeight * 1.7
-    implicitWidth: Variables.circleWidth * 1.7
+    implicitHeight: Variables.circleHeight * 1.3
+    implicitWidth: Variables.circleWidth * 1.3
     color: Variables.uiColor
     radius: Variables.radius
     border.color: Variables.borderColor
     border.width: Variables.borderWidth
+    opacity: actionMouse.containsMouse ? 0.85 : 1
 
     Text {
         anchors.fill: parent
@@ -36,12 +37,14 @@ Rectangle {
     }
 
         MouseArea {
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            if (!updateProc.running) {
-                updateProc.running = true
+            id: actionMouse
+            
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (!updateProc.running) {
+                    updateProc.running = true
+                }
             }
-        }
     }
 }
