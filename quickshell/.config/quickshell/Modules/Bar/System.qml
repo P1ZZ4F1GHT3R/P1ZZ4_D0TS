@@ -149,7 +149,7 @@ Rectangle {
             font.pixelSize: Variables.fontSize
         }
 
-                Text {
+        Text {
             text: "|"
             color: Variables.iconColor
             font.pixelSize: Variables.fontSize

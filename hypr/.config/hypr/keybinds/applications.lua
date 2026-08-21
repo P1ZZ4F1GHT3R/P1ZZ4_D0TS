@@ -12,5 +12,4 @@ hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(launcher .. " deeplink vicina
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("qs ipc call powermenu toggle"))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("skwd wall toggle"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs ipc call PC lock"))
-hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("ambxst run assistant"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(launcher .. " vicinae://launch/core/search-emojis"))

@@ -111,6 +111,8 @@ Rectangle {
         implicitWidth: Variables.circleWidth
         color: (!isOutOfRange && targetItem) ? Variables.buttonColor : "transparent"
         radius: Variables.circleRadius
+        border.width: Variables.borderWidth
+        border.color: Variables.borderColor
 
         Behavior on x {
         NumberAnimation { duration: Variables.animationDuration; easing.type: Variables.animationType }

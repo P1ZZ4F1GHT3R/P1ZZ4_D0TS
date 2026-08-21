@@ -12,4 +12,4 @@ hl.bind("XF86AudioNext", hl.dsp.exec_cmd(volumeBrightness .. " next_track"), { l
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(volumeBrightness .. " prev_track"), { locked = true })
 
 -- Tools
-hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("ambxst run tools"))
+hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("quickshell -c QuickSnip -n"))
