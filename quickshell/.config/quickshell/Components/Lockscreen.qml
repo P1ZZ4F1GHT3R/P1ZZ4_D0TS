@@ -326,7 +326,7 @@ Scope {
                                     leftMargin: Variables.leftMargin
                                 }
                                 text: "Arch, btw"
-                                color: Variables.iconColor
+                                color: Variables.uiColor
                                 visible: passwordInput.realPassword.length === 0
                             }
                         }
