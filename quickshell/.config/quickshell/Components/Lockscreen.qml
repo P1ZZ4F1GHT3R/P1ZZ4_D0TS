@@ -267,9 +267,40 @@ Scope {
                             id: passwordInput
                             anchors.centerIn: parent
 
-                            echoMode: TextInput.Password
+                            width: inputHolder.implicitWidth / 1.2
+                            height: inputHolder.implicitHeight / 2
+
+                            echoMode: TextInput.Normal
                             focus: true
                             color: Variables.uiColor
+                            horizontalAlignment: TextInput.AlignHCenter
+                            verticalAlignment: TextInput.AlignVCenter
+
+                            font.pixelSize: Variables.fontSize
+
+                            property string realPassword: ""
+                            property var symbolPool: Variables.oneZero
+
+                            function generateRandomMask(length) {
+                                let result = "";
+                                for (let i = 0; i < length; i++) {
+                                    let randomIndex = Math.floor(Math.random() * symbolPool.length);
+                                    result += symbolPool[randomIndex];
+                                }
+                                return result;
+                            }
+
+                            onTextEdited: {
+                                if (text.length < realPassword.length) {
+                                    realPassword = realPassword.substring(0, text.length);
+                                } else {
+                                    let typedChar = text.substring(text.length - 1);
+                                    realPassword += typedChar;
+                                }
+
+                                text = generateRandomMask(realPassword.length);
+                                cursorPosition = text.length; 
+                            }
 
                             background: Rectangle {
                                 implicitHeight: inputHolder.implicitHeight / 2
@@ -280,9 +311,23 @@ Scope {
                             
                             onAccepted: {
                                 if (pam.responseRequired) {
-                                    pam.respond(passwordInput.text);
+
+                                    pam.respond(passwordInput.realPassword);
+                                    
+                                    passwordInput.realPassword = "";
                                     passwordInput.text = ""; 
                                 }
+                            }
+
+                            Text{ 
+                                anchors {
+                                    verticalCenter: parent.verticalCenter
+                                    left: parent.left
+                                    leftMargin: Variables.leftMargin
+                                }
+                                text: "Arch, btw"
+                                color: Variables.iconColor
+                                visible: passwordInput.realPassword.length === 0
                             }
                         }
                     }
