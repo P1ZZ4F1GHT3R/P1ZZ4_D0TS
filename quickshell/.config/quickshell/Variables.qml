@@ -36,11 +36,11 @@ QtObject {
     readonly property int bouncingAnimationUI: Easing.OutElastic
     readonly property int bouncingDurationUI: 2400
     readonly property int pauseDuration: 150
+    readonly property int exclusiveZoneSide: 0
 
     
     readonly property bool hoverEnabled: false
     readonly property bool clickEnabled: hoverEnabled ? false : true
-    readonly property bool scrollingNotifs: false
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground
@@ -68,5 +68,6 @@ QtObject {
     property bool notchHidden: false
     property bool workspacesHidden: false
     property bool systemHidden: false
+    property bool controlCenter: false
     
 }

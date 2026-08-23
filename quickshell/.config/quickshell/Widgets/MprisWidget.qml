@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import "../"   
-import "../Modules/Bar"   
+import "../Modules"   
             
         
 RowLayout {
@@ -79,7 +79,6 @@ RowLayout {
                     NumberAnimation {
                         to: -(trackText.implicitWidth - textContainer.width)
                         duration: 4000
-                        easing.type: Linear
                     }
                     
                     PauseAnimation { duration: 1500 }
@@ -87,7 +86,6 @@ RowLayout {
                     NumberAnimation {
                         to: 0
                         duration: 600
-                        easing.type: Linear
                     }
 
                     onRunningChanged: {

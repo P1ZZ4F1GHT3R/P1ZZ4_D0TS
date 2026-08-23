@@ -4,8 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick.Shapes
-import "../../"
-import "./"
+import "../"
 
 Rectangle {
 
@@ -155,7 +154,7 @@ Rectangle {
         Rectangle {
             id: specialWorkspace
 
-            anchors.verticalCenter: parent.verticalCenter 
+            Layout.alignment: Qt.AlignVCenter
             visible: hasSpecialWindows
             width: Variables.circleWidth
             height: Variables.circleHeight

@@ -4,8 +4,8 @@ import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick.Shapes
-import "../../"
-import "../../Widgets"
+import "../"
+import "../Widgets"
 
 Rectangle {
     id: notchRoot
@@ -62,11 +62,9 @@ Rectangle {
 
     Shape {
         id: leftConcave
-
-        // Dynamically track the size: stays at radius, but shrinks if parent gets smaller than the radius
+        
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
         
-        // Hide completely to prevent rendering bugs when it hits exactly 0
         visible: cornerSize > 0
 
         width: cornerSize
@@ -79,7 +77,6 @@ Rectangle {
             fillColor: Variables.uiColor
             strokeWidth: 0
 
-            // Replace all Variables.radius inside the path with leftConcave.cornerSize
             PathMove { x: leftConcave.cornerSize; y: 0 }
             PathLine { x: leftConcave.cornerSize; y: leftConcave.cornerSize }
             PathArc {
@@ -170,6 +167,7 @@ Rectangle {
             fill: parent
             leftMargin: Variables.leftMargin
             rightMargin: Variables.rightMargin
+            
         } 
 
         MprisWidget {
@@ -195,7 +193,7 @@ Rectangle {
             id: powerMenuLoader
             active: Variables.powerMenu
             visible: active
-            source: "../../Widgets/PowerMenuWidget.qml"
+            source: "../Widgets/PowerMenuWidget.qml"
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             focus: true
         }

@@ -3,6 +3,7 @@ import Quickshell.Wayland
 import QtQuick
 import QtQuick.Shapes
 import "../"
+import "../Modules"
 
 PanelWindow {
     id: root

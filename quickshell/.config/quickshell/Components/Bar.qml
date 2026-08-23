@@ -6,13 +6,14 @@ import Quickshell.Wayland
 import QtQuick.Shapes
 import Quickshell.Io
 import Quickshell.Services.Notifications
-import "../Modules/Bar"
+import "../Modules"
 import "../Services"
 import "../Widgets"
 import "../"
 
 Scope {
     id: root
+    
 
     NotificationDaemon {
         id: notifDaemon
@@ -27,11 +28,11 @@ Scope {
     }
 
     PanelWindow {
-        id: bar 
+        id: topBar 
 
         HyprlandFocusGrab {
             active: Variables.powerMenu
-            windows: [ bar ] 
+            windows: [ topBar ] 
         }
 
         anchors {
@@ -82,6 +83,28 @@ Scope {
             PowerProfiles{}
             Item { Layout.fillWidth: true }
             System {}
+        }
+    }
+
+    PanelWindow {
+        id: sideBar
+
+        anchors {
+            right: true
+            top: true
+            bottom: true
+        }
+
+        mask: Region {
+            item: controlCenter
+        }
+
+        color: "transparent"
+        implicitWidth: 350
+        exclusiveZone: Variables.exclusiveZoneSide
+
+        ControlCenter{
+            id: controlCenter
         }
     }
 }
