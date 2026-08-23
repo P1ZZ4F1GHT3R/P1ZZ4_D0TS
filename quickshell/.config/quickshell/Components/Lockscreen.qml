@@ -16,6 +16,7 @@ Scope {
     property real screenOpacity: 1.0
     property url currentWallpaper: ""
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
+    property bool wait: false
 
     Process {
         id: imagePath
@@ -37,6 +38,7 @@ Scope {
                 Variables.lockScreen = true; 
                 lockScreen.screenOpacity = 1.0;
                 Variables.expandedState = false;
+                wait = false;
             }
         }
 
@@ -93,6 +95,18 @@ Scope {
         }
     }
 
+    Timer {
+        id: waitTimer
+        interval: 69 //heh nice
+        repeat: false
+        running: false
+        onTriggered: {
+            pam.start();
+            wait = false;
+            passwordInput.forceActiveFocus();
+        }
+    }
+
     PamContext {
         id: pam
         config: "quickshell_pam"
@@ -101,7 +115,7 @@ Scope {
             if (result === PamResult.Success) {
                 unlockAnimation.start();
             } else {
-                pam.start(); 
+                waitTimer.start();
             }
         }
     }
@@ -267,6 +281,8 @@ Scope {
                             id: passwordInput
                             anchors.centerIn: parent
 
+                            enabled: !wait
+
                             width: inputHolder.implicitWidth / 1.2
                             height: inputHolder.implicitHeight / 2
 
@@ -281,36 +297,41 @@ Scope {
                             property string realPassword: ""
                             property var symbolPool: Variables.oneZero
 
-                            function generateRandomMask(length) {
-                                let result = "";
-                                for (let i = 0; i < length; i++) {
-                                    let randomIndex = Math.floor(Math.random() * symbolPool.length);
-                                    result += symbolPool[randomIndex];
-                                }
-                                return result;
-                            }
-
                             onTextEdited: {
-                                if (text.length < realPassword.length) {
-                                    realPassword = realPassword.substring(0, text.length);
-                                } else {
-                                    let typedChar = text.substring(text.length - 1);
-                                    realPassword += typedChar;
+                            if (text.length < realPassword.length) {
+                                realPassword = realPassword.substring(0, text.length);
+                            } else if (text.length > realPassword.length) {
+                                let newChars = text.substring(realPassword.length);
+                                realPassword += newChars;
+                                
+                                let updatedMask = text.substring(0, text.length - newChars.length);
+                                
+                                for (let i = 0; i < newChars.length; i++) {
+                                    let randomIndex = Math.floor(Math.random() * symbolPool.length);
+                                    updatedMask += symbolPool[randomIndex];
                                 }
-
-                                text = generateRandomMask(realPassword.length);
-                                cursorPosition = text.length; 
+                                
+                                text = updatedMask;
+                            }
+                            
+                            cursorPosition = text.length; 
                             }
 
                             background: Rectangle {
                                 implicitHeight: inputHolder.implicitHeight / 2
                                 implicitWidth: inputHolder.implicitWidth / 1.2
-                                color: Variables.lockscreenColor
+                                color: wait ? Variables.uiColor : Variables.lockscreenColor
                                 radius: Variables.radius
+
+                                Behavior on color{
+                                    ColorAnimation {duration: Variables.animationDurationUI}
+
+                                }
                             }
                             
                             onAccepted: {
                                 if (pam.responseRequired) {
+                                    wait = true;
 
                                     pam.respond(passwordInput.realPassword);
                                     
