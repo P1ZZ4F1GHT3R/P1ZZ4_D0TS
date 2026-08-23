@@ -16,8 +16,6 @@ QtObject {
     readonly property int circleHeight: fontSize * (1 + 1/3)
     readonly property int circleWidth: circleHeight
     readonly property int circleRadius: circleHeight / 2
-    readonly property int animationType: Easing.InOutQuad
-    readonly property int animationDuration: 200
     readonly property int borderWidth: 2
     readonly property int systemPoll: 2000
     readonly property int imgHeight: 24

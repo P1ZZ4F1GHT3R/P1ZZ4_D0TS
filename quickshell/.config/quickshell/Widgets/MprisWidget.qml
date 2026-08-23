@@ -130,7 +130,7 @@ RowLayout {
 
         Row {
             Layout.alignment: Qt.AlignHCenter 
-            Layout.topMargin: 10
+            Layout.topMargin: Variables.topMargin * 2
             spacing: Variables.spacing * 2
 
             opacity: !Variables.expandedState ? 0.0 : 1.0

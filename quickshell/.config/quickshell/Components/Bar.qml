@@ -43,7 +43,7 @@ Scope {
 
         color: "transparent"
         implicitHeight: 150
-        exclusiveZone: Variables.exclusiveZone
+        exclusiveZone: Variables.exclusiveZone + Variables.borderWidth * 4
 
         mask: Region {
             item: left

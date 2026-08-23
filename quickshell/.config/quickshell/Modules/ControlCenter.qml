@@ -5,6 +5,10 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick.Shapes
 import Quickshell.Services.Pipewire
+import QtQuick.Dialogs
+import QtCore
+import Quickshell.Widgets
+import "../Widgets"
 import "../"
 
 
@@ -19,6 +23,7 @@ Rectangle {
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
+    clip: true
 
     Shape {
         id: bottomRightConcave
@@ -103,5 +108,28 @@ Rectangle {
         repeat: false
         triggeredOnStart: false
         onTriggered: Variables.controlCenter = true
+    }
+
+    ColumnLayout {
+        id: controlCenter
+        
+        anchors {
+            top: parent.top
+            horizontalCenter: parent.horizontalCenter
+        }
+
+        spacing: Variables.spacing
+        visible: Variables.controlCenter
+        opacity: Variables.controlCenter ? 1.0 : 0.0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Variables.fadeAnimation }
+        }
+
+        UserStats{
+            Layout.topMargin: Variables.topMargin * 4
+            Layout.leftMargin: Variables.topMargin * 4
+            Layout.rightMargin: Variables.topMargin * 4
+        }
     }
 }

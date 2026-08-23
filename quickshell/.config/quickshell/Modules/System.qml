@@ -10,15 +10,13 @@ Rectangle {
     id: system
 
     Layout.alignment: Qt.AlignTop
-    implicitHeight: rowLayout.implicitHeight + Variables.height
+    implicitHeight: rowLayout.implicitHeight + Variables.height + Variables.borderWidth * 4
     implicitWidth: Variables.systemHidden ? 0 : rowLayout.implicitWidth + Variables.width
     color: Variables.uiColor
     topLeftRadius: 0
     topRightRadius: 0
     bottomLeftRadius: Variables.radius
     bottomRightRadius: 0
-    //border.color: Variables.borderColor
-    //border.width: Variables.borderWidth
 
     property string cpuUsage: "0%"
     property string ramUsage: "0%"

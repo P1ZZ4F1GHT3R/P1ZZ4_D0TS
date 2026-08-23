@@ -9,15 +9,13 @@ import "../"
 Rectangle {
 
   Layout.alignment: Qt.AlignTop
-  implicitHeight: rowLayout.implicitHeight + Variables.height
+  implicitHeight: rowLayout.implicitHeight + Variables.height + Variables.borderWidth * 4
   implicitWidth: Variables.workspacesHidden ? 0 : rowLayout.implicitWidth + Variables.width
   color: Variables.uiColor
   topLeftRadius: 0
   topRightRadius: 0
   bottomLeftRadius: 0
   bottomRightRadius: Variables.radius
-  //border.color: Variables.borderColor
-  //border.width: Variables.borderWidth
 
     readonly property bool hasSpecialWindows: {
         let hasWin = false;
