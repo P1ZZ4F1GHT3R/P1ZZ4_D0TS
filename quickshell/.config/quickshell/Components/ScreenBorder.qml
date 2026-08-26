@@ -13,7 +13,6 @@ PanelWindow {
 
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {}
     exclusionMode: ExclusionMode.Ignore

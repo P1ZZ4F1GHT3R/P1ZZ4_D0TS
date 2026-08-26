@@ -112,7 +112,7 @@ Rectangle {
         border.color: Variables.borderColor
 
         Behavior on x {
-        NumberAnimation { duration: Variables.animationDuration; easing.type: Variables.animationType }
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
         }
     }
 

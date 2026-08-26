@@ -46,6 +46,7 @@ QtObject {
     readonly property color borderColor: Colors.color13
     readonly property color buttonColor: Colors.color10
     readonly property color lockscreenColor: Colors.color5
+    readonly property color backgroundColorUI: Colors.color8
 
     
     readonly property var oneZero: ["1", "0"]

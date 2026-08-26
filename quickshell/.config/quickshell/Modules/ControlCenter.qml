@@ -13,6 +13,7 @@ import "../"
 
 
 Rectangle { 
+    id: controlCenter
     anchors{
         right: parent.right
         verticalCenter: parent.verticalCenter
@@ -111,7 +112,6 @@ Rectangle {
     }
 
     ColumnLayout {
-        id: controlCenter
         
         anchors {
             top: parent.top
@@ -131,5 +131,6 @@ Rectangle {
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
         }
+        Volume{}
     }
 }
