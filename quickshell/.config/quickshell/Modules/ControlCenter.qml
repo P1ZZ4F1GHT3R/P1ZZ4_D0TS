@@ -19,23 +19,25 @@ Rectangle {
         verticalCenter: parent.verticalCenter
     }
 
-    width: Variables.controlCenter ? 270 : 10
+    width: Variables.controlCenter ? 270 + Variables.borderWidth * 4 : 10
     height: Variables.controlCenter ? 800: 400 
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
-    clip: true
+
+    property var notifServer
 
     Shape {
         id: bottomRightConcave
         
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
-        visible: cornerSize > 0
+        visible: Variables.controlCenter
 
         width: cornerSize
         height: cornerSize
         anchors.top: parent.bottom
         anchors.right: parent.right
+        anchors.rightMargin: Variables.borderWidth * 4
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -57,12 +59,13 @@ Rectangle {
         id: topRightConcave
         
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
-        visible: cornerSize > 0
+        visible: Variables.controlCenter
 
         width: cornerSize
         height: cornerSize
         anchors.bottom: parent.top
         anchors.right: parent.right
+        anchors.rightMargin: Variables.borderWidth * 4
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -115,7 +118,9 @@ Rectangle {
         
         anchors {
             top: parent.top
-            horizontalCenter: parent.horizontalCenter
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
         }
 
         spacing: Variables.spacing
@@ -131,7 +136,25 @@ Rectangle {
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
         }
-        Volume{}
-        IdleMonitorSwitch{}
+
+        Volume{
+            Layout.leftMargin: Variables.topMargin * 4
+            Layout.rightMargin: Variables.topMargin * 4
+        }
+
+        IdleMonitorSwitch{
+            Layout.leftMargin: Variables.topMargin * 4
+            Layout.rightMargin: Variables.topMargin * 4
+        }
+
+        NotificationTray {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.leftMargin: Variables.topMargin * 4
+            Layout.rightMargin: Variables.topMargin * 4
+            Layout.bottomMargin: Variables.topMargin * 4
+            
+            daemon: controlCenter.notifServer 
+        }
     }
 }

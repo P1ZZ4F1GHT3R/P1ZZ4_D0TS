@@ -127,6 +127,14 @@ Item {
         Variables.notifWidget = false
     }
 
+    function clearAll() {
+        var list = trackedNotifications.values.slice();
+        for (var i = 0; i < list.length; i++) {
+            dismissNotification(list[i]);
+        }
+        clearPopups();
+    }
+
     NotificationServer {
         id: notificationServer
 
@@ -143,7 +151,7 @@ Item {
         onNotification: notification => {
             notification.tracked = true
 
-            if (!notification.lastGeneration)
+            if (!notification.lastGeneration && !Variables.disablePopups)
                 root.showPopup(notification)
         }
     }

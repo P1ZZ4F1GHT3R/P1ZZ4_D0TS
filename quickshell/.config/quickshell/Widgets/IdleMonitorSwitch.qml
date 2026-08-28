@@ -20,9 +20,13 @@ Button {
         color: Variables.idleMonitor ? Variables.backgroundColorUI : Variables.iconColor
         border.color: Variables.idleMonitor ? Variables.iconColor : Variables.backgroundColorUI
         opacity: parent.down ? 0.85 : 1.0
+
+        Behavior on color {
+            ColorAnimation{ duration: Variables.animationDurationUI}
+        } 
     }
 
     onClicked: {
         Variables.idleMonitor = !Variables.idleMonitor
-    }
+    }   
 }

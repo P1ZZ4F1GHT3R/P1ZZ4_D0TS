@@ -6,12 +6,12 @@
 # Description: Checks for available package updates (Arch + AUR)
 # Author: saatvik333 (modified)
 # Version: 2.1
-# Dependencies: checkupdates (pacman-contrib), yay (optional for AUR), notify-send
+# Dependencies: checkupdates (pacman-contrib), yay (optional for AUR)
 #===============================================================================
 
 set -euo pipefail
 
-# Source common utilities
+# Source common utilities (kept for acquire_lock)
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 # --- Configuration ---
@@ -104,8 +104,6 @@ main() {
 
     # Validate dependencies
     if ! command -v checkupdates >/dev/null 2>&1; then
-        send_notification "Package Updates" "Dependency Missing" \
-            "checkupdates not found. Install pacman-contrib." "critical" "dialog-warning"
         echo '{"tooltip": "checkupdates not found", "class": "transparent"}'
         exit 1
     fi
@@ -117,12 +115,6 @@ main() {
     css_class=$(determine_css_class "$updates")
 
     output_waybar_json "$updates" "$css_class"
-
-    # Send notification for significant updates
-    if (( updates >= THRESHOLD_YELLOW )); then
-        send_notification "Package Updates" "Updates Available" \
-            "$updates packages can be updated" "normal" "system-software-update"
-    fi
 }
 
 # --- Script Entry Point ---

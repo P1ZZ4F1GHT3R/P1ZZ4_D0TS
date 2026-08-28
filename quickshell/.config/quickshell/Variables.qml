@@ -75,11 +75,13 @@ QtObject {
     property bool systemHidden: false
     property bool controlCenter: false
     property bool idleMonitor: true
+    property bool disablePopups: false
 
 
     property Settings settings: Settings {
-        category: "IdleService"
+        category: "ControlCenter"
         property alias idleMonitor: root.idleMonitor
+        property alias disablePopups: root.disablePopups
     }
     
 }

@@ -105,6 +105,7 @@ Scope {
 
         ControlCenter{
             id: controlCenter
+            notifServer: notifDaemon
         }
     }
 }

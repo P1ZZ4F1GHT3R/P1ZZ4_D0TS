@@ -128,7 +128,7 @@ Item {
             Layout.topMargin: Variables.topMargin * 2
             radius: Variables.circleRadius
             color: Variables.buttonColor
-            opacity: closeMouse.containsMouse ? 0.8 : 1
+            opacity: closeMouse.containsMouse ? 0.85 : 1
             visible: expanded
 
             Text {
@@ -166,6 +166,12 @@ Item {
         running: Variables.notifWidget && !expanded
         repeat: false
         triggeredOnStart: false
-        onTriggered: Variables.notifWidget = false 
+        onTriggered: {
+            if (daemon && daemon.currentPopup) {
+                daemon.removePopup(daemon.currentPopup)
+            } else {
+                Variables.notifWidget = false 
+            }
+        }
     }
 }
