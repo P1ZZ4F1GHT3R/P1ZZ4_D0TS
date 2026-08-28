@@ -1,8 +1,11 @@
 pragma Singleton
 import QtQuick
+import QtCore
 import "./"
 
 QtObject {
+    id: root
+
     readonly property int radius: 24
     readonly property int height: 24
     readonly property int width: 64
@@ -35,6 +38,8 @@ QtObject {
     readonly property int bouncingDurationUI: 2400
     readonly property int pauseDuration: 150
     readonly property int exclusiveZoneSide: 0
+    readonly property int idleLockTime: 300
+    readonly property int idleSleepTime: 900
 
     
     readonly property bool hoverEnabled: false
@@ -47,6 +52,7 @@ QtObject {
     readonly property color buttonColor: Colors.color10
     readonly property color lockscreenColor: Colors.color5
     readonly property color backgroundColorUI: Colors.color8
+    readonly property color progressBarBackground: Colors.color9
 
     
     readonly property var oneZero: ["1", "0"]
@@ -68,5 +74,12 @@ QtObject {
     property bool workspacesHidden: false
     property bool systemHidden: false
     property bool controlCenter: false
+    property bool idleMonitor: true
+
+
+    property Settings settings: Settings {
+        category: "IdleService"
+        property alias idleMonitor: root.idleMonitor
+    }
     
 }

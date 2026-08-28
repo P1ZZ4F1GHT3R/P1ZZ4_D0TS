@@ -132,5 +132,6 @@ Rectangle {
             Layout.rightMargin: Variables.topMargin * 4
         }
         Volume{}
+        IdleMonitorSwitch{}
     }
 }

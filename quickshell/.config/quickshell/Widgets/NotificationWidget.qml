@@ -11,8 +11,8 @@ Item {
     readonly property var notification: daemon ? daemon.currentPopup : Variables.currentNotif
     property bool expanded: false
 
-    Layout.preferredWidth: expanded ? Variables.width * 7.5 : Variables.width * 5
-    Layout.preferredHeight: expanded ? Variables.height * 5 : Variables.height * 3
+    Layout.preferredWidth: expanded ? (notifLayout.implicitWidth >= (Variables.width * 12) ? Variables.width * 8 : notifLayout.implicitWidth) : Variables.width * 5
+    Layout.preferredHeight: expanded ? Variables.height + notifLayout.implicitHeight : Variables.height * 3
 
     Connections {
         target: Variables
@@ -25,6 +25,8 @@ Item {
     }
 
     RowLayout {
+        id: notifLayout
+
         anchors.fill: parent
         spacing: Variables.spacing
         opacity: !Variables.notifWidget ? 0.0 : 1.0
@@ -69,7 +71,7 @@ Item {
                 color: Variables.textColor
                 elide: Text.ElideRight
                 wrapMode: Text.Wrap
-                maximumLineCount: expanded ? 4 : 2
+                maximumLineCount: expanded ? 3 : 2
                 font.pixelSize: Variables.fontSize
                 text: notification && daemon ? daemon.notificationBody(notification) : ""
             }

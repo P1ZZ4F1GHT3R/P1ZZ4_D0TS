@@ -167,7 +167,6 @@ Rectangle {
             fill: parent
             leftMargin: Variables.leftMargin
             rightMargin: Variables.rightMargin
-            
         } 
 
         MprisWidget {

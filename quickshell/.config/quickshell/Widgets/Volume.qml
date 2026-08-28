@@ -8,8 +8,8 @@ import "../"
 Rectangle {
     id: root
 
-    width: 50 
-    height: 200
+    width: 64 
+    height: 256
     radius: Variables.radius
     color: Variables.backgroundColorUI
 
@@ -56,14 +56,14 @@ Rectangle {
                 width: implicitWidth
                 height: volSlider.availableHeight
                 radius: Variables.radius
-                color: Variables.iconColor
+                color: Variables.borderColor
 
                 Rectangle {
                     anchors.top: parent.top
                     width: parent.width
                     height: volSlider.visualPosition * parent.height
                     y: height - parent.height
-                    color: Variables.uiColor
+                    color: Variables.progressBarBackground
                     radius: Variables.radius
                 }
             }
