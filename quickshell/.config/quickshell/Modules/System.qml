@@ -127,7 +127,8 @@ Rectangle {
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Variables.spacing
+        visible: !Variables.systemHidden
 
         Text {
             text: system.cpuUsage

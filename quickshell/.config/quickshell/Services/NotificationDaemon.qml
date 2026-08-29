@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Services.Notifications
+import QtCore
 import "../"
 
 Item {
@@ -16,6 +17,7 @@ Item {
 
     property int maxPopupCount: 4
     property var popupNotifications: []
+    property var notificationTimestamps: ({})
 
     signal popupAdded(var notification)
     signal notificationClosed(var notification)
@@ -135,6 +137,11 @@ Item {
         clearPopups();
     }
 
+    function notificationTime(notification) {
+        if (!notification) return ""
+        return notificationTimestamps[notification.id] || ""
+    }
+
     NotificationServer {
         id: notificationServer
 
@@ -150,9 +157,18 @@ Item {
 
         onNotification: notification => {
             notification.tracked = true
+            
+            var d = new Date();
+            var hours = d.getHours().toString().padStart(2, '0');
+            var minutes = d.getMinutes().toString().padStart(2, '0');
+            
+            var tempTimes = notificationTimestamps;
+            tempTimes[notification.id] = hours + ":" + minutes;
+            notificationTimestamps = tempTimes;
 
-            if (!notification.lastGeneration && !Variables.disablePopups)
+            if (!notification.lastGeneration && !Variables.disablePopups) {
                 root.showPopup(notification)
+            }
         }
     }
 }

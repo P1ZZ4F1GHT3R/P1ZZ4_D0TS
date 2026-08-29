@@ -28,7 +28,7 @@ QtObject {
     readonly property int animationDurationUI: 200
     readonly property int hoverTimer: 500
     readonly property int barRadius: 4
-    readonly property int trackTitleLength: 28
+    readonly property int trackTitleLength: 40
     readonly property int notifTimer: 5000
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
@@ -70,12 +70,14 @@ QtObject {
     property var currentNotif: null
     property int activeAnimationUI: animationTypeUI
     property int activeDurationUI: animationDurationUI
-    property bool notchHidden: false
-    property bool workspacesHidden: false
-    property bool systemHidden: false
+    property bool notchHidden: focusMode
+    property bool workspacesHidden: focusMode
+    property bool systemHidden: focusMode
     property bool controlCenter: false
     property bool idleMonitor: true
     property bool disablePopups: false
+    property bool focusMode: false
+    property bool locked: false
 
 
     property Settings settings: Settings {

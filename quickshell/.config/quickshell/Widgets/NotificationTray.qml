@@ -142,6 +142,8 @@ Rectangle {
             property bool isRemoving: localRemoving || root.isClearingAll
             property bool animationsEnabled: false
 
+            property bool isExpanded: false
+
             height: (isReady && !isRemoving) ? targetHeight : 0
             opacity: (isReady && !isRemoving) ? 1.0 : 0.0
             scale: (isReady && !isRemoving) ? 1.0 : 0.9
@@ -166,18 +168,18 @@ Rectangle {
             Component.onCompleted: {
                 if (root.seenNotifs.indexOf(modelData.id) !== -1) {
                     isReady = true;
-                    
-                    Qt.callLater(function() {
-                        animationsEnabled = true;
-                    });
+                    Qt.callLater(function() { animationsEnabled = true; });
                 } else {
                     root.seenNotifs.push(modelData.id);
-                    
                     animationsEnabled = true;
-                    Qt.callLater(function() {
-                        isReady = true;
-                    });
+                    Qt.callLater(function() { isReady = true; });
                 }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: delegateRect.isExpanded = !delegateRect.isExpanded
             }
 
             RowLayout {
@@ -191,6 +193,7 @@ Rectangle {
                     Layout.preferredHeight: Variables.fontSize * 2
                     radius: Variables.imgRadius
                     color: "transparent"
+                    Layout.alignment: Qt.AlignTop
                     visible: daemon && daemon.notificationImage(modelData) !== ""
 
                     Image {
@@ -205,13 +208,24 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
 
-                    Text {
+                    RowLayout {
                         Layout.fillWidth: true
-                        color: Variables.textColor
-                        elide: Text.ElideRight
-                        font.bold: true
-                        font.pixelSize: Variables.fontSize
-                        text: daemon ? (daemon.notificationApp(modelData) + " - " + daemon.notificationTitle(modelData)) : ""
+                        
+                        Text {
+                            Layout.fillWidth: true
+                            color: Variables.textColor
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Variables.fontSize
+                            text: daemon ? (daemon.notificationApp(modelData) + " - " + daemon.notificationTitle(modelData)) : ""
+                        }
+
+                        Text {
+                            color: Variables.textColor
+                            opacity: 0.6
+                            font.pixelSize: Variables.fontSize * 0.8
+                            text: daemon ? daemon.notificationTime(modelData) : ""
+                        }
                     }
 
                     Text {
@@ -219,9 +233,58 @@ Rectangle {
                         color: Variables.textColor
                         elide: Text.ElideRight
                         wrapMode: Text.Wrap
-                        maximumLineCount: 2
+                        
+                        maximumLineCount: delegateRect.isExpanded ? 100 : 2
+                        
                         font.pixelSize: Variables.fontSize
                         text: daemon ? daemon.notificationBody(modelData) : ""
+                    }
+
+                    RowLayout {
+
+                        Layout.fillWidth: true
+                        
+                        visible: delegateRect.isExpanded && modelData && modelData.actions ? modelData.actions.length > 0 : false
+                        spacing: Variables.spacing / 2
+
+                        Repeater {
+                            
+                            model: parent.visible && modelData && modelData.actions ? Math.min(modelData.actions.length, 2) : 0
+
+                            Rectangle {
+                                id: actionButton
+
+                                required property int index
+                                readonly property var action: (modelData && modelData.actions) ? modelData.actions[index] : null
+
+                                Layout.preferredHeight: Variables.circleHeight
+                                Layout.fillWidth: true
+                                radius: Variables.radius
+                                color: Variables.buttonColor
+                                opacity: actionMouse.pressed ? 0.85 : 1
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: Variables.textColor
+                                    textFormat: Text.PlainText
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Variables.fontSize * 0.9
+                                    text: actionButton.action && actionButton.action.text ? actionButton.action.text : ""
+                                }
+
+                                MouseArea {
+                                    id: actionMouse
+
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (actionButton.action) {
+                                            daemon.invokeAction(actionButton.action, modelData)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -248,12 +311,11 @@ Rectangle {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             if (delegateRect.isRemoving) return; 
-
-                            delegateRect.isRemoving = true
-                            delegateRect.opacity = 0.0
-                            delegateRect.scale = 0.9
-                            
-                            removalTimer.start()
+                                delegateRect.localRemoving = true;
+                                delegateRect.opacity = 0.0
+                                delegateRect.scale = 0.9
+                                
+                                removalTimer.start()
                         }
                     }
 
@@ -266,7 +328,6 @@ Rectangle {
                 }
             }
         }
-
         Text {
             anchors.centerIn: parent
             text: "A tumbleweed tumbles..."

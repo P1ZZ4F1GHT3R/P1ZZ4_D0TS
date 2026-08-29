@@ -136,6 +136,7 @@ Scope {
                     anchors.fill: parent
                     visible: true
                     source: lockScreen.currentWallpaper
+                    fillMode: Image.PreserveAspectCrop
                 }
 
                 MultiEffect {
@@ -209,7 +210,7 @@ Scope {
                         bottomMargin: Variables.borderWidth * 4
                     }
 
-                    implicitHeight: Variables.lockScreen ? rectangle.height / 12.5 : 0
+                    implicitHeight: Variables.lockScreen && !wait ? rectangle.height / 12.5 : 0
                     implicitWidth: rectangle.width / 7
                     color: Variables.uiColor
                     topLeftRadius: Variables.radius

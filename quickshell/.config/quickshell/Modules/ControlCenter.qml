@@ -19,8 +19,8 @@ Rectangle {
         verticalCenter: parent.verticalCenter
     }
 
-    width: Variables.controlCenter ? 270 + Variables.borderWidth * 4 : 10
-    height: Variables.controlCenter ? 800: 400 
+    width: Variables.controlCenter ? 370 + Variables.borderWidth * 4 : 15
+    height: Variables.controlCenter ? 800: 500 
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
@@ -142,9 +142,17 @@ Rectangle {
             Layout.rightMargin: Variables.topMargin * 4
         }
 
-        IdleMonitorSwitch{
-            Layout.leftMargin: Variables.topMargin * 4
-            Layout.rightMargin: Variables.topMargin * 4
+        RowLayout {
+            id: buttonRow
+
+            IdleMonitorToggle{
+                Layout.leftMargin: Variables.topMargin * 4
+                Layout.rightMargin: Variables.topMargin * 4
+            }
+
+            FocusModeToggle{
+                
+            }
         }
 
         NotificationTray {

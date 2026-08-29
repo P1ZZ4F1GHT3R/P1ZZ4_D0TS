@@ -13,6 +13,7 @@ import "../"
 RowLayout {
     id: userStats
 
+    Layout.fillWidth: parent
     spacing: Variables.spacing
 
     Scope {
@@ -37,13 +38,17 @@ RowLayout {
             const days = Math.floor(totalSeconds / 86400)
             const hours = Math.floor((totalSeconds % 86400) / 3600)
             const minutes = Math.floor((totalSeconds % 3600) / 60)
+            const seconds = Math.floor(totalSeconds % 60)
 
-            let parts = []
-            if (days > 0) parts.push(`${days}d`)
-            if (hours > 0 || days > 0) parts.push(`${hours}h`)
-            parts.push(`${minutes}m`)
-
-            return parts.join(" ")
+            if (days > 0) {
+                return `${days} day${days === 1 ? '' : 's'}, ${hours} hr${hours === 1 ? '' : 's'}`
+            } else if (hours > 0) {
+                return `${hours} hr${hours === 1 ? '' : 's'}, ${minutes} min${minutes === 1 ? '' : 's'}`
+            } else if (minutes > 0) {
+                return `${minutes} min${minutes === 1 ? '' : 's'}, ${seconds} sec${seconds === 1 ? '' : 's'}`
+            } else {
+                return `${seconds} sec${seconds === 1 ? '' : 's'}`
+            }
         }
     }
 
@@ -122,4 +127,5 @@ RowLayout {
     Text{ text: Quickshell.env("USER"); color: Variables.textColor; font.pixelSize: Variables.fontSize}
     Text{ text: "-"; color: Variables.textColor; font.pixelSize: Variables.fontSize}
     Text{ text: uptimeChecker.uptimeText; color: Variables.textColor; font.pixelSize: Variables.fontSize}
+    Item{ Layout.fillWidth: parent}
 }

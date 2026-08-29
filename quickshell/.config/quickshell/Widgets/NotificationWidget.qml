@@ -11,8 +11,9 @@ Item {
     readonly property var notification: daemon ? daemon.currentPopup : Variables.currentNotif
     property bool expanded: false
 
-    Layout.preferredWidth: expanded ? (notifLayout.implicitWidth >= (Variables.width * 12) ? Variables.width * 8 : notifLayout.implicitWidth) : Variables.width * 5
+    Layout.preferredWidth: expanded ? Math.min(notifLayout.implicitWidth, Variables.width * 8) : Variables.width * 5
     Layout.preferredHeight: expanded ? Variables.height + notifLayout.implicitHeight : Variables.height * 3
+    Layout.fillWidth: expanded
 
     Connections {
         target: Variables
@@ -126,6 +127,7 @@ Item {
             Layout.preferredHeight: Variables.circleHeight
             Layout.alignment: Qt.AlignTop
             Layout.topMargin: Variables.topMargin * 2
+            Layout.rightMargin: Variables.topMargin * 3
             radius: Variables.circleRadius
             color: Variables.buttonColor
             opacity: closeMouse.containsMouse ? 0.85 : 1

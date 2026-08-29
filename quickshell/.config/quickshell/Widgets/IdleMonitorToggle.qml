@@ -3,10 +3,10 @@ import QtQuick.Controls
 import "../"
 
 Button {
-    id: idleMonitorSwitch
+    id: idleMonitorToggle
 
     contentItem: Text {
-        text: ""
+        text: Variables.idleMonitor ? "󰅶" : "󰛊"
         font.pixelSize: Variables.fontSize * 2
         color: Variables.idleMonitor ? Variables.iconColor : Variables.backgroundColorUI
         horizontalAlignment: Text.AlignHCenter

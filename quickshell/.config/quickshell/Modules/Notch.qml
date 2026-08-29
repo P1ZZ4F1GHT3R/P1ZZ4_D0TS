@@ -15,7 +15,7 @@ Rectangle {
     implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height + Variables.borderWidth * 4
     implicitWidth: {
         if (Variables.notchHidden) return 0; 
-        return Variables.expandedState ? notch.implicitWidth + Variables.width * 3 : notch.implicitWidth + Variables.width;
+        return Variables.expandedState ? notch.implicitWidth + Variables.width * 5 : notch.implicitWidth + Variables.width;
         }
     bottomLeftRadius: Variables.radius
     bottomRightRadius: Variables.radius
@@ -44,17 +44,15 @@ Rectangle {
                 Variables.powerMenu = false;
                 powerMenuLoader.active = false;
                 Variables.expandedState = false;
-                Variables.notchHidden = true;
-                Variables.workspacesHidden = true;
-                Variables.systemHidden = true;
+                Variables.focusMode = true;
+                Variables.locked = true;
                 hovertimer.stop();
             }
             else {
                 Variables.activeAnimationUI = Variables.bouncingAnimationUI;
                 Variables.activeDurationUI = Variables.bouncingDurationUI;
-                Variables.notchHidden = false;
-                Variables.workspacesHidden = false;
-                Variables.systemHidden = false;
+                Variables.focusMode = false;
+                Variables.locked = false;
                 animationSwitch.start();
             }
         }

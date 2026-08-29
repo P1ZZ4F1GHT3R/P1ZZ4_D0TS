@@ -19,6 +19,7 @@ Rectangle {
     border.color: Variables.borderColor
     border.width: Variables.borderWidth
     opacity: actionMouse.containsMouse ? 0.85 : 1
+    visible: !Variables.workspacesHidden
 
     Text {
         anchors.fill: parent

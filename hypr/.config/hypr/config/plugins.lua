@@ -202,6 +202,7 @@ if hl.plugin.hyprglass then
         enabled = true,
         default_theme = "dark",
         default_preset = "glass",
+        layers = { enabled = false },
     })
 end
 

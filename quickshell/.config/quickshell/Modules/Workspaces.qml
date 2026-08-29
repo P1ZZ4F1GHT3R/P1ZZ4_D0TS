@@ -110,6 +110,7 @@ Rectangle {
         radius: Variables.circleRadius
         border.width: Variables.borderWidth
         border.color: Variables.borderColor
+        visible: !Variables.workspacesHidden
 
         Behavior on x {
         NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
@@ -124,6 +125,7 @@ Rectangle {
             rightMargin: Variables.rightMargin
         }
         spacing: Variables.spacing
+        visible: !Variables.workspacesHidden
         
         Repeater {
         model: Variables.workspaceCount

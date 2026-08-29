@@ -42,8 +42,8 @@ Scope {
         }
 
         color: "transparent"
-        implicitHeight: 150
-        exclusiveZone: Variables.exclusiveZone + Variables.borderWidth * 4
+        implicitHeight: 300
+        exclusiveZone: Variables.focusMode && !Variables.locked ? 0 : Variables.exclusiveZone + Variables.borderWidth * 4
 
         mask: Region {
             item: left
@@ -100,7 +100,7 @@ Scope {
         }
 
         color: "transparent"
-        implicitWidth: 350
+        implicitWidth: 500
         exclusiveZone: Variables.exclusiveZoneSide
 
         ControlCenter{

@@ -18,6 +18,7 @@ Rectangle {
     border.color: Variables.borderColor
     border.width: Variables.borderWidth
     opacity: actionMouse.containsMouse ? 0.85 : 1
+    visible: !Variables.systemHidden
 
     property string currentProfile: Variables.currentProfile
 
