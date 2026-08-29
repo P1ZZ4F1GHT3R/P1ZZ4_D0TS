@@ -129,7 +129,7 @@ Rectangle {
         spacing: Variables.topMargin
         clip: true
 
-        model: daemon ? daemon.trackedNotifications.values : []
+        model: daemon ? daemon.trackedNotifications.values.slice().reverse() : []
 
         delegate: Rectangle {
             id: delegateRect

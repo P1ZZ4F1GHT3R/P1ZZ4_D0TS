@@ -8,7 +8,7 @@ Button {
     contentItem: Text {
         text: Variables.focusMode ? "󰒲" : "󰒳"
         font.pixelSize: Variables.fontSize * 2
-        color: Variables.focusMode ? Variables.iconColor : Variables.backgroundColorUI
+        color: !Variables.focusMode ? Variables.iconColor : Variables.backgroundColorUI
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
     }
@@ -17,8 +17,8 @@ Button {
         implicitWidth: 64
         implicitHeight: 64
         radius: Variables.radius
-        color: Variables.focusMode ? Variables.backgroundColorUI : Variables.iconColor
-        border.color: Variables.focusMode ? Variables.iconColor : Variables.backgroundColorUI
+        color: !Variables.focusMode ? Variables.backgroundColorUI : Variables.iconColor
+        border.color: !Variables.focusMode ? Variables.iconColor : Variables.backgroundColorUI
         opacity: parent.down ? 0.85 : 1.0
 
         Behavior on color {

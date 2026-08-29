@@ -51,6 +51,14 @@ Scope {
             Region { item: right }
         }
 
+        IpcHandler {
+            target: "focusmode"
+
+            function toggle(): void {
+                Variables.focusMode = !Variables.focusMode
+            }
+        }
+
         RowLayout {
             id: left
 
