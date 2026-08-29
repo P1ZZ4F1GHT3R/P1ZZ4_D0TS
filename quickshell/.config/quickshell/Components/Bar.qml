@@ -14,6 +14,7 @@ import "../"
 Scope {
     id: root
     
+    property bool focused
 
     NotificationDaemon {
         id: notifDaemon
@@ -43,7 +44,7 @@ Scope {
 
         color: "transparent"
         implicitHeight: 300
-        exclusiveZone: Variables.focusMode && !Variables.locked ? 0 : Variables.exclusiveZone + Variables.borderWidth * 4
+        exclusiveZone: Variables.focused ? 0 : Variables.exclusiveZone + Variables.borderWidth * 4
 
         mask: Region {
             item: left
@@ -55,8 +56,27 @@ Scope {
             target: "focusmode"
 
             function toggle(): void {
+                Variables.notchHidden = !Variables.notchHidden
+                Variables.workspacesHidden = !Variables.workspacesHidden
+                Variables.systemHidden = !Variables.systemHidden
                 Variables.focusMode = !Variables.focusMode
+                if (!Variables.focused) {
+                    focusTimer.start();
+                }
+                else {
+                    Variables.focused = false
+                }
             }
+        }
+
+        Timer {
+            id: focusTimer
+
+            interval: Variables.animationDurationUI / 1.7
+            running: false
+            repeat: false
+            triggeredOnStart: false
+            onTriggered: Variables.focused = true
         }
 
         RowLayout {

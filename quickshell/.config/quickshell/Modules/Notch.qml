@@ -44,15 +44,17 @@ Rectangle {
                 Variables.powerMenu = false;
                 powerMenuLoader.active = false;
                 Variables.expandedState = false;
-                Variables.focusMode = true;
-                Variables.locked = true;
+                Variables.notchHidden = true
+                Variables.workspacesHidden = true
+                Variables.systemHidden = true
                 hovertimer.stop();
             }
             else {
                 Variables.activeAnimationUI = Variables.bouncingAnimationUI;
                 Variables.activeDurationUI = Variables.bouncingDurationUI;
-                Variables.focusMode = false;
-                Variables.locked = false;
+                Variables.notchHidden = false
+                Variables.workspacesHidden = false
+                Variables.systemHidden = false
                 animationSwitch.start();
             }
         }

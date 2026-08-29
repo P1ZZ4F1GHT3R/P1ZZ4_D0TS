@@ -70,14 +70,15 @@ QtObject {
     property var currentNotif: null
     property int activeAnimationUI: animationTypeUI
     property int activeDurationUI: animationDurationUI
-    property bool notchHidden: focusMode
-    property bool workspacesHidden: focusMode
-    property bool systemHidden: focusMode
+    property bool notchHidden: false
+    property bool workspacesHidden: false
+    property bool systemHidden: false
     property bool controlCenter: false
     property bool idleMonitor: true
     property bool disablePopups: false
     property bool focusMode: false
-    property bool locked: false
+    property bool focused: false 
+
 
 
     property Settings settings: Settings {

@@ -20,14 +20,14 @@ noise_reduction = 77
 4 = 1.2
 5 = 1.5
 [color]
-background = '#0d0e13'
-foreground = '#bac3ff'
+background = '#0f0d13'
+foreground = '#d3bcfd'
 
 gradient = 1
 gradient_count = 6
-gradient_color_1 = '#bac3ff'
-gradient_color_2 = '#c3c5dd'
-gradient_color_3 = '#e6bad7'
+gradient_color_1 = '#d3bcfd'
+gradient_color_2 = '#cdc2db'
+gradient_color_3 = '#f1b7c5'
 gradient_color_4 = '#ffb4ab'
-gradient_color_5 = '#3a4379'
-gradient_color_6 = '#434659'
+gradient_color_5 = '#503c74'
+gradient_color_6 = '#4b4358'

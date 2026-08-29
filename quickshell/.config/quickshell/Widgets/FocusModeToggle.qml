@@ -27,6 +27,25 @@ Button {
     }
 
     onClicked: {
+        Variables.notchHidden = !Variables.notchHidden
+        Variables.workspacesHidden = !Variables.workspacesHidden
+        Variables.systemHidden = !Variables.systemHidden
         Variables.focusMode = !Variables.focusMode
+        if (!Variables.focused) {
+            focusTimer.start();
+        }
+        else {
+            Variables.focused = false
+        }
+    }
+
+    Timer {
+        id: focusTimer
+
+        interval: Variables.animationDurationUI / 1.7
+        running: false
+        repeat: false
+        triggeredOnStart: false
+        onTriggered: Variables.focused = true
     }   
 }
