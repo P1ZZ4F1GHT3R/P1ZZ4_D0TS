@@ -9,6 +9,8 @@ Rectangle {
 
     radius: Variables.radius
     color: Variables.backgroundColorUI
+    border.color: Variables.borderColor
+    border.width: Variables.borderWidth
 
     property var daemon 
     property var seenNotifs: []
@@ -21,7 +23,7 @@ Rectangle {
             top: parent.top
             right: parent.right
             left: parent.left
-            margins: Variables.topMargin
+            margins: Variables.topMargin * 2
         }
 
         spacing: Variables.spacing

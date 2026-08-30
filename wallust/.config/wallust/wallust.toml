@@ -80,4 +80,4 @@ vicinae = { src = 'vicinae.toml', dst = '~/.local/share/vicinae/themes/wallust.t
 
 hyprcolors = { src = 'hyprcolors.lua', dst = '~/.config/hypr/hyprcolors.lua'}
 
-Colors = { src = 'Colors.qml', dst = '~/.config/quickshell/Colors.qml'}
+quickshell = { src = 'colors.json', dst = '~/.config/quickshell/colors.json'}

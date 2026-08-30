@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Services.Pipewire
-import "../"
+import "../Services"
+import "../" 
 
 Rectangle {
     id: root
@@ -15,15 +15,8 @@ Rectangle {
     border.color: Variables.borderColor
     border.width: Variables.borderWidth
 
-    property var audioNode: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.audio : null
-
-    PwObjectTracker {
-        objects: [ Pipewire.defaultAudioSink ]
-    }
-
     ColumnLayout {
-
-        anchors{
+        anchors {
             fill: parent
             topMargin: Variables.topMargin * 2
             bottomMargin: Variables.topMargin * 2
@@ -32,7 +25,7 @@ Rectangle {
         spacing: Variables.spacing
 
         Slider {
-            id: volSlider
+            id: brightnessSlider
 
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignHCenter
@@ -41,28 +34,26 @@ Rectangle {
             from: 0.0
             to: 1.0 
 
-            value: root.audioNode ? root.audioNode.volume : 0.0
+            value: BrightnessService.level
 
             onMoved: {
-                if (root.audioNode) {
-                    root.audioNode.volume = value
-                }
+                BrightnessService.setBrightness(value)
             }
 
             background: Rectangle {
-                x: volSlider.leftPadding + volSlider.availableWidth / 2 - width / 2
-                y: volSlider.topPadding
+                x: brightnessSlider.leftPadding + brightnessSlider.availableWidth / 2 - width / 2
+                y: brightnessSlider.topPadding
                 implicitWidth: 6
                 implicitHeight: 200
                 width: implicitWidth
-                height: volSlider.availableHeight
+                height: brightnessSlider.availableHeight
                 radius: Variables.radius
                 color: Variables.borderColor
 
                 Rectangle {
                     anchors.top: parent.top
                     width: parent.width
-                    height: volSlider.visualPosition * parent.height
+                    height: brightnessSlider.visualPosition * parent.height
                     y: height - parent.height
                     color: Variables.progressBarBackground
                     radius: Variables.radius
@@ -70,24 +61,24 @@ Rectangle {
             }
 
             handle: Rectangle {
-                x: volSlider.leftPadding + volSlider.availableWidth / 2 - width / 2
-                y: volSlider.topPadding + volSlider.visualPosition * (volSlider.availableHeight - height)
+                x: brightnessSlider.leftPadding + brightnessSlider.availableWidth / 2 - width / 2
+                y: brightnessSlider.topPadding + brightnessSlider.visualPosition * (brightnessSlider.availableHeight - height)
                 implicitWidth: 16
                 implicitHeight: 16
                 radius: Variables.circleRadius
                 color: Variables.textColor
-                opacity: volSlider.pressed ? 0.85 : 1.0
+                opacity: brightnessSlider.pressed ? 0.85 : 1.0
             }
         }
 
         Button {
             Layout.alignment: Qt.AlignHCenter
-            text: (root.audioNode && root.audioNode.muted) ? "" : ""
+            text: ""
 
             contentItem: Text {
                 text: parent.text
                 font.pixelSize: Variables.fontSize
-                color: (root.audioNode && root.audioNode.muted) ? Variables.iconColor : Variables.textColor
+                color: Variables.textColor
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
@@ -97,26 +88,20 @@ Rectangle {
                 implicitHeight: 32
                 radius: Variables.radius
                 color: Variables.uiColor
-                border.color: (root.audioNode && root.audioNode.muted) ? Variables.iconColor : Variables.textColor
-                opacity: parent.down ? 0.85 :  1.0
-            }
-            
-            onClicked: {
-                if (root.audioNode) {
-                    root.audioNode.muted = !root.audioNode.muted
-                }
+                border.color: Variables.textColor
+                opacity: parent.down ? 0.85 : 1.0
             }
         }
     }
 
     MouseArea {
-    anchors.fill: parent
-    onPressed: (mouse) => mouse.accepted = false
-    onWheel: (wheel) => {
-        if (!root.audioNode) return;
-        let step = 0.02; 
-        let delta = wheel.angleDelta.y > 0 ? step : -step;
-        root.audioNode.volume = Math.max(volSlider.from, Math.min(volSlider.to, root.audioNode.volume + delta));
+        anchors.fill: parent
+        onPressed: (mouse) => mouse.accepted = false
+        onWheel: (wheel) => {
+            let step = 0.05; 
+            let delta = wheel.angleDelta.y > 0 ? step : -step;
+            let newValue = Math.max(brightnessSlider.from, Math.min(brightnessSlider.to, BrightnessService.level + delta));
+            BrightnessService.setBrightness(newValue);
+        }
     }
-}
 }

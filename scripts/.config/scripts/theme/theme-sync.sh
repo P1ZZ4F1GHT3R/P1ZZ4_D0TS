@@ -248,6 +248,32 @@ vicinae_update(){
         fi
 }
 
+reload_quickshell() {
+    log_debug "Pushing new colors to Quickshell via IPC"
+    
+    local json_file="/home/$USER/.config/quickshell/colors.json"
+    
+    if [[ ! -f "$json_file" ]]; then
+        log_error "JSON file not found: $json_file"
+        return
+    fi
+
+    # Read the file contents into a variable
+    local json_data
+    json_data=$(cat "$json_file")
+
+    # Pass the raw JSON string as an argument to the update function
+    if command -v qs > /dev/null 2>&1; then
+        qs ipc call Colors update "$json_data" || log_error "Failed to send IPC command to Quickshell"
+        log_success "Quickshell colors updated"
+    elif command -v quickshell > /dev/null 2>&1; then
+        quickshell ipc call Colors update "$json_data" || log_error "Failed to send IPC command to Quickshell"
+        log_success "Quickshell colors updated"
+    else
+        log_info "Quickshell IPC tools not found, skipping Quickshell update"
+    fi
+}
+
 reload_system_components() {
     log_info "Reloading system components"
     
@@ -256,6 +282,7 @@ reload_system_components() {
     reload_hyprland_plugins
     #`reload_ghostty
     vicinae_update
+    reload_quickshell
     
     log_success "All system components reloaded successfully"
 }

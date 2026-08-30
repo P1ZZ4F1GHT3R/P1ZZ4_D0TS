@@ -29,7 +29,7 @@ QtObject {
     readonly property int hoverTimer: 500
     readonly property int barRadius: 4
     readonly property int trackTitleLength: 40
-    readonly property int notifTimer: 5000
+    readonly property int notifTimer: 3000
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
     readonly property int updateNotifRunning: 900000

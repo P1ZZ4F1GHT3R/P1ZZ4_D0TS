@@ -131,28 +131,36 @@ Rectangle {
             NumberAnimation { duration: Variables.fadeAnimation }
         }
 
-        UserStats{
+        User{
             Layout.topMargin: Variables.topMargin * 4
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
         }
 
-        Volume{
+        RowLayout {
+            id: sliderRow
+
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
+            spacing: Variables.spacing
+
+            Volume{}
+
+            UnderContstruction{}
+
+            Brightness{}
         }
 
         RowLayout {
             id: buttonRow
 
-            IdleMonitorToggle{
-                Layout.leftMargin: Variables.topMargin * 4
-                Layout.rightMargin: Variables.topMargin * 4
-            }
+            Layout.leftMargin: Variables.topMargin * 4
+            Layout.rightMargin: Variables.topMargin * 4
+            spacing: Variables.spacing
 
-            FocusModeToggle{
-                
-            }
+            IdleMonitorToggle{}
+
+            FocusModeToggle{}
         }
 
         NotificationTray {
