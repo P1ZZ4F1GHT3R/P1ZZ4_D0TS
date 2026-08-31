@@ -7,6 +7,8 @@ import "../"
 Rectangle {
     id: root
 
+    implicitWidth: 368
+    implicitHeight: 368
     radius: Variables.radius
     color: Variables.backgroundColorUI
     border.color: Variables.borderColor

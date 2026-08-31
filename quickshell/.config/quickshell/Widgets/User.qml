@@ -13,8 +13,8 @@ import "../"
 Rectangle {
     id: root
 
-    Layout.fillWidth: true
-    implicitHeight: userStats.implicitHeight + (Variables.spacing * 2)
+    implicitWidth: 368
+    implicitHeight: 64
 
     color: Variables.backgroundColorUI
     radius: Variables.radius

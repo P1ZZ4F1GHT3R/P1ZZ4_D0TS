@@ -26,7 +26,7 @@ QtObject {
     readonly property int imgRadius: 8
     readonly property int animationTypeUI: Easing.InOutQuad
     readonly property int animationDurationUI: 200
-    readonly property int hoverTimer: 500
+    readonly property int hoverTimer: 250
     readonly property int barRadius: 4
     readonly property int trackTitleLength: 40
     readonly property int notifTimer: 3000
@@ -78,6 +78,12 @@ QtObject {
     property bool disablePopups: false
     property bool focusMode: false
     property bool focused: false 
+    property int pomodoroTime: 25 * 60
+    property int breakTime: 5 * 60
+    property bool pomodoroClock: false
+    property int pomodoroTimeLeft: pomodoroTime
+    property bool pomodoroIsRunning: false
+    property bool pomodoroIsBreak: false
 
 
 

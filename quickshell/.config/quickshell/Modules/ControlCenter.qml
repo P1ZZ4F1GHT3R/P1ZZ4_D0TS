@@ -19,8 +19,8 @@ Rectangle {
         verticalCenter: parent.verticalCenter
     }
 
-    width: Variables.controlCenter ? 370 + Variables.borderWidth * 4 : 15
-    height: Variables.controlCenter ? 800: 500 
+    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : 15
+    height: Variables.controlCenter ? controlLayout.implicitHeight : 500 
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
@@ -101,8 +101,20 @@ Rectangle {
         hoverEnabled: true
 
         onClicked: Variables.clickEnabled && !Variables.controlCenter ? Variables.controlCenter = true : Variables.controlCenter = false
-        onEntered: Variables.hoverEnabled ? hovertimer.start() : null
-        onExited: Variables.hoverEnabled ? (Variables.controlCenter = false, hovertimer.stop()) : null
+    }
+
+    HoverHandler {
+        id: hoverHandler
+        enabled: Variables.hoverEnabled
+
+        onHoveredChanged: {
+            if (hovered) {
+                hovertimer.start()
+            } else {
+                hovertimer.stop()
+                Variables.controlCenter = false
+            }
+        }
     }
 
     Timer {
@@ -115,6 +127,7 @@ Rectangle {
     }
 
     ColumnLayout {
+        id: controlLayout
         
         anchors {
             top: parent.top
@@ -146,26 +159,40 @@ Rectangle {
 
             Volume{}
 
-            UnderContstruction{}
+            PomodoroTimer{}
 
             Brightness{}
         }
 
-        RowLayout {
-            id: buttonRow
-
+        Rectangle {
+            id: buttonrowBackground
+        
+            implicitWidth: 368
+            implicitHeight: 64 + Variables.topMargin * 2
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
-            spacing: Variables.spacing
 
-            IdleMonitorToggle{}
+            color: Variables.backgroundColorUI
+            radius: Variables.radius
+            border.color: Variables.borderColor
+            border.width: Variables.borderWidth
 
-            FocusModeToggle{}
+            RowLayout {
+                id: buttonRow
+
+                anchors {
+                    centerIn: parent
+                    margins: Variables.topMargin * 4
+                }
+                spacing: Variables.spacing / 1.2
+
+                IdleMonitorToggle{}
+
+                FocusModeToggle{}
+            }
         }
 
         NotificationTray {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
             Layout.bottomMargin: Variables.topMargin * 4

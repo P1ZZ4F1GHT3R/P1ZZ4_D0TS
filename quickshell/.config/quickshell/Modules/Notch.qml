@@ -53,8 +53,10 @@ Rectangle {
                 Variables.activeAnimationUI = Variables.bouncingAnimationUI;
                 Variables.activeDurationUI = Variables.bouncingDurationUI;
                 Variables.notchHidden = false
-                Variables.workspacesHidden = false
-                Variables.systemHidden = false
+                if (!Variables.pomodoroClock) {
+                    Variables.workspacesHidden = false
+                    Variables.systemHidden = false
+                }
                 animationSwitch.start();
             }
         }
@@ -171,7 +173,7 @@ Rectangle {
 
         MprisWidget {
             id: mprisWidget
-            visible: !Variables.powerMenu && !Variables.notifWidget && mprisWidget.activePlayer !== null
+            visible: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null
         }
 
         ClockWidget {
@@ -200,7 +202,7 @@ Rectangle {
         VisualizerWidget {
             id: visualizerWidget 
             activePlayer: mprisWidget.activePlayer
-            visible: !Variables.powerMenu && !Variables.expandedState && !Variables.notifWidget && mprisWidget.activePlayer !== null
+            visible: !Variables.powerMenu && !Variables.expandedState && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null
         }
     }
 }

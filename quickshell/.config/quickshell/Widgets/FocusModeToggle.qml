@@ -19,7 +19,6 @@ Button {
         radius: Variables.radius
         color: !Variables.focusMode ? Variables.backgroundColorUI : Variables.iconColor
         border.color: !Variables.focusMode ? Variables.iconColor : Variables.backgroundColorUI
-        opacity: parent.down ? 0.85 : 1.0
 
         Behavior on color {
             ColorAnimation{ duration: Variables.animationDurationUI}

@@ -38,6 +38,8 @@ Scope {
                 Variables.lockScreen = true; 
                 lockScreen.screenOpacity = 1.0;
                 Variables.expandedState = false;
+                Variables.focusMode = false;
+                Variables.focused = false;
                 wait = false;
             }
         }
@@ -189,6 +191,23 @@ Scope {
                             
                             color: Variables.lockscreenColor
                             font.pixelSize: Variables.fontSize * 2
+                        }
+
+                        Text {
+                            id: pomodoroClock
+                            
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible: Variables.pomodoroIsRunning
+
+                            function formatPomodoro(seconds) {
+                                let m = Math.floor(seconds / 60)
+                                let s = seconds % 60
+                                return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
+                            }
+
+                            text: formatPomodoro(Variables.pomodoroTimeLeft)
+                            color: Variables.lockscreenColor
+                            font.pixelSize: Variables.fontSize * 1.5
                         }
 
                         Timer {
