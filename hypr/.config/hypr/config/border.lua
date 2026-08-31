@@ -1,8 +1,8 @@
 hl.config({
     general = {
         col = {
-            active_border = { colors = { "rgb(387F9E)", "rgb(C3533C)", "rgb(AB879B)", "rgb(42BFDB)", "rgb(93566E)" } },
-            inactive_border = "rgba(010509ee)",
+            active_border = { colors = { "rgb(615162)", "rgb(8A506A)", "rgb(B36180)", "rgb(BB5E89)", "rgb(4B515E)" } },
+            inactive_border = "rgba(140C15ee)",
         },
     },
 })

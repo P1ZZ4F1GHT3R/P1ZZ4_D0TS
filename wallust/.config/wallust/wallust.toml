@@ -14,7 +14,7 @@
 backend = "fastresize"
 
 # What color space to use to produce and select the most prominent colors:
-# lab - labmixed - lch - lchmixed
+# lab - labmixed - lch - lchmixed - salience
 color_space = "lch"
 
 # Use the most prominent colors in a way that makes sense, a scheme color palette:
@@ -23,7 +23,7 @@ color_space = "lch"
 # harddark - harddark16 - harddarkcomp - harddarkcomp16
 # softdark - softdark16 - softdarkcomp - softdarkcomp16
 # softlight - softlight16 - softlightcomp - softlightcomp16
-palette = "harddark"
+palette = "harddark16"
 
 # Ensures a "readable contrast" (OPTIONAL, disabled by default)
 # Should only be enabled when you notice an unreadable contrast frequently happening
