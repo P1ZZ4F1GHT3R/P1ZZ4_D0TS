@@ -91,6 +91,7 @@ Scope {
     IpcHandler {
         target: "PC" 
         function lock(): void {
+            imagePath.running = true;
             lockAnimation.start();
         }
     }
@@ -137,6 +138,7 @@ Scope {
                     visible: true
                     source: lockScreen.currentWallpaper
                     fillMode: Image.PreserveAspectCrop
+                    cache: false
                 }
 
                 MultiEffect {

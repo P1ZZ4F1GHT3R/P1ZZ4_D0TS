@@ -1,18 +1,16 @@
 pragma Singleton
 import QtQuick
-import QtCore      // Required for Settings in Qt 6
+import QtCore
 import Quickshell
 import Quickshell.Io
 
 Item {
     id: root
 
-    // The Settings block automatically saves and loads these values to disk
     Settings {
         id: themeSettings
         category: "WallustColors"
 
-        // Default values act as a fallback on the very first boot
         property color background: "#03040A"
         property color foreground: "#A9ABB1"
         property color cursor:     "#A6BDD3"
@@ -36,7 +34,6 @@ Item {
         property color color15: "#7C7F88"
     }
 
-    // Expose the settings to the rest of your shell so you can still use `Colors.background`
     property alias background: themeSettings.background
     property alias foreground: themeSettings.foreground
     property alias cursor:     themeSettings.cursor
@@ -59,7 +56,6 @@ Item {
     property alias color14: themeSettings.color14
     property alias color15: themeSettings.color15
 
-    // Function to parse the incoming JSON and save it into Settings
     function applyColors(jsonString) {
         try {
             var colors = JSON.parse(jsonString);
