@@ -8,7 +8,7 @@ Button {
     contentItem: Text {
         text: Variables.idleMonitor ? "󰅶" : "󰛊"
         font.pixelSize: Variables.fontSize * 2
-        color: Variables.idleMonitor ? Variables.iconColor : Variables.backgroundColorUI
+        color: Variables.idleMonitor ? Variables.iconColor : Variables.uiColor
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
     }
@@ -17,8 +17,9 @@ Button {
         implicitWidth: 64
         implicitHeight: 64
         radius: Variables.radius
-        color: Variables.idleMonitor ? Variables.backgroundColorUI : Variables.iconColor
-        border.color: Variables.idleMonitor ? Variables.iconColor : Variables.backgroundColorUI
+        color: Variables.idleMonitor ? Variables.uiColor : Variables.iconColor
+        border.color: Variables.idleMonitor ? Variables.iconColor : Variables.uiColor
+        border.width: Variables.borderWidth
 
         Behavior on color {
             ColorAnimation{ duration: Variables.animationDurationUI}
