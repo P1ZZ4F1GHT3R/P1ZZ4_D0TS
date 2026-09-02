@@ -14,6 +14,7 @@ PanelWindow {
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.layer: Variables.wallpaperPicker ? WlrLayer.Overlay : WlrLayer.Top
     mask: Region {}
     exclusionMode: ExclusionMode.Ignore
 

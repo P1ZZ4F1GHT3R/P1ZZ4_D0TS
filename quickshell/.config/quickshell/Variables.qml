@@ -14,7 +14,7 @@ QtObject {
     readonly property int topMargin: 4
     readonly property int fontSize: 18
     readonly property int spacing: 12
-    readonly property int exclusiveZone: 36
+    readonly property int exclusiveZoneTop: 36
     readonly property int workspaceCount: 5
     readonly property int circleHeight: fontSize * (1 + 1/3)
     readonly property int circleWidth: circleHeight
@@ -40,7 +40,6 @@ QtObject {
     readonly property int exclusiveZoneSide: 0
     readonly property int idleLockTime: 300
     readonly property int idleSleepTime: 900
-
     
     readonly property bool hoverEnabled: false
     readonly property bool clickEnabled: hoverEnabled ? false : true
@@ -84,6 +83,9 @@ QtObject {
     property int pomodoroTimeLeft: pomodoroTime
     property bool pomodoroIsRunning: false
     property bool pomodoroIsBreak: false
+    property bool wallpaperPicker: false
+    property bool wallpaperPreview: false
+    property string previewPath: ""
 
 
 

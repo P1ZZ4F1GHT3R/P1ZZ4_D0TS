@@ -64,7 +64,7 @@ MANAGER_LOG="$HOME/hyprland-manager-$TIMESTAMP.log"
 PACKAGES=(
     "hypr" "wallust" "bash" "btop" "chrome-flags.conf" "code-flags.conf"
     "fastfetch" "ghostty" "nvim" "quickshell" "scripts" "shell.env"
-    "Thunar" "vicinae" "yazi" "zsh" ".zshenv" "matugen" "waybound" "cli.sh"
+    "Thunar" "vicinae" "yazi" "zsh" ".zshenv" "waybound" "cli.sh"
 )
 
 # Log everything to file without suppressing terminal output.

@@ -7,20 +7,9 @@ A modern, highly customized Hyprland configuration featuring a bespoke Quickshel
 ## The Core Stack
 
 - **Compositor:** [Hyprland](https://hyprland.org/) (Git version)
-- **Shell UI:** [Ambxst](https://github.com/Axenide/Ambxst) (Heavily modified Quickshell implementation)
 - **Launcher:** [Vicinae](https://github.com/JustPreston/vicinae)
 - **Terminal:** [Ghostty](https://ghostty.org/)
-- **Theming:** [Wallust](https://github.com/fufexan/wallust) & [Matugen](https://github.com/InioAsman/matugen) (Material You generation)
-- **Wallpaper Picker:** [skwd-wall](https://github.com/liixini/skwd-wall)
-
-## Custom Ambxst Shell
-
-The highlight of this rice is a custom "Portable" version of the **Ambxst** shell. I took the full shell and used AI to strip it down and refactor it into a lightweight, modular UI.
-
-**Key modifications:**
-- **Stripped down:** Reduced the shell to strictly the Bar, the Notch/Dashboard, and the AI panel.
-- **Refactored Modules:** Removed redundant components like the built-in wallpaper manager, settings window, and dock.
-- **Behavior Adjustments:** Customized bar modules and interaction behavior to fit a more minimal aesthetic while retaining the Matugen color integration.
+- **Theming:** [Wallust](https://github.com/fufexan/wallust) (wallpaper-driven color generation)
 
 ## Installation
 
@@ -92,7 +81,6 @@ Use `./manager.sh` and select **Delete dotfiles**. It removes only the symlinks 
 ## Credits & Inspiration
 
 - **Saatvik333:** The original foundation for the Hyprland configuration.
-- **Axenide:** The creator of the Ambxst shell.
 - **ericbrand97:** For the Vimix Hyprcursor theme.
 
 ## License
@@ -102,4 +90,4 @@ This configuration is provided as-is for educational and personal use. Individua
 ## Disclaimer
 
 - This script is provided as-is and has not been fully tested across all environments. Review `install.sh` and all included files before running. I am not responsible for any system changes or data loss.
-- I use AI to assist me in perfecting my dotfiles.
+- I use AI to assist me in creating my dotfiles.

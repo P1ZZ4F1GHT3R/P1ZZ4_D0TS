@@ -6,7 +6,7 @@
 # Description: Orchestrates system-wide theme updates based on current wallpaper
 # Author: saatvik333
 # Version: 3.1
-# Dependencies: awww, wallust, hyprctl, matugen, imagemagick
+# Dependencies: awww, wallust, hyprctl, imagemagick
 #===============================================================================
 
 set -euo pipefail
@@ -15,8 +15,11 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/color-utils.sh"
 
-# Short delay to ensure clean startup
-sleep 1
+# Keep the normal no-argument sync forgiving during startup, but do not add a
+# needless delay when the picker explicitly passes a selected wallpaper.
+if [[ $# -eq 0 ]]; then
+    sleep 1
+fi
 
 # --- Configuration ---
 readonly SCRIPT_NAME="${0##*/}"
@@ -36,6 +39,18 @@ readonly GHOSTTY_SCRIPT="$CONFIG_DIR/scripts/theme/ghostty-colors.sh"
 
 # --- Wallpaper Management Functions ---
 get_current_wallpaper() {
+    local requested_wallpaper="${1:-}"
+
+    if [[ -n "$requested_wallpaper" ]]; then
+        requested_wallpaper="${requested_wallpaper#file://}"
+        if [[ ! -f "$requested_wallpaper" ]]; then
+            die "Wallpaper file does not exist: $requested_wallpaper"
+        fi
+
+        echo "$requested_wallpaper"
+        return
+    fi
+
     log_debug "Retrieving current wallpaper from awww"
     
     local wallpaper
@@ -53,6 +68,15 @@ get_current_wallpaper() {
     echo "$wallpaper"
 }
 
+set_wallpaper() {
+    local -r wallpaper="$1"
+
+    log_info "Setting wallpaper with awww: $wallpaper"
+    if ! awww img -t fade --transition-duration 9 "$wallpaper" >/dev/null 2>&1; then
+        die "Failed to set wallpaper with awww: $wallpaper"
+    fi
+}
+
 cache_wallpaper_path() {
     local -r wallpaper="$1"
     
@@ -65,7 +89,7 @@ cache_wallpaper_path() {
 
 process_wallpaper() {
     local wallpaper
-    wallpaper=$(get_current_wallpaper)
+    wallpaper=$(get_current_wallpaper "${1:-}")
     
     # Cache the original wallpaper path
     cache_wallpaper_path "$wallpaper"
@@ -162,27 +186,6 @@ execute_wallust_generation() {
     log_success "Wallust theme generation completed"
 }
 
-execute_ambxst_matugen_generation() {
-    local -r wallpaper="$1"
-    local -r matugen_config="$CONFIG_DIR/matugen/config.toml"
-
-    log_debug "Executing Ambxst matugen theme generation"
-
-    if [[ ! -r "$wallpaper" ]]; then
-        die "Wallpaper file not readable: $wallpaper"
-    fi
-
-    if [[ ! -f "$matugen_config" ]]; then
-        die "Matugen config not found: $matugen_config"
-    fi
-
-if ! matugen image "$wallpaper" --source-color-index 0 -c "$matugen_config" -t scheme-tonal-spot; then
-        log_error "Ambxst matugen generation failed for: $wallpaper, but continuing script..."
-    fi
-
-    log_success "Ambxst matugen theme generation completed"
-}
-
 execute_ghostty_update() {
     validate_executable "$GHOSTTY_SCRIPT" "Ghostty color script"
 
@@ -200,9 +203,8 @@ execute_theme_scripts() {
     log_info "Executing theme update scripts"
     
     # Execute scripts in order
-    execute_gtk_theme_update
     execute_wallust_generation "$wallpaper"
-    execute_ambxst_matugen_generation "$wallpaper"
+    execute_gtk_theme_update
     execute_ghostty_update
     
     log_success "All theme scripts executed successfully"
@@ -251,7 +253,7 @@ vicinae_update(){
 reload_quickshell() {
     log_debug "Pushing new colors to Quickshell via IPC"
     
-    local json_file="/home/$USER/.config/quickshell/colors.json"
+    local json_file="$CONFIG_DIR/quickshell/colors.json"
     
     if [[ ! -f "$json_file" ]]; then
         log_error "JSON file not found: $json_file"
@@ -260,7 +262,7 @@ reload_quickshell() {
 
     # Read the file contents into a variable
     local json_data
-    json_data=$(cat "$json_file")
+    json_data=$(<"$json_file")
 
     # Pass the raw JSON string as an argument to the update function
     if command -v qs > /dev/null 2>&1; then
@@ -299,11 +301,22 @@ main() {
     ensure_directory "$(dirname "$WALLPAPER_CACHE")"
     
     # Validate system dependencies
-    validate_dependencies "awww" "wallust" "matugen" "hyprctl"
+    validate_dependencies "awww" "wallust" "hyprctl"
+
+    if [[ $# -gt 1 ]]; then
+        die "Usage: $SCRIPT_NAME [wallpaper-image]"
+    fi
+
+    local requested_wallpaper="${1:-}"
+    if [[ -n "$requested_wallpaper" ]]; then
+        requested_wallpaper="${requested_wallpaper#file://}"
+        [[ -r "$requested_wallpaper" ]] || die "Wallpaper file not readable: $requested_wallpaper"
+        set_wallpaper "$requested_wallpaper"
+    fi
     
     # Process current wallpaper (handles GIF extraction)
     local wallpaper
-    wallpaper=$(process_wallpaper)
+    wallpaper=$(process_wallpaper "$requested_wallpaper")
     
     # Get original wallpaper path for hyprlock
     local original_wallpaper hyprlock_wallpaper

@@ -197,7 +197,7 @@ PACMAN_PACKAGES=(
     yazi
     btop ghostty swww vscodium
     sddm neovim python python-pip
-    zen-browser quickshell matugen
+    zen-browser quickshell
     rsync
 )
 

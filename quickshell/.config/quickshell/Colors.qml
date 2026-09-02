@@ -58,29 +58,38 @@ Item {
 
     function applyColors(jsonString) {
         try {
-            var colors = JSON.parse(jsonString);
+            var data = JSON.parse(jsonString);
+            // Wallust's built-in JSON shape is nested, while the configured
+            // Quickshell template emits the same values at the top level.
+            // Accept both so preview and full theme updates use one contract.
+            var colors = data.colors || data;
+            var special = data.special || data;
+
+            function valueOr(current, value) {
+                return typeof value === "string" && value.length > 0 ? value : current;
+            }
             
-            themeSettings.background = colors.background;
-            themeSettings.foreground = colors.foreground;
-            themeSettings.cursor = colors.cursor;
+            themeSettings.background = valueOr(themeSettings.background, special.background);
+            themeSettings.foreground = valueOr(themeSettings.foreground, special.foreground);
+            themeSettings.cursor = valueOr(themeSettings.cursor, special.cursor);
             
-            themeSettings.color0 = colors.color0;
-            themeSettings.color1 = colors.color1;
-            themeSettings.color2 = colors.color2;
-            themeSettings.color3 = colors.color3;
-            themeSettings.color4 = colors.color4;
-            themeSettings.color5 = colors.color5;
-            themeSettings.color6 = colors.color6;
-            themeSettings.color7 = colors.color7;
+            themeSettings.color0 = valueOr(themeSettings.color0, colors.color0);
+            themeSettings.color1 = valueOr(themeSettings.color1, colors.color1);
+            themeSettings.color2 = valueOr(themeSettings.color2, colors.color2);
+            themeSettings.color3 = valueOr(themeSettings.color3, colors.color3);
+            themeSettings.color4 = valueOr(themeSettings.color4, colors.color4);
+            themeSettings.color5 = valueOr(themeSettings.color5, colors.color5);
+            themeSettings.color6 = valueOr(themeSettings.color6, colors.color6);
+            themeSettings.color7 = valueOr(themeSettings.color7, colors.color7);
             
-            themeSettings.color8 = colors.color8;
-            themeSettings.color9 = colors.color9;
-            themeSettings.color10 = colors.color10;
-            themeSettings.color11 = colors.color11;
-            themeSettings.color12 = colors.color12;
-            themeSettings.color13 = colors.color13;
-            themeSettings.color14 = colors.color14;
-            themeSettings.color15 = colors.color15;
+            themeSettings.color8 = valueOr(themeSettings.color8, colors.color8);
+            themeSettings.color9 = valueOr(themeSettings.color9, colors.color9);
+            themeSettings.color10 = valueOr(themeSettings.color10, colors.color10);
+            themeSettings.color11 = valueOr(themeSettings.color11, colors.color11);
+            themeSettings.color12 = valueOr(themeSettings.color12, colors.color12);
+            themeSettings.color13 = valueOr(themeSettings.color13, colors.color13);
+            themeSettings.color14 = valueOr(themeSettings.color14, colors.color14);
+            themeSettings.color15 = valueOr(themeSettings.color15, colors.color15);
             
         } catch(e) {
             console.error("Failed to parse colors JSON via IPC: " + e);

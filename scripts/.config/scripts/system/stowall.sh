@@ -22,7 +22,6 @@ PACKAGES=(
     "yazi"
     "zsh"
     ".zshenv"
-    "matugen"
     "waybound"
     "cava"
 )

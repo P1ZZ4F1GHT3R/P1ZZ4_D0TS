@@ -2,6 +2,7 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
 import Quickshell.Services.Pipewire
@@ -19,8 +20,8 @@ Rectangle {
         verticalCenter: parent.verticalCenter
     }
 
-    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : 15
-    height: Variables.controlCenter ? controlLayout.implicitHeight : 500 
+    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : 12
+    height: controlLayout.implicitHeight
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
@@ -30,14 +31,18 @@ Rectangle {
     Shape {
         id: bottomRightConcave
         
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
-        visible: Variables.controlCenter
-
-        width: cornerSize
-        height: cornerSize
         anchors.top: parent.bottom
         anchors.right: parent.right
         anchors.rightMargin: Variables.borderWidth * 4
+
+        property real closedWidth: 12
+        property real openWidth: controlLayout.implicitWidth + Variables.borderWidth * 4
+        property real progress: Math.max(0, Math.min(1, (parent.width - closedWidth) / Math.max(1, openWidth - closedWidth)))
+
+        readonly property real cornerSize: Variables.radius * progress
+
+        width: cornerSize
+        height: cornerSize
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -57,31 +62,32 @@ Rectangle {
 
     Shape {
         id: topRightConcave
-        
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
-        visible: Variables.controlCenter
 
-        width: cornerSize
-        height: cornerSize
         anchors.bottom: parent.top
         anchors.right: parent.right
         anchors.rightMargin: Variables.borderWidth * 4
+
+        property real closedWidth: 12
+        property real openWidth: controlLayout.implicitWidth + Variables.borderWidth * 4
+        property real progress: Math.max(0, Math.min(1, (parent.width - closedWidth) / Math.max(1, openWidth - closedWidth)))
+
+        readonly property real cornerSize: Variables.radius * progress
+
+        width: cornerSize
+        height: cornerSize
 
         ShapePath {
             fillColor: Variables.uiColor
             strokeWidth: 0
 
             PathMove { x: topRightConcave.cornerSize; y: topRightConcave.cornerSize }
-            
             PathLine { x: topRightConcave.cornerSize; y: 0 }
-            
             PathArc {
                 x: 0; y: topRightConcave.cornerSize
                 radiusX: topRightConcave.cornerSize
                 radiusY: topRightConcave.cornerSize
                 direction: PathArc.Clockwise
             }
-            
             PathLine { x: topRightConcave.cornerSize; y: topRightConcave.cornerSize }
         }
     }
@@ -137,7 +143,6 @@ Rectangle {
         }
 
         spacing: Variables.spacing
-        visible: Variables.controlCenter
         opacity: Variables.controlCenter ? 1.0 : 0.0
 
         Behavior on opacity {
