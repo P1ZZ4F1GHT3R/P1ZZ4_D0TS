@@ -23,7 +23,7 @@ Rectangle {
     topRightRadius: Variables.radius
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
     }
 
     function localPath(fileUrl) {
@@ -54,21 +54,21 @@ Rectangle {
     }
 
     FolderListModel {
+
         id: wallpaperModel
         folder: "file://" + root.wallpaperDirectory
         nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp"]
         showDirs: false
 
         onCountChanged: {
-            if (count > 0 && wallpaperList.currentIndex <= 0) {
-                var middleIndex = Math.floor(count / 2);
-                wallpaperList.currentIndex = middleIndex;
-                wallpaperList.positionViewAtIndex(middleIndex, ListView.Center);
+            if (count > 0 && wallpaperList.currentIndex === -1) {
+                wallpaperList.currentIndex = Math.floor(Math.random() * count);
             }
         }
     }
 
     Process {
+
         id: imagePath
         command: ["cat", txtDir]
         running: true 
@@ -81,6 +81,7 @@ Rectangle {
     }
 
     Shape {
+
         id: bottomLeftConcave
         
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
@@ -110,6 +111,7 @@ Rectangle {
     }
 
     Shape {
+
         id: bottomRightConcave
 
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
@@ -138,26 +140,37 @@ Rectangle {
         }
     }
 
-    ListView {
+    PathView {
+
         id: wallpaperList
 
         anchors.fill: parent
         anchors.margins: Variables.spacing
-        orientation: ListView.Horizontal
-        spacing: Variables.spacing
+        focus: Variables.wallpaperPicker
+        clip: true
+        interactive: true
         model: wallpaperModel
         currentIndex: -1
-        boundsBehavior: Flickable.StopAtBounds
-        focus: Variables.wallpaperPicker
-        preferredHighlightBegin: width / 2 - 150
-        preferredHighlightEnd: width / 2 + 150
-        highlightRangeMode: ListView.StrictlyEnforceRange
-        highlightMoveDuration: 100
-        clip: true
+        pathItemCount: 7 
         
-        interactive: true
+        preferredHighlightBegin: 0.5
+        preferredHighlightEnd: 0.5
+        highlightMoveDuration: Variables.activeDurationUI
+
+        path: Path {
+            startX: -wallpaperList.width
+            startY: wallpaperList.height / 2
+
+            PathLine {
+                x: wallpaperList.width * 2
+                y: wallpaperList.height / 2
+            }
+        }
+        Keys.onLeftPressed: decrementCurrentIndex()
+        Keys.onRightPressed: incrementCurrentIndex()
 
         onCurrentItemChanged: root.previewCurrentWallpaper()
+        
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                 if (!currentItem || !currentItem.imagePath || applyProcess.running)
@@ -173,40 +186,56 @@ Rectangle {
             }
         }
 
-        delegate: Rectangle {
-            id: scrollList
+        delegate: Item {
+
+            id: delegateRoot
 
             required property string filePath
             required property int index
 
-            readonly property bool isSelected: ListView.isCurrentItem
-
+            readonly property bool isSelected: PathView.isCurrentItem
             property string imagePath: root.localPath(filePath)
 
             width: 300
-            height: ListView.view.height - 20
-            color: scrollList.isSelected ? Variables.borderColor : "transparent"
-            border.color: Variables.borderColor
-            border.width: scrollList.isSelected ? Variables.borderWidth : 0
-            radius: Variables.radius
-            clip: true
+            height: PathView.view.height 
 
-            ClippingWrapperRectangle {
-                anchors.fill: parent
-                anchors.margins: scrollList.isSelected ? Math.max(Variables.borderWidth) : 3
+            Rectangle {
+                id: scrollList
+                
+                width: parent.width
+                height: parent.height - 20 
+                y: delegateRoot.isSelected ? 0 : 20
+
+                Behavior on y {
+                    NumberAnimation {
+                        duration: Variables.animationDurationUI
+                        easing.type: Variables.animationTypeUI
+                    }
+                }
+
+                color: delegateRoot.isSelected ? Variables.borderColor : "transparent"
+                border.color: Variables.borderColor
+                border.width: delegateRoot.isSelected ? Variables.borderWidth : 0
                 radius: Variables.radius
-                color: Variables.uiColor
+                clip: true
 
-                Image {
-                    anchors.fill: scrollList
-                    anchors.margins: 3
-                    source: filePath
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    opacity: scrollList.isSelected ? 1.0 : 0.4
+                ClippingWrapperRectangle {
+                    anchors.fill: parent
+                    anchors.margins: delegateRoot.isSelected ? Math.max(Variables.borderWidth) : 3
+                    radius: Variables.radius
+                    color: Variables.uiColor
 
-                    Behavior on opacity {
-                        NumberAnimation { duration: Variables.fadeAnimation }
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 3
+                        source: filePath
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        opacity: delegateRoot.isSelected ? 1.0 : 0.4
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: Variables.fadeAnimation }
+                        }
                     }
                 }
             }
@@ -217,6 +246,7 @@ Rectangle {
         target: Variables
 
         function onWallpaperPickerChanged() {
+
             if (!Variables.wallpaperPicker) {
                 previewProcess.running = false;
                 previewProcess.command = [
@@ -225,7 +255,10 @@ Rectangle {
                     root.previewScript + " \"$(cat " + root.txtDir + ")\""
                 ];
                 previewProcess.running = true;
+                reshuffleTimer.start();
+
             } else {
+                reshuffleTimer.stop();
                 initialPreviewTimer.restart();
             }
         }
@@ -255,15 +288,22 @@ Rectangle {
             previewProcess.running = true;
         }
     }
+    Timer {
+        id: reshuffleTimer
+        interval: Variables.animationDurationUI
+        repeat: false
+        onTriggered: {
+            if (wallpaperModel.count > 0) {
+                wallpaperList.currentIndex = Math.floor(Math.random() * wallpaperModel.count);
+            }
+        }
+    }
 
     Timer {
         id: initialPreviewTimer
         interval: 50
         repeat: false
         onTriggered: {
-            if (wallpaperList.currentIndex >= 0) {
-                wallpaperList.positionViewAtIndex(wallpaperList.currentIndex, ListView.Center);
-            }
             root.previewCurrentWallpaper();
         }
     }

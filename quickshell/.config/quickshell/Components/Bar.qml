@@ -204,6 +204,17 @@ Scope {
                         previewWallpaper.opacity = 0.0;
                         crossfadeAnim.restart();
                     }
+
+                    function onWallpaperPickerChanged() {
+                        if (!Variables.wallpaperPicker) {
+                            previewWallpaper.source = "";
+                            oldWallpaper.source = "";
+                            Variables.previewPath = "";
+                            
+                            crossfadeAnim.stop();
+                            previewWallpaper.opacity = 1.0;
+                        }
+                    }
                 }
 
                 NumberAnimation on opacity {
