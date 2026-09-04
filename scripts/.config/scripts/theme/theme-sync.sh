@@ -4,7 +4,7 @@
 # Theme Synchronization Master Script
 # ~/.config/scripts/theme/theme-sync.sh
 # Description: Orchestrates system-wide theme updates based on current wallpaper
-# Author: saatvik333
+# Author: saatvik333 (Modified by P1ZZ4_F1GHT3R)
 # Version: 3.1
 # Dependencies: awww, wallust, hyprctl, imagemagick
 #===============================================================================
@@ -178,12 +178,38 @@ execute_wallust_generation() {
     
     log_debug "Using absolute wallpaper path: $abs_wallpaper"
     
-    # Run wallust with dynamic threshold
-    if ! wallust run "$abs_wallpaper" --dynamic-threshold 2>/dev/null; then
+    # --- NEW: LUMINANCE DETECTION ---
+    log_debug "Calculating image luminance..."
+    
+    # Uses ImageMagick to get the mean brightness of the image (0 to 100)
+    local luminance
+    luminance=$(magick "$abs_wallpaper" -colorspace gray -format "%[fx:mean*100]" info: | awk '{print int($1)}')
+    
+    # Set defaults
+    local mode="dark"
+    local palette="harddark"
+    
+    # If the image is mostly bright (adjust the 60 threshold to your liking), go light!
+    if (( luminance > 60 )); then
+        mode="light"
+        palette="light"
+    fi
+    
+    log_info "Wallpaper luminance is $luminance. Applying $mode theme."
+    
+    # Export the mode as an environment variable so your other scripts can read it
+    export THEME_MODE="$mode"
+    
+    # Cache the mode so Quickshell can grab it via IPC or a file read if needed
+    echo "$mode" > "$CACHE_DIR/theme-mode.txt"
+    # --------------------------------
+    
+    # Run wallust, passing the dynamic palette flag
+    if ! wallust run "$abs_wallpaper" --palette "$palette" --dynamic-threshold 2>/dev/null; then
         die "Wallust theme generation failed for: $abs_wallpaper"
     fi
     
-    log_success "Wallust theme generation completed"
+    log_success "Wallust theme generation completed ($mode mode)"
 }
 
 execute_ghostty_update() {
