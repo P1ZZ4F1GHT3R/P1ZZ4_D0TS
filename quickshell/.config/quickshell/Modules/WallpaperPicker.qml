@@ -227,7 +227,6 @@ Rectangle {
 
                     Image {
                         anchors.fill: parent
-                        anchors.margins: 3
                         source: filePath
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true

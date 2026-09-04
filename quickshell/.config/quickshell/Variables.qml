@@ -40,6 +40,7 @@ QtObject {
     readonly property int exclusiveZoneSide: 0
     readonly property int idleLockTime: 300
     readonly property int idleSleepTime: 900
+    readonly property int workspaceAnimationType: Easing.InOutBack
     
     readonly property bool hoverEnabled: false
     readonly property bool clickEnabled: hoverEnabled ? false : true
