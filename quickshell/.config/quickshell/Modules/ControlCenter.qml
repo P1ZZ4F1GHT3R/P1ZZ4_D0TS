@@ -194,6 +194,12 @@ Rectangle {
                 IdleMonitorToggle{}
 
                 FocusModeToggle{}
+
+                Test{}
+                
+                Test{}
+
+                Test{}
             }
         }
 

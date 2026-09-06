@@ -179,7 +179,4 @@ RowLayout {
             }
         }
     }
-    Item { Layout.fillWidth: Variables.expandedState 
-    visible: mpris.activePlayer !== null && Variables.expandedState ? true : false
-    }
 }

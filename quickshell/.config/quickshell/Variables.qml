@@ -53,7 +53,6 @@ QtObject {
     readonly property color lockscreenColor: Colors.color5
     readonly property color backgroundColorUI: Colors.color1
     readonly property color progressBarBackground: Colors.color9
-
     
     readonly property var oneZero: ["1", "0"]
     readonly property var fullRandom: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]

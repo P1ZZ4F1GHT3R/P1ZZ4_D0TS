@@ -179,7 +179,7 @@ Rectangle {
         ClockWidget {
             id: clockWidget 
             
-            Layout.alignment: Qt.AlignHCenter
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
             visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget
         }

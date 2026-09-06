@@ -11,12 +11,12 @@ Item {
 
     Layout.preferredWidth: Variables.width / 16 * 7
     Layout.preferredHeight: Variables.height / 2
-    Layout.alignment: Qt.AlignVCenter
+    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
 
     opacity: Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
     
     Behavior on opacity {
-        NumberAnimation { duration: 200 }
+        NumberAnimation { duration: Variables.fadeAnimation }
     } 
 
     Process {
