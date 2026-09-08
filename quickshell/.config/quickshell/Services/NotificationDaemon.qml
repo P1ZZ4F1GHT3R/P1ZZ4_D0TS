@@ -12,6 +12,7 @@ Item {
     readonly property alias server: notificationServer
     readonly property var trackedNotifications: notificationServer.trackedNotifications
     readonly property int trackedCount: notificationServer.trackedNotifications.values.length
+    readonly property var groupedNotifications: buildNotificationGroups(trackedNotifications.values)
     readonly property int popupCount: popupNotifications.length
     readonly property var currentPopup: popupNotifications.length > 0 ? popupNotifications[0] : null
 
@@ -51,6 +52,37 @@ Item {
 
     function notificationApp(notification) {
         return notification ? cleanText(notification.appName || "Notification") : "Notification"
+    }
+
+    function buildNotificationGroups(values) {
+        var groups = []
+        var notifications = values.slice().reverse()
+
+        for (var i = 0; i < notifications.length; i++) {
+            var notification = notifications[i]
+            var appName = notificationApp(notification)
+            var group = null
+
+            for (var j = 0; j < groups.length; j++) {
+                if (groups[j].key === appName.toLowerCase()) {
+                    group = groups[j]
+                    break
+                }
+            }
+
+            if (!group) {
+                group = {
+                    key: appName.toLowerCase(),
+                    appName: appName,
+                    notifications: []
+                }
+                groups.push(group)
+            }
+
+            group.notifications.push(notification)
+        }
+
+        return groups
     }
 
     function notificationImage(notification) {
