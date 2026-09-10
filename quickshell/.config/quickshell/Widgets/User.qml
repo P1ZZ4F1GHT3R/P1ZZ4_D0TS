@@ -141,7 +141,7 @@ Rectangle {
             }
         }
         Item {}
-        Text{ text: Quickshell.env("USER") + " - " + uptimeChecker.uptimeText; color: Variables.borderColor; font.pixelSize: Variables.fontSize; Layout.alignment: Qt.AlignVCenter}
+        Text{ text: Quickshell.env("USER") + " - " + uptimeChecker.uptimeText; color: Variables.textColor; font.pixelSize: Variables.fontSize; Layout.alignment: Qt.AlignVCenter}
         Item { Layout.fillWidth: true}
     }
 }

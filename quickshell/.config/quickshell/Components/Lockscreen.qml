@@ -18,6 +18,11 @@ Scope {
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
     property bool wait: false
 
+    Component.onCompleted: {
+        imagePath.running = true;
+        lockAnimation.start();
+    }
+
     Process {
         id: imagePath
         command: ["cat", txtDir]
@@ -59,8 +64,7 @@ Scope {
             target: lockScreen
             property: "screenOpacity"
             to: 0.0
-            duration: 200
-            easing.type: Variables.fadeAnimation
+            duration: Variables.fadeAnimation
         }
     }
 
@@ -79,8 +83,7 @@ Scope {
             target: lockScreen
             property: "screenOpacity"
             to: 1.0
-            duration: 200
-            easing.type: Variables.fadeAnimation
+            duration: Variables.fadeAnimation
         }
 
         ScriptAction {
@@ -125,6 +128,7 @@ Scope {
 
     WlSessionLock {
         id: sessionLock
+
         locked: false
 
         WlSessionLockSurface {

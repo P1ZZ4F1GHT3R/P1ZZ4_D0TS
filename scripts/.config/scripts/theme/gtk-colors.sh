@@ -3,9 +3,9 @@
 #===============================================================================
 # GTK Theme Update
 # ~/.config/scripts/theme/gtk-colors.sh
-# Description: Updates GTK themes based on current wallpaper folder structure
+# Description: Updates GTK themes based on current wallpaper folder structure & mode
 # Author: saatvik333
-# Version: 2.0
+# Version: 2.1
 # Dependencies: gsettings, sed
 #===============================================================================
 
@@ -17,18 +17,25 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 # --- Configuration ---
 readonly CONFIG_DIR="$HOME/.config"
 readonly WALLPAPER_FILE="$CONFIG_DIR/waytrogen/wallpaper.txt"
-readonly DEFAULT_THEME="Colloid-Dark"
-readonly COLOR_SCHEME="prefer-dark"
 readonly GTK_VERSIONS=("3.0" "4.0")
 
+# Grab the mode exported by the master script (default to dark if not set)
+readonly MODE="${THEME_MODE:-dark}"
+
+# Capitalize the first letter (light -> Light, dark -> Dark)
+readonly MODE_CAP="$(tr '[:lower:]' '[:upper:]' <<< ${MODE:0:1})${MODE:1}" 
+readonly COLOR_SCHEME="prefer-$MODE"
+readonly PREFER_DARK_VAL=$([[ "$MODE" == "dark" ]] && echo "1" || echo "0")
+
+# Map the folder names to their Colloid suffix
 declare -rA THEME_MAP=(
-    ["Catppuccin"]="Colloid-Dark-Catppuccin"
-    ["Everforest"]="Colloid-Dark-Everforest"
-    ["Gruvbox"]="Colloid-Dark-Gruvbox"
-    ["Nord"]="Colloid-Dark-Nord"
-    ["Onedark"]="Colloid-Dark-Dracula"
-    ["Black"]="Colloid-Dark"
-    ["Animated"]="Colloid-Dark"
+    ["Catppuccin"]="-Catppuccin"
+    ["Everforest"]="-Everforest"
+    ["Gruvbox"]="-Gruvbox"
+    ["Nord"]="-Nord"
+    ["Onedark"]="-Dracula"
+    ["Black"]=""
+    ["Animated"]=""
 )
 
 # --- Functions ---
@@ -47,13 +54,15 @@ get_wallpaper_folder() {
 
 resolve_theme_name() {
     local -r folder="${1:-}"
+    local suffix=""
     
-    if [[ -z "$folder" ]]; then
-        echo "$DEFAULT_THEME"
-        return
+    # If the folder exists in our map, grab its specific suffix
+    if [[ -n "$folder" ]] && [[ -v "THEME_MAP[$folder]" ]]; then
+        suffix="${THEME_MAP[$folder]}"
     fi
     
-    echo "${THEME_MAP[$folder]:-$DEFAULT_THEME}"
+    # Combine Base + Mode + Suffix (e.g., Colloid + Light + -Catppuccin)
+    echo "Colloid-${MODE_CAP}${suffix}"
 }
 
 verify_theme_installation() {
@@ -105,7 +114,9 @@ manage_gtk_config() {
     ensure_directory "$(dirname "$config_file")"
     
     set_ini_value "$config_file" "Settings" "gtk-theme-name" "$theme"
-    set_ini_value "$config_file" "Settings" "gtk-application-prefer-dark-theme" "1"
+    
+    # Set the prefer-dark-theme flag based on our calculated value (1 or 0)
+    set_ini_value "$config_file" "Settings" "gtk-application-prefer-dark-theme" "$PREFER_DARK_VAL"
 }
 
 manage_symlinks() {
@@ -192,7 +203,7 @@ main() {
     
     [[ "$new_theme" == "$target_theme" ]] || die "Theme verification failed"
       
-    log_success "Theme successfully updated to $target_theme"
+    log_success "Theme successfully updated to $target_theme ($MODE mode)"
 }
 
 # --- Script Entry Point ---

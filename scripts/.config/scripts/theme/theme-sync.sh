@@ -187,12 +187,12 @@ execute_wallust_generation() {
     
     # Set defaults
     local mode="dark"
-    local palette="harddark"
+    local palette="dark16"
     
     # If the image is mostly bright (adjust the 60 threshold to your liking), go light!
     if (( luminance > 60 )); then
         mode="light"
-        palette="light"
+        palette="light16"
     fi
     
     log_info "Wallpaper luminance is $luminance. Applying $mode theme."

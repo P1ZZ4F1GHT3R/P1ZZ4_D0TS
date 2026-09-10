@@ -107,7 +107,7 @@ RowLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
 
-            color: Colors.color9
+            color: Variables.progressBarBackground
             radius: Variables.barRadius
 
             Rectangle {

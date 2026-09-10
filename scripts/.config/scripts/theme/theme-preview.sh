@@ -16,11 +16,11 @@ fi
 LUMINANCE=$(magick "$IMAGE" -colorspace gray -format "%[fx:mean*100]" info: | awk '{print int($1)}')
 
 # Default to dark mode
-PALETTE="harddark"
+PALETTE="dark16"
 
 # If the image is bright use light mode
 if (( LUMINANCE > 55 )); then
-    PALETTE="light"
+    PALETTE="light16"
 fi
 
 # Run Wallust silently (skipping sequences and hooks) with the correct palette

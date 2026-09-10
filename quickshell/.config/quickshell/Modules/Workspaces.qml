@@ -106,7 +106,7 @@ Rectangle {
         x: targetItem ? (rowLayout.x + targetItem.x) - ((width - targetItem.width) / 2) : x
         implicitHeight: Variables.circleHeight
         implicitWidth: Variables.circleWidth
-        color: (!isOutOfRange && targetItem) ? Variables.buttonColor : "transparent"
+        color: (!isOutOfRange && targetItem) ? Variables.borderColor : "transparent"
         radius: Variables.circleRadius
         border.width: Variables.borderWidth
         border.color: Variables.borderColor
@@ -146,7 +146,7 @@ Rectangle {
             }
 
             text: wsId
-            color: isOccupied ? Variables.textColor : Colors.color1
+            color: isOccupied ? Variables.textColor : Variables.backgroundColorUI
             font.pixelSize: Variables.fontSize
         }
         }

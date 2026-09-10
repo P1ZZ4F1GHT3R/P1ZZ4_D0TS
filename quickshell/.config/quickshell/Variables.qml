@@ -33,7 +33,7 @@ QtObject {
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
     readonly property int updateNotifRunning: 900000
-    readonly property int updateTreshold: 50
+    readonly property int updateTreshold: 125
     readonly property int bouncingAnimationUI: Easing.OutElastic
     readonly property int bouncingDurationUI: 2400
     readonly property int pauseDuration: 150
@@ -47,12 +47,12 @@ QtObject {
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground
-    readonly property color iconColor: Colors.color14
-    readonly property color borderColor: Colors.color13
-    readonly property color buttonColor: Colors.color10
-    readonly property color lockscreenColor: Colors.color5
-    readonly property color backgroundColorUI: Colors.color1
-    readonly property color progressBarBackground: Colors.color9
+    readonly property color iconColor: Colors.color13
+    readonly property color borderColor: Colors.color12
+    readonly property color buttonColor: Colors.color9
+    readonly property color lockscreenColor: Colors.color11
+    readonly property color backgroundColorUI: Colors.color8
+    readonly property color progressBarBackground: Colors.color0
     
     readonly property var oneZero: ["1", "0"]
     readonly property var fullRandom: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
