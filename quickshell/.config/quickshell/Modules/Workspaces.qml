@@ -119,6 +119,7 @@ Rectangle {
 
     RowLayout{
         id: rowLayout
+
         anchors {
             fill: parent
             leftMargin: Variables.leftMargin
@@ -151,17 +152,23 @@ Rectangle {
         }
         }
 
-        Rectangle {
-            id: specialWorkspace
-
+        Item {
             Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: specialWorkspace.width
+            Layout.preferredHeight: 0
             visible: hasSpecialWindows
-            width: Variables.circleWidth
-            height: Variables.circleHeight
-            color: Variables.borderColor
-            radius: Variables.circleRadius
-            
-            Text {text: "S"; anchors.centerIn: parent}
+
+            Rectangle {
+                id: specialWorkspace
+                anchors.centerIn: parent
+
+                width: Variables.circleWidth
+                height: Variables.circleHeight
+                color: Variables.borderColor
+                radius: Variables.circleRadius
+                
+                Text { text: "S"; anchors.centerIn: parent }
+            }
         }
     }
 }

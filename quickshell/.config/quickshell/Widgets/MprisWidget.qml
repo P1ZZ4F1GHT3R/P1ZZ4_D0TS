@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
+import QtQuick.Effects
 import "../"   
 import "../Modules"   
             
@@ -46,135 +47,204 @@ RowLayout {
 
     }
 
-    ColumnLayout {
+   Item {
+        id: expandedContainer
+        
         visible: mpris.activePlayer !== null && Variables.expandedState
         opacity: !Variables.expandedState ? 0.0 : 1.0
+
+        Layout.fillWidth: true
+        Layout.preferredHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
 
         Behavior on opacity {
             NumberAnimation { duration: Variables.fadeAnimation }
         }
 
-        Item {
-            id: textContainer
-            clip: true
-            Layout.fillWidth: true
-            implicitHeight: trackText.implicitHeight
+        ClippingWrapperRectangle {
+            anchors.fill: parent
+            radius: Variables.imgRadius
 
-            Text {
-                id: trackText
-                text: {
-                    const player = mprisWidget?.activePlayer
-                    if (!player) return ""
-                    return `${player.trackTitle || "Unknown"} - ${player.trackArtist || "Unknown"}`
+            Item {
+                anchors.fill: parent
+
+                Image {
+                    id: blurredBgSource
+                    source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    visible: false 
                 }
-                color: Variables.textColor
-                font.bold: true
 
-                SequentialAnimation on x {
-                    running: trackText.text.length > Variables.trackTitleLength && Variables.expandedState === true
-                    loops: Animation.Infinite
+                MultiEffect {
+                    source: blurredBgSource
+                    anchors.fill: parent
+                    blurEnabled: true
+                    blurMax: 32
+                    blur: 0.8
+                }
 
-                    PauseAnimation { duration: 1500 }
-
-                    NumberAnimation {
-                        to: -(trackText.implicitWidth - textContainer.width)
-                        duration: 4000
-                    }
-                    
-                    PauseAnimation { duration: 1500 }
-                    
-                    NumberAnimation {
-                        to: 0
-                        duration: 600
-                    }
-
-                    onRunningChanged: {
-                        if (!running) {
-                            trackText.x = 0
-                            }
-                    }
+                Rectangle {
+                    anchors.fill: parent
+                    color: Qt.rgba(0, 0, 0, 0.4) 
                 }
             }
         }
 
+        RowLayout {
+            id: expandedContent
 
-        Rectangle {
-            id: progressBarBackground
-
-            Layout.topMargin: Variables.height / 2
-            Layout.preferredWidth: Variables.width / 8 * 6
-            Layout.preferredHeight: Variables.height / 2
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-
-            color: Variables.progressBarBackground
-            radius: Variables.barRadius
-
-            Rectangle {
-                id: progressFill
-
-                height: parent.height
-                radius: Variables.barRadius
-                color: Variables.borderColor
-
-                width: {
-                    if (mpris.activePlayer && mpris.activePlayer.length > 0) {
-                        return parent.width * (mpris.activePlayer.position / mpris.activePlayer.length)
-                    }
-                    return 0
-                }
-
-                Behavior on width { NumberAnimation { duration: Variables.fadeAnimation } }
-            }
-        }
-
-        Row {
-            Layout.alignment: Qt.AlignHCenter 
-            Layout.topMargin: Variables.topMargin * 2
+            anchors.fill: parent
+            anchors.margins: Variables.spacing * 2
             spacing: Variables.spacing * 2
 
-            opacity: !Variables.expandedState ? 0.0 : 1.0
+            ClippingWrapperRectangle {
+                Layout.preferredWidth: 128 
+                Layout.preferredHeight: 128
+                Layout.alignment: Qt.AlignVCenter
+                radius: Variables.imgRadius
 
-            visible: mpris.activePlayer !== null && Variables.expandedState
-
-            Behavior on opacity {
-                NumberAnimation { duration: Variables.fadeAnimation }
-            } 
-
-            Rectangle {
-                width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.buttonColor
-                Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor}
-                MouseArea {
+                Image {
+                    source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
                     anchors.fill: parent
-                    onClicked: mpris.activePlayer && mpris.activePlayer.previous()
-                    cursorShape: Qt.PointingHandCursor
+                    fillMode: Image.PreserveAspectCrop
                 }
             }
 
-            Rectangle {
-                width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.borderColor
-            Text { 
-                anchors.fill: parent
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: mpris.activePlayer && mpris.activePlayer.isPlaying ? "" : "" 
-                color: Variables.textColor
-            }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
-                    cursorShape: Qt.PointingHandCursor
+            ColumnLayout {
+                id: controlsColumn
+
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: Variables.spacing
+
+                Item {
+                    id: textContainer
+
+                    clip: true
+                    Layout.fillWidth: true
+                    implicitHeight: trackText.implicitHeight
+
+                    onWidthChanged: {
+                        if (marqueeAnim.running) marqueeAnim.restart()
+                    }
+
+                    Text {
+                        id: trackText
+                        
+                        x: (textContainer.width > implicitWidth) ? (textContainer.width - implicitWidth) / 2 : 0
+
+                        text: {
+                            const player = mpris.activePlayer
+                            if (!player) return ""
+                            return `${player.trackTitle || "Unknown"} - ${player.trackArtist || "Unknown"}`
+                        }
+                        color: Variables.textColor
+                        font.bold: true
+
+                        onImplicitWidthChanged: {
+                            if (marqueeAnim.running) marqueeAnim.restart()
+                        }
+
+                        SequentialAnimation on x {
+                            id: marqueeAnim
+
+                            running: textContainer.width > 0 && trackText.implicitWidth > textContainer.width && Variables.expandedState === true
+                                     
+                            loops: Animation.Infinite
+
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation {
+                                to: -(trackText.implicitWidth - textContainer.width)
+                                duration: 3000
+                            }
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation {
+                                to: 0
+                                duration: 600
+                            }
+
+                            onRunningChanged: {
+                                if (!running) {
+                                    trackText.x = Qt.binding(function() {
+                                        return (textContainer.width > trackText.implicitWidth) ? (textContainer.width - trackText.implicitWidth) / 2 : 0
+                                    })
+                                }
+                            }
+                        }
+                    }
                 }
-            }
 
-            Rectangle {
-                width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.buttonColor
-                Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor }
+                Rectangle {
+                    id: progressBarBackground
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: mpris.activePlayer && mpris.activePlayer.next()
-                    cursorShape: Qt.PointingHandCursor
+                    Layout.topMargin: Variables.height / 4
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Variables.height / 2
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                    color: Variables.progressBarBackground
+                    radius: Variables.barRadius
+
+                    Rectangle {
+                        id: progressFill
+                        height: parent.height
+                        radius: Variables.barRadius
+                        color: Variables.iconColor
+                        width: {
+                            if (mpris.activePlayer && mpris.activePlayer.length > 0) {
+                                return parent.width * (mpris.activePlayer.position / mpris.activePlayer.length)
+                            }
+                            return 0
+                        }
+                        Behavior on width { NumberAnimation { duration: Variables.fadeAnimation } }
+                    }
+                }
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: Variables.topMargin
+                    spacing: Variables.spacing * 4
+
+                    Rectangle {
+                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.progressBarBackground
+
+                        Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor}
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: mpris.activePlayer && mpris.activePlayer.previous()
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
+
+                    Rectangle {
+                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.iconColor
+
+                        Text { 
+                            anchors.fill: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: mpris.activePlayer && mpris.activePlayer.isPlaying ? "" : "" 
+                            color: Variables.textColor
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
+
+                    Rectangle {
+                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.progressBarBackground
+
+                        Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: mpris.activePlayer && mpris.activePlayer.next()
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
                 }
             }
         }

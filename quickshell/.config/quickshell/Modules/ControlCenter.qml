@@ -195,7 +195,7 @@ Rectangle {
 
                 FocusModeToggle{}
 
-                Test{}
+                ActivateLinuxToggle{}
                 
                 Test{}
 

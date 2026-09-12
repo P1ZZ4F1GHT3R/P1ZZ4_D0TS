@@ -15,7 +15,7 @@ Rectangle {
     implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height + Variables.borderWidth * 4
     implicitWidth: {
         if (Variables.notchHidden) return 0; 
-        return Variables.expandedState ? notch.implicitWidth + Variables.width * 5 : notch.implicitWidth + Variables.width;
+        return Variables.expandedState ? notch.implicitWidth + Variables.width * 8 : notch.implicitWidth + Variables.width;
         }
     bottomLeftRadius: Variables.radius
     bottomRightRadius: Variables.radius
@@ -167,7 +167,7 @@ Rectangle {
 
         anchors {
             fill: parent
-            leftMargin: Variables.leftMargin
+            leftMargin: Variables.rightMargin
             rightMargin: Variables.rightMargin
         } 
 

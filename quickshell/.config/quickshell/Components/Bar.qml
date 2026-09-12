@@ -247,4 +247,34 @@ Scope {
             }
         }
     }
+
+    PanelWindow {
+        id: activateLinux
+
+        implicitHeight: watermark.implicitHeight + Variables.borderWidth * 12
+        implicitWidth: watermark.implicitWidth + Variables.borderWidth * 12
+
+        visible: Variables.activateLinux
+        color: "transparent"
+
+        anchors {
+            bottom: true
+            right: true
+        }
+
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        exclusionMode: ExclusionMode.Ignore
+
+        ActivateLinux{
+            id: watermark
+
+            anchors {
+                top: parent.top
+                left: parent.left
+            }
+        }
+
+    }
 }

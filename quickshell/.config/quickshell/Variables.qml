@@ -28,7 +28,6 @@ QtObject {
     readonly property int animationDurationUI: 200
     readonly property int hoverTimer: 250
     readonly property int barRadius: 4
-    readonly property int trackTitleLength: 40
     readonly property int notifTimer: 3000
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
@@ -86,6 +85,7 @@ QtObject {
     property bool wallpaperPicker: false
     property bool wallpaperPreview: false
     property string previewPath: ""
+    property bool activateLinux: false
 
 
 
@@ -93,6 +93,7 @@ QtObject {
         category: "ControlCenter"
         property alias idleMonitor: root.idleMonitor
         property alias disablePopups: root.disablePopups
+        property alias activateLinux: root.activateLinux
     }
     
 }

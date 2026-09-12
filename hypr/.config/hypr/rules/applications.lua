@@ -1,3 +1,5 @@
+require ("config/variables")
+
 hl.window_rule({
    match = {
        class = "^(GitHub Desktop)$",
@@ -34,4 +36,6 @@ hl.workspace_rule({
    ["on_created_empty"] = "discord",
 })
 
-hl.workspace_rule({ workspace = "w[tv1-10]", gaps_out = 15, gaps_in = 5 })
+hl.workspace_rule({ 
+   workspace = "w[tv1-10]", gaps_out = gapsOut, gaps_in = gapsIn 
+})

@@ -23,7 +23,7 @@ fontMono = "Ligma SFMono Nerd Font"
 
 -- Layout Variables
 gapsIn = 5
-gapsOut = 10
+gapsOut = 15
 borderSize = 2
 rounding = 22
 masterRatio = 0.6
