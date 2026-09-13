@@ -60,32 +60,42 @@ RowLayout {
             NumberAnimation { duration: Variables.fadeAnimation }
         }
 
-        ClippingWrapperRectangle {
+        Rectangle {
             anchors.fill: parent
-            radius: Variables.imgRadius
+            radius: Variables.radius
+            color: Variables.backgroundColorUI
+            border.color: Variables.borderColor
+            border.width: Variables.borderWidth
 
-            Item {
+            ClippingWrapperRectangle {
                 anchors.fill: parent
+                anchors.margins: Variables.borderWidth
+                radius: Math.max(0, Variables.radius - Variables.borderWidth)
 
-                Image {
-                    id: blurredBgSource
-                    source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
+                Item {
                     anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    visible: false 
-                }
 
-                MultiEffect {
-                    source: blurredBgSource
-                    anchors.fill: parent
-                    blurEnabled: true
-                    blurMax: 32
-                    blur: 0.8
-                }
+                    Image {
+                        id: blurredBgSource
+                        source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+                        visible: false 
+                    }
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: Qt.rgba(0, 0, 0, 0.4) 
+                    MultiEffect {
+                        source: blurredBgSource
+                        anchors.fill: parent
+                        blurEnabled: true
+                        blurMax: 32
+                        blur: 0.8
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Variables.backgroundColorUI
+                        opacity: 0.6
+                    }
                 }
             }
         }
