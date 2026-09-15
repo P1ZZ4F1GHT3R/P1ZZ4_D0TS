@@ -1,6 +1,6 @@
 * {
-    color: #A9AAB6;
-    background: #0F030E;
+    color: #A6B7BA;
+    background: #0E0F04;
     border: none;
     border-radius: 10px;
 }
@@ -14,8 +14,8 @@
 }
 
 .index {
-    color: #7976B0;
-    background: #0F030E;
+    color: #888135;
+    background: #0E0F04;
     border-radius: 10px;
     padding: 3px;
 }
@@ -27,5 +27,5 @@
 }
 
 .client_active {
-    border: 3px solid #3F4055;
+    border: 3px solid #3A575B;
 }

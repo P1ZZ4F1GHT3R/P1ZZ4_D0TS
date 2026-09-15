@@ -87,14 +87,14 @@ RowLayout {
                         source: blurredBgSource
                         anchors.fill: parent
                         blurEnabled: true
-                        blurMax: 32
-                        blur: 0.8
+                        blurMax: 64
+                        blur: 0.69 //heh nice
                     }
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Variables.backgroundColorUI
-                        opacity: 0.6
+                        color: Variables.borderColor
+                        opacity: 0.5
                     }
                 }
             }
@@ -148,7 +148,7 @@ RowLayout {
                             if (!player) return ""
                             return `${player.trackTitle || "Unknown"} - ${player.trackArtist || "Unknown"}`
                         }
-                        color: Variables.textColor
+                        color: Variables.uiColor
                         font.bold: true
 
                         onImplicitWidthChanged: {
@@ -185,13 +185,13 @@ RowLayout {
                 }
 
                 Rectangle {
-                    id: progressBarBackground
+                    id: uiColor
 
                     Layout.topMargin: Variables.height / 4
                     Layout.fillWidth: true
                     Layout.preferredHeight: Variables.height / 2
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                    color: Variables.progressBarBackground
+                    color: Variables.uiColor
                     radius: Variables.barRadius
 
                     Rectangle {
@@ -215,7 +215,7 @@ RowLayout {
                     spacing: Variables.spacing * 4
 
                     Rectangle {
-                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.progressBarBackground
+                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
 
                         Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor}
 
@@ -245,7 +245,7 @@ RowLayout {
                     }
 
                     Rectangle {
-                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.progressBarBackground
+                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
 
                         Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor }
 

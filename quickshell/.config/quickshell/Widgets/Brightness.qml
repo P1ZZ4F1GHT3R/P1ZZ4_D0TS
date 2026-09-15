@@ -55,7 +55,7 @@ Rectangle {
                     width: parent.width
                     height: brightnessSlider.visualPosition * parent.height
                     y: height - parent.height
-                    color: Variables.progressBarBackground
+                    color: Variables.uiColor
                     radius: Variables.radius
                 }
             }

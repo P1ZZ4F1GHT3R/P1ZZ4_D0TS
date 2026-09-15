@@ -64,7 +64,7 @@ Rectangle {
                     width: parent.width
                     height: volSlider.visualPosition * parent.height
                     y: height - parent.height
-                    color: Variables.progressBarBackground
+                    color: Variables.uiColor
                     radius: Variables.radius
                 }
             }

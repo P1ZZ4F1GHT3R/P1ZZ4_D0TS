@@ -187,7 +187,6 @@ Rectangle {
         }
 
         delegate: Item {
-
             id: delegateRoot
 
             required property string filePath
@@ -197,16 +196,25 @@ Rectangle {
             property string imagePath: root.localPath(filePath)
 
             width: 300
-            height: PathView.view.height 
+            height: PathView.view.height
 
             Rectangle {
                 id: scrollList
                 
+                anchors.centerIn: parent
                 width: parent.width
-                height: parent.height - 20 
-                y: delegateRoot.isSelected ? 0 : 20
+                height: parent.height - 30
+                y: delegateRoot.isSelected ? 0 : 30
+                scale: delegateRoot.isSelected ? 1.1 : 0.8
 
                 Behavior on y {
+                    NumberAnimation {
+                        duration: Variables.animationDurationUI
+                        easing.type: Variables.animationTypeUI
+                    }
+                }
+
+                Behavior on scale {
                     NumberAnimation {
                         duration: Variables.animationDurationUI
                         easing.type: Variables.animationTypeUI
