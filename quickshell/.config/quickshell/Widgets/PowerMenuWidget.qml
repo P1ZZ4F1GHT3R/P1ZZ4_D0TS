@@ -81,7 +81,7 @@ RowLayout {
             }
 
             Behavior on color{
-                ColorAnimation {duration: Variables.animationDurationUI}
+                ColorAnimation {duration: Variables.fadeAnimation}
 
             }
 

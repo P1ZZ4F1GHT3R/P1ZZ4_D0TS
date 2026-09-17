@@ -113,7 +113,7 @@ Rectangle {
         visible: !Variables.workspacesHidden
 
         Behavior on x {
-        NumberAnimation { duration: Variables.animationDurationUI * 2; easing.type: Variables.workspaceAnimationType }
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.workspaceAnimationType }
         }
     }
 

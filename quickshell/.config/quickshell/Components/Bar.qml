@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import QtQuick.Shapes
+import QtQuick.Effects
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import "../Modules"
@@ -27,30 +28,47 @@ Scope {
     Lockscreen{
         id: lockScreen
     }
-
+    
     PanelWindow {
-        id: topBar 
-
-        HyprlandFocusGrab {
-            active: Variables.powerMenu
-            windows: [ topBar ] 
-        }
-
+        id: exclusiveZoneReserve
         anchors {
             top: true
             left: true
             right: true
         }
+        color: "transparent"
+        implicitHeight: 0
+        exclusiveZone: Variables.focused ? 0 : Variables.exclusiveZoneTop + Variables.borderWidth * 4
+        mask: Region {}
+    }
+
+    PanelWindow {
+        id: unifiedPanel 
+
+        HyprlandFocusGrab {
+            active: Variables.powerMenu || Variables.wallpaperPicker
+            windows: [ unifiedPanel ] 
+        }
+
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
 
         color: "transparent"
-        implicitHeight: 300
-        exclusiveZone: Variables.focused ? 0 : Variables.exclusiveZoneTop + Variables.borderWidth * 4
         WlrLayershell.layer: Variables.wallpaperPicker ? WlrLayer.Overlay : WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        
+        exclusionMode: ExclusionMode.Ignore 
 
         mask: Region {
             item: left
             Region { item: center }
             Region { item: right }
+            Region { item: controlCenter }
+            Region { item: wallpaperSwitcher }
         }
 
         IpcHandler {
@@ -70,9 +88,23 @@ Scope {
             }
         }
 
+        IpcHandler {
+            target: "wallpaper"
+
+            function toggle(): void {
+                if (Variables.wallpaperPicker) {
+                    Variables.wallpaperPicker = false;
+                    closeWallpaperTimer.start();
+                }
+                else {
+                    Variables.wallpaperPreview = true;
+                    Variables.wallpaperPicker = true; 
+                }
+            }
+        }
+
         Timer {
             id: focusTimer
-
             interval: Variables.animationDurationUI / 1.7
             running: false
             repeat: false
@@ -80,107 +112,27 @@ Scope {
             onTriggered: Variables.focused = true
         }
 
-        RowLayout {
-            id: left
-
-            anchors {
-                left: parent.left
-            }
-            spacing: Variables.spacing
-
-            Workspaces {}
-            UpdateButton {}
-
+        Timer {
+            id: wallpaperTimer
+            interval: Variables.animationDurationUI
+            running: false
+            repeat: false
+            triggeredOnStart: false
+            onTriggered: Variables.wallpaperPicker = true
         }
 
-        RowLayout {
-            id: center
+        Timer {
+            id: closeWallpaperTimer
 
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            Notch {
-                notifServer: notifDaemon
-            }
+            interval: Variables.animationDurationUI
+            running: false
+            repeat: false
+            onTriggered: Variables.wallpaperPreview = false
         }
-
-        RowLayout {
-            id: right
-
-            anchors {
-                right: parent.right
-            }
-            PowerProfiles{}
-            Item { Layout.fillWidth: true }
-            System {}
-        }
-    }
-
-    PanelWindow {
-        id: sideBar
-
-        anchors {
-            right: true
-            top: true
-            bottom: true
-        }
-
-        mask: Region {
-            item: controlCenter
-        }
-
-        color: "transparent"
-        implicitWidth: 500
-        exclusiveZone: Variables.exclusiveZoneSide
-        WlrLayershell.layer: Variables.wallpaperPicker ? WlrLayer.Overlay : WlrLayer.Top
-
-        ControlCenter{
-            id: controlCenter
-            notifServer: notifDaemon
-        }
-    }
-
-    PanelWindow {
-        id: wallpaperPickerWindow
-
-        visible: Variables.wallpaperPreview
-
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        exclusionMode: ExclusionMode.Ignore
-
-        color: "transparent"
-
-        HyprlandFocusGrab {
-            active: Variables.wallpaperPicker
-            windows: [ wallpaperPickerWindow ] 
-        }
-
-        IpcHandler {
-            target: "wallpaper"
-
-            function toggle(): void {
-                if (Variables.wallpaperPicker) {
-                    Variables.wallpaperPicker = !Variables.wallpaperPicker
-                    Variables.wallpaperPreview = !Variables.wallpaperPreview
-                }
-                else {
-                    Variables.wallpaperPreview = !Variables.wallpaperPreview
-                    wallpaperTimer.start()
-                }
-            }
-        }
-
-        mask: Region { item: wallpaperSwitcher }
 
         Item {
             anchors.fill: parent
+            visible: Variables.wallpaperPreview
 
             Image {
                 id: oldWallpaper
@@ -223,27 +175,95 @@ Scope {
             }
         }
 
-        Rectangle {
+        Item {
+            id: compositeContainer
             anchors.fill: parent
-            color: "transparent"
-        }
 
-        Timer {
-            id: wallpaperTimer
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: Variables.shadowColor
+                shadowBlur: Variables.shadowBlur
+                shadowVerticalOffset: 0
+                shadowHorizontalOffset: 0
+            }
 
-            interval: Variables.animationDurationUI
-            running: false
-            repeat: false
-            triggeredOnStart: false
-            onTriggered: Variables.wallpaperPicker = true
-        }
+            Shape {
+                id: screenBorderShape
+                anchors.fill: parent
+                antialiasing: true
 
-        WallpaperPicker {
-            id: wallpaperSwitcher
+                readonly property real bw: Variables.borderWidth * 4
+                readonly property real r: Variables.radius
 
-            anchors {
-                bottom: parent.bottom
-                horizontalCenter: parent.horizontalCenter
+                ShapePath {
+                    id: framePath
+                    fillColor: Variables.uiColor
+                    strokeWidth: -1
+                    fillRule: ShapePath.OddEvenFill
+
+                    startX: 0
+                    startY: 0
+                    PathLine { x: screenBorderShape.width; y: 0 }
+                    PathLine { x: screenBorderShape.width; y: screenBorderShape.height }
+                    PathLine { x: 0; y: screenBorderShape.height }
+                    PathLine { x: 0; y: 0 }
+
+                    PathMove { x: screenBorderShape.bw + screenBorderShape.r; y: screenBorderShape.bw }
+                    PathLine { x: screenBorderShape.width - screenBorderShape.bw - screenBorderShape.r; y: screenBorderShape.bw }
+                    PathArc { x: screenBorderShape.width - screenBorderShape.bw; y: screenBorderShape.bw + screenBorderShape.r; radiusX: screenBorderShape.r; radiusY: screenBorderShape.r }
+                    PathLine { x: screenBorderShape.width - screenBorderShape.bw; y: screenBorderShape.height - screenBorderShape.bw - screenBorderShape.r }
+                    PathArc { x: screenBorderShape.width - screenBorderShape.bw - screenBorderShape.r; y: screenBorderShape.height - screenBorderShape.bw; radiusX: screenBorderShape.r; radiusY: screenBorderShape.r }
+                    PathLine { x: screenBorderShape.bw + screenBorderShape.r; y: screenBorderShape.height - screenBorderShape.bw }
+                    PathArc { x: screenBorderShape.bw; y: screenBorderShape.height - screenBorderShape.bw - screenBorderShape.r; radiusX: screenBorderShape.r; radiusY: screenBorderShape.r }
+                    PathLine { x: screenBorderShape.bw; y: screenBorderShape.bw + screenBorderShape.r }
+                    PathArc { x: screenBorderShape.bw + screenBorderShape.r; y: screenBorderShape.bw; radiusX: screenBorderShape.r; radiusY: screenBorderShape.r }
+                }
+            }
+
+            RowLayout {
+                id: left
+                anchors { left: parent.left; top: parent.top }
+                spacing: Variables.spacing
+
+                Workspaces {}
+                UpdateButton {}
+            }
+
+            RowLayout {
+                id: center
+                anchors { horizontalCenter: parent.horizontalCenter; top: parent.top }
+
+                Notch {
+                    notifServer: notifDaemon
+                }
+            }
+
+            RowLayout {
+                id: right
+                anchors { right: parent.right; top: parent.top }
+
+                PowerProfiles{}
+                Item { Layout.fillWidth: true }
+                System {}
+            }
+
+            ControlCenter {
+                id: controlCenter
+                notifServer: notifDaemon
+                anchors {
+                    right: parent.right
+                }
+                implicitWidth: 500
+            }
+
+            WallpaperPicker {
+                id: wallpaperSwitcher
+                visible: Variables.wallpaperPreview
+                anchors {
+                    bottom: parent.bottom
+                    horizontalCenter: parent.horizontalCenter
+                }
             }
         }
     }
@@ -262,7 +282,6 @@ Scope {
             right: true
         }
 
-
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
@@ -275,6 +294,5 @@ Scope {
                 left: parent.left
             }
         }
-
     }
 }

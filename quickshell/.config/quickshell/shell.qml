@@ -8,8 +8,8 @@ import "./Services"
 
 Scope {
 
-    ScreenBorder{}
     Bar{}
     IdleMonitor{}
+    
 }
 

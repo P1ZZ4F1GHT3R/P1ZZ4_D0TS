@@ -33,27 +33,27 @@ Item {
         property color color14: "#E1CCEB"
         property color color15: "#7C7F88"
 
-        Behavior on background { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on foreground { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on cursor     { ColorAnimation { duration: Variables.animationDurationUI } }
+        Behavior on background { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on foreground { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on cursor     { ColorAnimation { duration: Variables.fadeAnimation } }
 
-        Behavior on color0  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color1  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color2  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color3  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color4  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color5  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color6  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color7  { ColorAnimation { duration: Variables.animationDurationUI } }
+        Behavior on color0  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color1  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color2  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color3  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color4  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color5  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color6  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color7  { ColorAnimation { duration: Variables.fadeAnimation } }
 
-        Behavior on color8  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color9  { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color10 { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color11 { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color12 { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color13 { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color14 { ColorAnimation { duration: Variables.animationDurationUI } }
-        Behavior on color15 { ColorAnimation { duration: Variables.animationDurationUI } }
+        Behavior on color8  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color9  { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color10 { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color11 { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color12 { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color13 { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color14 { ColorAnimation { duration: Variables.fadeAnimation } }
+        Behavior on color15 { ColorAnimation { duration: Variables.fadeAnimation } }
     }
 
     property alias background: themeSettings.background

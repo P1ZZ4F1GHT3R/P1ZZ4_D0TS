@@ -155,7 +155,7 @@ Rectangle {
         
         preferredHighlightBegin: 0.5
         preferredHighlightEnd: 0.5
-        highlightMoveDuration: Variables.activeDurationUI
+        highlightMoveDuration: Variables.animationDurationUI / 1.5
 
         path: Path {
             startX: -wallpaperList.width
@@ -209,14 +209,14 @@ Rectangle {
 
                 Behavior on y {
                     NumberAnimation {
-                        duration: Variables.animationDurationUI
+                        duration: Variables.animationDurationUI / 2
                         easing.type: Variables.animationTypeUI
                     }
                 }
 
                 Behavior on scale {
                     NumberAnimation {
-                        duration: Variables.animationDurationUI
+                        duration: Variables.animationDurationUI / 2
                         easing.type: Variables.animationTypeUI
                     }
                 }
@@ -274,7 +274,7 @@ Rectangle {
     Timer {
         id: wallpaperTimer
 
-        interval: Variables.animationDurationUI
+        interval: Variables.animationDurationUI / 2
         running: false
         repeat: false
         triggeredOnStart: false
@@ -297,7 +297,7 @@ Rectangle {
     }
     Timer {
         id: reshuffleTimer
-        interval: Variables.animationDurationUI
+        interval: Variables.animationDurationUI / 2
         repeat: false
         onTriggered: {
             if (wallpaperModel.count > 0) {

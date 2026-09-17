@@ -7,6 +7,7 @@ Item {
     id: visualizer
     
     property var activePlayer: null
+    readonly property var audioDataDefault: [0, 0, 0, 0]
     property var audioData: [0, 0, 0, 0]
 
     Layout.preferredWidth: Variables.width / 16 * 7
@@ -37,6 +38,16 @@ Item {
                         (parseInt(parts[3]) || 0) / 1000.0
                     ]
                 }
+            }
+        }
+    }
+
+    Connections {
+        target: visualizer.activePlayer
+        ignoreUnknownSignals: true
+        function onIsPlayingChanged() {
+            if (!visualizer.activePlayer || !visualizer.activePlayer.isPlaying) {
+                visualizer.audioData = visualizer.audioDataDefault
             }
         }
     }

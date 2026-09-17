@@ -24,8 +24,8 @@ QtObject {
     readonly property int imgHeight: 24
     readonly property int imgWidth: imgHeight
     readonly property int imgRadius: 8
-    readonly property int animationTypeUI: Easing.InOutQuad
-    readonly property int animationDurationUI: 200
+    readonly property int animationTypeUI: Easing.OutBack
+    readonly property int animationDurationUI: 450
     readonly property int hoverTimer: 250
     readonly property int barRadius: 4
     readonly property int notifTimer: 3000
@@ -51,6 +51,7 @@ QtObject {
     readonly property color buttonColor: Colors.color9
     readonly property color lockscreenColor: Colors.color11
     readonly property color backgroundColorUI: Colors.color8
+    readonly property color shadowColor: "#000000"
     
     readonly property var oneZero: ["1", "0"]
     readonly property var fullRandom: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
@@ -58,6 +59,7 @@ QtObject {
     readonly property var mineCraft: ["ᔑ", "ʖ", "ᓵ", "↸", "ᒷ", "⎓", "⊣", "⍑", "╎", "⋮", "ꖌ", "ꖎ", "ᒲ", "リ", "𝙹", "!¡", "ᑑ", "∷", "ᓭ", "ℸ ̣", "⚍", "⍊", "∴", "̇/", "||", "⨅"]
     readonly property var matrix: ["ﾊ", "ﾐ", "ﾋ", "ｰ", "ｳ", "ｼ", "ﾅ", "ﾓ", "ﾆ", "ｻ"]
     readonly property var standard: [""]
+    readonly property var shadowBlur: 1.0
 
     property string currentProfile: "balanced"
     property bool expandedState: false

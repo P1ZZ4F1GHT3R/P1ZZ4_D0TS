@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick.Shapes
+import QtQuick.Effects
 import "../"
 import "../Widgets"
 
