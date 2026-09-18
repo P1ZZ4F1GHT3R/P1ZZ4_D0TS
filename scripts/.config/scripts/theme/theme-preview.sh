@@ -19,7 +19,7 @@ LUMINANCE=$(magick "$IMAGE" -colorspace gray -format "%[fx:mean*100]" info: | aw
 PALETTE="dark16"
 
 # If the image is bright use light mode
-if (( LUMINANCE > 55 )); then
+if (( LUMINANCE > 70 )); then
     PALETTE="light16"
 fi
 

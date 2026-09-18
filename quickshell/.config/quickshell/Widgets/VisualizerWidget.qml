@@ -42,15 +42,15 @@ Item {
         }
     }
 
-    Connections {
-        target: visualizer.activePlayer
-        ignoreUnknownSignals: true
-        function onIsPlayingChanged() {
-            if (!visualizer.activePlayer || !visualizer.activePlayer.isPlaying) {
-                visualizer.audioData = visualizer.audioDataDefault
-            }
-        }
-    }
+    // Connections {
+    //     target: visualizer.activePlayer
+    //     ignoreUnknownSignals: true
+    //     function onIsPlayingChanged() {
+    //         if (!visualizer.activePlayer || !visualizer.activePlayer.isPlaying) {
+    //             visualizer.audioData = visualizer.audioDataDefault
+    //         }
+    //     }
+    // }
     
 
     Row {

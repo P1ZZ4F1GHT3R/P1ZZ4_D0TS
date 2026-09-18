@@ -153,7 +153,7 @@ manage_symlinks() {
         [[ -e "$target" ]] || continue
         
         ensure_directory "$(dirname "$link")"
-        ln -sf "$target" "$link" && log_info "Created symlink: ${link##*/}"
+        ln -sfn "$target" "$link" && log_info "Created symlink: ${link##*/}"
     done
 }
 

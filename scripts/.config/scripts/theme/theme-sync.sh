@@ -72,7 +72,7 @@ set_wallpaper() {
     local -r wallpaper="$1"
 
     log_info "Setting wallpaper with awww: $wallpaper"
-    if ! awww img -t fade --transition-duration 9 "$wallpaper" >/dev/null 2>&1; then
+    if ! awww img -t center --transition-duration 1 --transition-fps 180 "$wallpaper" >/dev/null 2>&1; then
         die "Failed to set wallpaper with awww: $wallpaper"
     fi
 }
@@ -190,7 +190,7 @@ execute_wallust_generation() {
     local palette="dark16"
     
     # If the image is mostly bright (adjust the 60 threshold to your liking), go light!
-    if (( luminance > 60 )); then
+    if (( luminance > 70 )); then
         mode="light"
         palette="light16"
     fi

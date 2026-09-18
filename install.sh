@@ -198,7 +198,7 @@ PACMAN_PACKAGES=(
     btop ghostty swww vscodium
     sddm neovim python python-pip
     zen-browser quickshell
-    rsync imagemagick
+    rsync imagemagick hyprland hyprpm
 )
 
 step "The following packages will be installed:"
@@ -225,7 +225,7 @@ AUR_PACKAGES=(
     vicinae wallust sunsetr
     cmatrix-git ttf-material-symbols-variable-git
     waybound skwd-wall skwd-daemon-bin pipes-rs
-    plymouth python-edev hyprland-git papirus-icon-theme
+    plymouth python-edev papirus-icon-theme
     quicksnip-git
 )
 

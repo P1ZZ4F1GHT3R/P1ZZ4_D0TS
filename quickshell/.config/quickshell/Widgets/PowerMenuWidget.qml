@@ -70,8 +70,8 @@ RowLayout {
             Layout.preferredWidth: iconText.implicitWidth + Variables.height / 4 * 5
             Layout.preferredHeight: iconText.implicitHeight + Variables.height / 8 * 5
             radius: Variables.radius
-            color: powermenu.selectedIndex === index ? Variables.backgroundColorUI : "transparent"
-            border.color: powermenu.selectedIndex === index ? Variables.borderColor : "transparent"
+            color: powermenu.selectedIndex === index ? Variables.borderColor : "transparent"
+            border.color: powermenu.selectedIndex === index ? Variables.iconColor : "transparent"
             border.width: Variables.borderWidth
 
             opacity: Variables.powerMenu ? 1.0 : 0.0
@@ -82,7 +82,10 @@ RowLayout {
 
             Behavior on color{
                 ColorAnimation {duration: Variables.fadeAnimation}
+            }
 
+            Behavior on border.color{
+                ColorAnimation {duration: Variables.fadeAnimation}
             }
 
             Text {

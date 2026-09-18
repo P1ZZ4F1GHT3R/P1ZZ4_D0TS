@@ -16,6 +16,8 @@ Rectangle {
     readonly property string syncScript: homePath + "/.config/scripts/theme/theme-sync.sh"
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
 
+    property bool isApplying: false
+
     implicitWidth: 800
     implicitHeight: Variables.wallpaperPicker ? 250 : 0
     color: Variables.uiColor
@@ -179,9 +181,11 @@ Rectangle {
                 previewProcess.running = false;
                 applyProcess.command = ["/bin/bash", root.syncScript, currentItem.imagePath];
                 applyProcess.running = true;
-                Variables.wallpaperPicker = false;
-                wallpaperTimer.start();
                 
+                root.isApplying = true;
+                Variables.wallpaperPicker = false;
+                
+                wallpaperTimer.start();
                 event.accepted = true;
             }
         }
@@ -253,17 +257,21 @@ Rectangle {
         target: Variables
 
         function onWallpaperPickerChanged() {
-
             if (!Variables.wallpaperPicker) {
-                previewProcess.running = false;
-                previewProcess.command = [
-                    "/bin/bash", 
-                    "-c", 
-                    root.previewScript + " \"$(cat " + root.txtDir + ")\""
-                ];
-                previewProcess.running = true;
+                
+                if (root.isApplying) {
+                    root.isApplying = false;
+                } else {
+                    previewProcess.running = false;
+                    previewProcess.command = [
+                        "/bin/bash", 
+                        "-c", 
+                        root.previewScript + " \"$(cat " + root.txtDir + ")\""
+                    ];
+                    previewProcess.running = true;
+                }
+                
                 reshuffleTimer.start();
-
             } else {
                 reshuffleTimer.stop();
                 initialPreviewTimer.restart();
