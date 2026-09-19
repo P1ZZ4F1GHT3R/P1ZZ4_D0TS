@@ -34,6 +34,5 @@ export PATH=$PATH:~/.spicetify
 
 # Dynamic System Paths
 export WALLPAPER_DIR="/home/p1zz4f1ght3r/Pictures/Wallpapers"
-export SCRIPT_DIR="/home/p1zz4f1ght3r/.config/hypr/scripts"
 PATH="$HOME/.local/bin:${PATH}"
 export PATH
