@@ -84,7 +84,7 @@ Rectangle {
         verticalAlignment: Text.AlignVCenter
         text: powerProfiles.profileIcons[powerProfiles.currentProfile] || ""
         color: Variables.iconColor
-        font.pixelSize: Variables.fontSize
+        font.pixelSize: Variables.fontSize * 0.9
     }
 
     MouseArea {
