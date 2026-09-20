@@ -251,6 +251,7 @@ PACMAN_PACKAGES=(
     bash zsh thunar fastfetch yazi btop ghostty awww vscodium
     sddm python python-pip zen-browser quickshell qt6ct noto-fonts
     imagemagick hyprpm nwg-displays nwg-look brightnessctl power-profiles-daemon
+    ttf-dejavu-nerd
 )
 step "The following official packages will be installed:"
 printf '    %s\n' "${PACMAN_PACKAGES[@]}"
