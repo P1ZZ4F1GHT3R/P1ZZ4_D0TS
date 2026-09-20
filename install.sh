@@ -187,8 +187,8 @@ echo
 info "This script will:"
 echo -e "  ${DIM}  1. Update the system with pacman, yay, and hyprpm where available${RESET}"
 echo -e "  ${DIM}  2. Install base tools, official packages, and AUR packages${RESET}"
-echo -e "  ${DIM}  3. Install Hyprland plugins, Colloid Light/Dark, and Vimix cursors${RESET}"
-echo -e "  ${DIM}  4. Install the Quickshell PAM file and optionally enable SDDM autologin${RESET}"
+echo -e "  ${DIM}  3. Install Hyprland plugins, Colloid Light/Dark, Vimix, and VSCodium theming${RESET}"
+echo -e "  ${DIM}  4. Set zsh as the default shell and install PAM/SDDM configuration${RESET}"
 echo -e "  ${DIM}  5. Back up ~/.config, patch local usernames, and stow the dotfiles${RESET}"
 
 if ! confirm "Ready to begin?" y; then
@@ -248,19 +248,47 @@ fi
 
 header "Official packages (pacman)"
 PACMAN_PACKAGES=(
-    bash zsh thunar fastfetch yazi btop ghostty swww vscodium
-    sddm neovim python python-pip zen-browser quickshell
-    imagemagick hyprland hyprpm
+    bash zsh thunar fastfetch yazi btop ghostty awww vscodium
+    sddm python python-pip zen-browser quickshell
+    imagemagick hyprpm
 )
 step "The following official packages will be installed:"
 printf '    %s\n' "${PACMAN_PACKAGES[@]}"
 install_pacman_packages "${PACMAN_PACKAGES[@]}"
 
+header "VSCodium theme"
+if command -v codium >/dev/null 2>&1; then
+    run_step "Installing the Wallust theme extension for VSCodium" \
+        codium --install-extension saatvik333.wallust-theme || true
+else
+    error "codium was not found; could not install the Wallust VSCodium extension."
+    record_step_failure "Installing the Wallust VSCodium extension" 1
+fi
+
+header "Default shell"
+ZSH_PATH="$(command -v zsh || true)"
+if [[ -z "$ZSH_PATH" ]]; then
+    error "zsh was not found; the default shell was not changed."
+    record_step_failure "Setting zsh as the default shell" 1
+elif ! command -v chsh >/dev/null 2>&1; then
+    error "chsh was not found; the default shell was not changed."
+    record_step_failure "Setting zsh as the default shell" 1
+else
+    CURRENT_LOGIN_SHELL="$(getent passwd "$INSTALL_USER" 2>/dev/null | cut -d: -f7)"
+    if [[ "$CURRENT_LOGIN_SHELL" == "$ZSH_PATH" ]]; then
+        success "zsh is already the default shell for $INSTALL_USER"
+    elif chsh -s "$ZSH_PATH" "$INSTALL_USER"; then
+        success "Set zsh as the default shell for $INSTALL_USER"
+    else
+        error "Could not set zsh as the default shell for $INSTALL_USER."
+        record_step_failure "Setting zsh as the default shell" 1
+    fi
+fi
+
 header "AUR packages (yay)"
 AUR_PACKAGES=(
-    vicinae wallust sunsetr cmatrix-git ttf-material-symbols-variable-git
-    waybound skwd-wall skwd-daemon-bin pipes-rs plymouth python-edev
-    papirus-icon-theme quicksnip-git
+    vicinae wallust sunsetr ttf-material-symbols-variable-git
+    waybound pipes-rs papirus-icon-theme quicksnip-git
 )
 if command -v yay >/dev/null 2>&1; then
     step "The following AUR packages will be installed:"
@@ -312,12 +340,12 @@ if confirm "Install the Vimix hyprcursor theme?" y; then
     CURSOR_TMP="$(mktemp -d -t p1zz4-dots-vimix.XXXXXX)"
     TEMP_DIRS+=("$CURSOR_TMP")
     CURSOR_ARCHIVE="$CURSOR_TMP/vimix-hyprcursors-v0.1.tar.gz"
+    CURSOR_SOURCE="$CURSOR_TMP/Vimix Hyprcursors - Dark"
     CURSOR_USER_DIR="$HOME/.local/share/icons/Vimix"
     CURSOR_SYSTEM_DIR="/usr/share/icons/Vimix"
     if curl -fL "$CURSOR_URL" -o "$CURSOR_ARCHIVE" &&
         tar -xzf "$CURSOR_ARCHIVE" -C "$CURSOR_TMP"; then
-        CURSOR_SOURCE="$(find "$CURSOR_TMP" -mindepth 1 -maxdepth 1 -type d -print -quit)"
-        if [[ -n "${CURSOR_SOURCE:-}" ]] &&
+        if [[ -d "$CURSOR_SOURCE" ]] &&
             mkdir -p "$CURSOR_USER_DIR" &&
             cp -a "$CURSOR_SOURCE"/. "$CURSOR_USER_DIR/" &&
             sudo install -d "$CURSOR_SYSTEM_DIR" &&
