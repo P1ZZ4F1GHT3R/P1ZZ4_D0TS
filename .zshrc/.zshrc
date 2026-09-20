@@ -15,11 +15,7 @@ source /usr/share/cachyos-zsh-config/cachyos-config.zsh
 # Created by `pipx` on 2025-12-16 18:49:59
 export PATH="$PATH:/home/p1zz4f1ght3r/.local/bin"
 
-## [Completion]
-## Completion scripts setup. Remove the following line to uninstall
-[[ -f /home/p1zz4f1ght3r/.dart-cli-completion/zsh-config.zsh ]] && . /home/p1zz4f1ght3r/.dart-cli-completion/zsh-config.zsh || true
-## [/Completion]
-
+plugins=(git zsh-autosuggestions)
 
 fpath+=~/.zfunc; autoload -Uz compinit; compinit
 

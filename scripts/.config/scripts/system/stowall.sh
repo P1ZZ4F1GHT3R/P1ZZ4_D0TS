@@ -13,7 +13,6 @@ PACKAGES=(
     "code-flags.conf"
     "fastfetch"
     "ghostty"
-    "nvim"
     "quickshell"
     "scripts"
     "shell.env"
@@ -24,6 +23,7 @@ PACKAGES=(
     ".zshenv"
     "waybound"
     "cava"
+    "qt6ct"
 )
 
 # These packages may have real files at target (themer overwrites symlinks).

@@ -249,8 +249,8 @@ fi
 header "Official packages (pacman)"
 PACMAN_PACKAGES=(
     bash zsh thunar fastfetch yazi btop ghostty awww vscodium
-    sddm python python-pip zen-browser quickshell
-    imagemagick hyprpm
+    sddm python python-pip zen-browser quickshell qt6ct noto-fonts
+    imagemagick hyprpm nwg-displays nwg-look brightnessctl powerprofilesctl
 )
 step "The following official packages will be installed:"
 printf '    %s\n' "${PACMAN_PACKAGES[@]}"
@@ -285,6 +285,20 @@ else
     fi
 fi
 
+header "Zsh autosuggestions"
+ZSH_CUSTOM_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+ZSH_AUTOSUGGESTIONS_DIR="$ZSH_CUSTOM_DIR/plugins/zsh-autosuggestions"
+if [[ -d "$ZSH_AUTOSUGGESTIONS_DIR" ]]; then
+    success "zsh-autosuggestions is already installed"
+elif mkdir -p "$(dirname "$ZSH_AUTOSUGGESTIONS_DIR")" &&
+    sudo git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_AUTOSUGGESTIONS_DIR" &&
+    sudo chown -R "$INSTALL_USER:$(id -gn "$INSTALL_USER")" "$ZSH_AUTOSUGGESTIONS_DIR"; then
+    success "Installed zsh-autosuggestions"
+else
+    error "Could not install zsh-autosuggestions."
+    record_step_failure "Installing zsh-autosuggestions" 1
+fi
+
 header "AUR packages (yay)"
 AUR_PACKAGES=(
     vicinae wallust sunsetr ttf-material-symbols-variable-git
@@ -312,6 +326,7 @@ else
 fi
 
 header "GTK themes — regular Colloid Light and Dark"
+COLLOID_INSTALLED=0
 if confirm "Build and install regular Colloid Light and Dark themes?" y; then
     COLLOID_TMP="$(mktemp -d -t p1zz4-dots-colloid.XXXXXX)"
     TEMP_DIRS+=("$COLLOID_TMP")
@@ -322,6 +337,7 @@ if confirm "Build and install regular Colloid Light and Dark themes?" y; then
             ./install.sh -t default -c dark
         ); then
             success "Regular Colloid Light and Dark themes installed"
+            COLLOID_INSTALLED=1
         else
             error "Colloid Light/Dark theme installation failed."
             record_step_failure "Installing Colloid Light/Dark themes" 1
@@ -332,6 +348,21 @@ if confirm "Build and install regular Colloid Light and Dark themes?" y; then
     fi
 else
     warn "Skipping Colloid themes."
+fi
+
+header "Default GTK theme"
+set_default_colloid_theme() {
+    gsettings set org.gnome.desktop.interface gtk-theme "Colloid-Dark" &&
+        gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+}
+
+if (( COLLOID_INSTALLED == 1 )) && command -v gsettings >/dev/null 2>&1; then
+    run_step "Setting Colloid-Dark as the default GTK theme" set_default_colloid_theme || true
+elif (( COLLOID_INSTALLED == 1 )); then
+    warn "gsettings was not found; Colloid-Dark could not be selected automatically."
+    record_step_failure "Setting Colloid-Dark as the default GTK theme" 1
+else
+    info "Colloid was skipped, so the default GTK theme was not changed."
 fi
 
 header "Hyprcursor — Vimix"
