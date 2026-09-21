@@ -47,6 +47,31 @@ Rectangle {
         previewTimer.restart();
     }
 
+    function shuffleWallpapers() {
+        if (folderModel.status !== FolderListModel.Ready) return;
+
+        var tempArray = [];
+        for (var i = 0; i < folderModel.count; i++) {
+            tempArray.push({ "filePath": folderModel.get(i, "fileUrl").toString() });
+        }
+
+        for (var j = tempArray.length - 1; j > 0; j--) {
+            var k = Math.floor(Math.random() * (j + 1));
+            var temp = tempArray[j];
+            tempArray[j] = tempArray[k];
+            tempArray[k] = temp;
+        }
+
+        shuffledModel.clear();
+        for (var n = 0; n < tempArray.length; n++) {
+            shuffledModel.append(tempArray[n]);
+        }
+
+        if (shuffledModel.count > 0) {
+            wallpaperList.currentIndex = Math.floor(Math.random() * shuffledModel.count);
+        }
+    }
+
     Process {
         id: previewProcess
     }
@@ -56,21 +81,23 @@ Rectangle {
     }
 
     FolderListModel {
-
-        id: wallpaperModel
+        id: folderModel
         folder: "file://" + root.wallpaperDirectory
         nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp"]
         showDirs: false
 
-        onCountChanged: {
-            if (count > 0 && wallpaperList.currentIndex === -1) {
-                wallpaperList.currentIndex = Math.floor(Math.random() * count);
+        onStatusChanged: {
+            if (status === FolderListModel.Ready) {
+                root.shuffleWallpapers();
             }
         }
     }
 
-    Process {
+    ListModel {
+        id: shuffledModel
+    }
 
+    Process {
         id: imagePath
         command: ["cat", txtDir]
         running: true 
@@ -83,13 +110,9 @@ Rectangle {
     }
 
     Shape {
-
         id: bottomLeftConcave
-        
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
-        
         visible: cornerSize > 0
-
         width: cornerSize
         height: cornerSize
         anchors.bottom: parent.bottom
@@ -113,13 +136,9 @@ Rectangle {
     }
 
     Shape {
-
         id: bottomRightConcave
-
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
-        
         visible: cornerSize > 0
-        
         width: cornerSize
         height: cornerSize
         anchors.bottom: parent.bottom
@@ -143,7 +162,6 @@ Rectangle {
     }
 
     PathView {
-
         id: wallpaperList
 
         anchors.fill: parent
@@ -151,7 +169,7 @@ Rectangle {
         focus: Variables.wallpaperPicker
         clip: true
         interactive: true
-        model: wallpaperModel
+        model: shuffledModel
         currentIndex: -1
         pathItemCount: 7 
         
@@ -160,14 +178,15 @@ Rectangle {
         highlightMoveDuration: Variables.animationDurationUI / 1.5
 
         path: Path {
-            startX: -wallpaperList.width
+            startX: -wallpaperList.width / 2
             startY: wallpaperList.height / 2
 
             PathLine {
-                x: wallpaperList.width * 2
+                x: wallpaperList.width * 1.5
                 y: wallpaperList.height / 2
             }
         }
+
         Keys.onLeftPressed: decrementCurrentIndex()
         Keys.onRightPressed: incrementCurrentIndex()
 
@@ -196,44 +215,75 @@ Rectangle {
             required property string filePath
             required property int index
 
-            readonly property bool isSelected: PathView.isCurrentItem
             property string imagePath: root.localPath(filePath)
+
+            readonly property int totalItems: PathView.view ? PathView.view.count : 1
+            
+            readonly property int signedDistance: {
+                if (!PathView.view) return 0;
+                var diff = index - PathView.view.currentIndex;
+                var half = Math.floor(totalItems / 2);
+                if (diff > half) diff -= totalItems;
+                else if (diff < -half) diff += totalItems;
+                return diff;
+            }
+            
+            readonly property int distance: Math.abs(signedDistance)
+
+            readonly property real itemOffsetX: {
+                if (signedDistance <= -2) return 70;  
+                if (signedDistance >= 2) return -70;  
+                return 0;                             
+            }
+
+            readonly property real itemScale: {
+                if (distance === 0) return 1.1;
+                if (distance === 1) return 0.80;    
+                return 0.70;                           
+            }
+
+            readonly property real itemOpacity: {
+                if (distance === 0) return 1.0;     
+                if (distance === 1) return 0.60;     
+                return 0.20;                          
+            }
 
             width: 300
             height: PathView.view.height
+            z: distance === 0 ? 20 : (distance === 1 ? 10 : 0)
 
             Rectangle {
                 id: scrollList
                 
                 anchors.centerIn: parent
+                anchors.horizontalCenterOffset: delegateRoot.itemOffsetX
+                
                 width: parent.width
                 height: parent.height - 30
-                y: delegateRoot.isSelected ? 0 : 30
-                scale: delegateRoot.isSelected ? 1.1 : 0.8
+                
+                scale: delegateRoot.itemScale
 
-                Behavior on y {
+                Behavior on anchors.horizontalCenterOffset {
                     NumberAnimation {
                         duration: Variables.animationDurationUI / 2
-                        easing.type: Variables.animationTypeUI
+                        easing.type: easing.InOutQuad
                     }
                 }
-
                 Behavior on scale {
                     NumberAnimation {
                         duration: Variables.animationDurationUI / 2
-                        easing.type: Variables.animationTypeUI
+                        easing.type: easing.InOutQuad
                     }
                 }
 
-                color: delegateRoot.isSelected ? Variables.borderColor : "transparent"
-                border.color: Variables.borderColor
-                border.width: delegateRoot.isSelected ? Variables.borderWidth : 0
+                color: "transparent"
+                border.width: 0 
                 radius: Variables.radius
                 clip: true
 
                 ClippingWrapperRectangle {
                     anchors.fill: parent
-                    anchors.margins: delegateRoot.isSelected ? Math.max(Variables.borderWidth) : 3
+                    anchors.margins: 3
                     radius: Variables.radius
                     color: Variables.uiColor
 
@@ -242,10 +292,14 @@ Rectangle {
                         source: filePath
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        opacity: delegateRoot.isSelected ? 1.0 : 0.4
+                        
+                        opacity: delegateRoot.itemOpacity
 
                         Behavior on opacity {
-                            NumberAnimation { duration: Variables.fadeAnimation }
+                            NumberAnimation {
+                                duration: Variables.animationDurationUI / 1.5
+                                easing.type: Variables.animationTypeUI
+                            }
                         }
                     }
                 }
@@ -253,12 +307,28 @@ Rectangle {
         }
     }
 
+    Rectangle {
+        id: selectionBorder
+        
+        anchors.centerIn: wallpaperList
+        width: 300
+        height: wallpaperList.height - 30
+        
+        scale: 1.1 
+        
+        color: "transparent"
+        border.color: Variables.borderColor
+        border.width: Variables.borderWidth * 2
+        radius: Variables.radius
+        z: 30
+        visible: Variables.wallpaperPicker && wallpaperList.count > 0
+    }
+
     Connections {
         target: Variables
 
         function onWallpaperPickerChanged() {
             if (!Variables.wallpaperPicker) {
-                
                 if (root.isApplying) {
                     root.isApplying = false;
                 } else {
@@ -270,7 +340,6 @@ Rectangle {
                     ];
                     previewProcess.running = true;
                 }
-                
                 reshuffleTimer.start();
             } else {
                 reshuffleTimer.stop();
@@ -281,7 +350,6 @@ Rectangle {
 
     Timer {
         id: wallpaperTimer
-
         interval: Variables.animationDurationUI / 2
         running: false
         repeat: false
@@ -303,14 +371,13 @@ Rectangle {
             previewProcess.running = true;
         }
     }
+
     Timer {
         id: reshuffleTimer
         interval: Variables.animationDurationUI / 2
         repeat: false
         onTriggered: {
-            if (wallpaperModel.count > 0) {
-                wallpaperList.currentIndex = Math.floor(Math.random() * wallpaperModel.count);
-            }
+            root.shuffleWallpapers(); 
         }
     }
 

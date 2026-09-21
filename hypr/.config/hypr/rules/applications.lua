@@ -36,6 +36,15 @@ hl.workspace_rule({
    ["on_created_empty"] = "discord",
 })
 
+local topGap = math.floor(gapsOut + (gapsOut / 3))
+
 hl.workspace_rule({ 
-   workspace = "w[tv1-10]", gaps_out = gapsOut, gaps_in = gapsIn 
+   workspace = "w[tv1-10]", 
+   gaps_out = {
+       top = topGap,
+       right = gapsOut,
+       bottom = gapsOut,
+       left = gapsOut,
+   },
+   gaps_in = gapsIn 
 })

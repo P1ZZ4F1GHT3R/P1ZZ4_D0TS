@@ -42,7 +42,7 @@ Button {
     Timer {
         id: focusTimer
 
-        interval: Variables.animationDurationUI / 1.7
+        interval: Variables.animationDurationUI
         running: false
         repeat: false
         triggeredOnStart: false

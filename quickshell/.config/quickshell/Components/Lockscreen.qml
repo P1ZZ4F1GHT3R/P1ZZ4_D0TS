@@ -18,10 +18,10 @@ Scope {
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
     property bool wait: false
 
-    Component.onCompleted: {
-        imagePath.running = true;
-        lockAnimation.start();
-    }
+    // Component.onCompleted: {
+    //     imagePath.running = true;
+    //     lockAnimation.start();
+    // }
 
     Process {
         id: imagePath
