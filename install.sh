@@ -188,8 +188,9 @@ info "This script will:"
 echo -e "  ${DIM}  1. Update the system with pacman, yay, and hyprpm where available${RESET}"
 echo -e "  ${DIM}  2. Install base tools, official packages, and AUR packages${RESET}"
 echo -e "  ${DIM}  3. Install Hyprland plugins, Colloid Light/Dark, Vimix, and VSCodium theming${RESET}"
-echo -e "  ${DIM}  4. Set zsh as the default shell and install PAM/SDDM configuration${RESET}"
-echo -e "  ${DIM}  5. Back up ~/.config, patch local usernames, and stow the dotfiles${RESET}"
+echo -e "  ${DIM}  4. Set up Oh My Zsh, zsh autosuggestions, and the default shell${RESET}"
+echo -e "  ${DIM}  5. Create standard user directories and install PAM/SDDM configuration${RESET}"
+echo -e "  ${DIM}  6. Back up ~/.config, patch local usernames, and stow the dotfiles${RESET}"
 
 if ! confirm "Ready to begin?" y; then
     info "Aborted. Nothing was changed."
@@ -211,6 +212,30 @@ if confirm "Update the system now? (recommended)" y; then
     fi
 else
     warn "Skipping system update. Packages may be stale."
+fi
+
+header "Standard user directories"
+STANDARD_DIRECTORIES=(
+    "$HOME/Desktop"
+    "$HOME/Documents"
+    "$HOME/Downloads"
+    "$HOME/Music"
+    "$HOME/Pictures"
+    "$HOME/Pictures/Wallpapers"
+    "$HOME/Pictures/Screenshots"
+    "$HOME/Videos"
+    "$HOME/Images"
+    "$HOME/Images/Wallpapers"
+    "$HOME/Images/Screenshots"
+    "$HOME/.cache"
+    "$HOME/.cache/wallpaper_picker/thumbs"
+)
+
+if mkdir -p "${STANDARD_DIRECTORIES[@]}"; then
+    success "Created standard user directories"
+else
+    error "Could not create one or more standard user directories."
+    record_step_failure "Creating standard user directories" 1
 fi
 
 header "Base tools"
@@ -251,7 +276,7 @@ PACMAN_PACKAGES=(
     bash zsh thunar fastfetch yazi btop ghostty awww vscodium
     sddm python python-pip zen-browser quickshell qt6ct noto-fonts
     imagemagick hyprpm nwg-displays nwg-look brightnessctl power-profiles-daemon
-    ttf-dejavu-nerd
+    ttf-dejavu-nerd fzf pkgfile
 )
 step "The following official packages will be installed:"
 printf '    %s\n' "${PACMAN_PACKAGES[@]}"
@@ -283,6 +308,20 @@ else
     else
         error "Could not set zsh as the default shell for $INSTALL_USER."
         record_step_failure "Setting zsh as the default shell" 1
+    fi
+fi
+
+header "Oh My Zsh"
+if [[ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]]; then
+    success "Oh My Zsh is already installed"
+else
+    OH_MY_ZSH_INSTALLER="$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    if [[ -n "$OH_MY_ZSH_INSTALLER" ]] &&
+        RUNZSH=no CHSH=no sh -c "$OH_MY_ZSH_INSTALLER"; then
+        success "Installed Oh My Zsh"
+    else
+        error "Could not install Oh My Zsh."
+        record_step_failure "Installing Oh My Zsh" 1
     fi
 fi
 
@@ -512,6 +551,15 @@ else
     error "Stowing failed."
     record_step_failure "Stowing dotfiles" 1
     info "Restore with: ${DIM}rm -rf ~/.config && mv $CONFIG_BACKUP ~/.config${RESET}"
+fi
+
+# stowall-install.sh synchronizes ~/.config and may remove untracked runtime
+# directories, so create the wallpaper cache directory after stowing.
+if mkdir -p "$HOME/.config/wallpaper"; then
+    success "Created ~/.config/wallpaper"
+else
+    error "Could not create ~/.config/wallpaper."
+    record_step_failure "Creating ~/.config/wallpaper" 1
 fi
 
 show_failure_summary

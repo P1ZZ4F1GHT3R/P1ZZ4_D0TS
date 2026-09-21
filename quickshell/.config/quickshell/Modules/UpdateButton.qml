@@ -33,7 +33,19 @@ Rectangle {
     Process {
         id: updateProc
 
-        command: ["ghostty", "-e", "sh", "-c", "sudo pacman -Syu --noconfirm && notify-send --app-name=$USER --icon=pamac-updater 'System is up to date' 'All packages have been successfully checked and updated.'; read -p 'Press enter to exit...'"]
+        command: [
+            "ghostty", "-e", "bash", "-lc",
+            "failures=0; " +
+            "sudo pacman -Syu --noconfirm || failures=1; " +
+            "if command -v hyprpm >/dev/null 2>&1; then hyprpm update || failures=1; else failures=1; fi; " +
+            "if command -v zsh >/dev/null 2>&1; then zsh -ic 'source \"${ZSH:-$HOME/.oh-my-zsh}/oh-my-zsh.sh\" && omz update' || failures=1; else failures=1; fi; " +
+            "if (( failures == 0 )); then " +
+                "notify-send --app-name=system-update --icon=pamac-updater 'System is up to date' 'Pacman, Hyprpm, and Oh My Zsh updates completed.'; " +
+            "else " +
+                "notify-send --urgency=critical --app-name=system-update --icon=dialog-error 'System update completed with errors' 'One or more update steps failed. Check the terminal.'; " +
+            "fi; " +
+            "read -r -p 'Press enter to exit...'"
+        ]
     }
 
         MouseArea {

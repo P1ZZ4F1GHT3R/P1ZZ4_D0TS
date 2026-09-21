@@ -95,6 +95,7 @@ QtObject {
         property alias idleMonitor: root.idleMonitor
         property alias disablePopups: root.disablePopups
         property alias activateLinux: root.activateLinux
+        property alias currentProfile: root.currentProfile
     }
     
 }
