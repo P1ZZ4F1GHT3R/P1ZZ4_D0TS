@@ -42,30 +42,70 @@ Item {
         }
     }
 
-    // Connections {
-    //     target: visualizer.activePlayer
-    //     ignoreUnknownSignals: true
-    //     function onIsPlayingChanged() {
-    //         if (!visualizer.activePlayer || !visualizer.activePlayer.isPlaying) {
-    //             visualizer.audioData = visualizer.audioDataDefault
-    //         }
-    //     }
-    // }
+    Connections {
+        target: visualizer.activePlayer
+        ignoreUnknownSignals: true
+        function onIsPlayingChanged() {
+            if (!visualizer.activePlayer || !visualizer.activePlayer.isPlaying) {
+                Qt.callLater(function() {
+                    visualizer.audioData = visualizer.audioDataDefault
+                })
+            }
+        }
+    }
     
 
-    Row {
-        spacing: Variables.spacing / 6
-        anchors.bottom: parent.bottom
-        height: parent.height
-
-        Repeater {
-            model: 4
-            Rectangle {
-                width: Variables.width / 16
-                height: Math.max(2, (visualizer.audioData[index] || 0) * parent.height)
-                color: Variables.iconColor
-                radius: Variables.barRadius
-                anchors.bottom: parent.bottom
+    Column {
+        anchors.centerIn: parent
+        spacing: -2
+        
+        Row {
+            spacing: Variables.spacing / 6
+            height: visualizer.height
+            
+            Repeater {
+                model: 4
+                Rectangle {
+                    width: Variables.width / 16
+                    height: Math.max(2, (visualizer.audioData[index] || 0) * parent.height)
+                    color: Variables.iconColor
+                    radius: Variables.barRadius
+                    
+                    anchors.bottom: parent.bottom
+                    
+                    Behavior on height {
+                        NumberAnimation { 
+                            duration: visualizer.activePlayer.isPlaying ? 0 : Variables.animationDurationUI
+                            easing.type: Easing.InOutCubic
+                        }
+                    }
+                }
+            }
+        }
+        
+        Row {
+            spacing: Variables.spacing / 6
+            height: visualizer.height 
+            
+            //opacity: 0.5
+            
+            Repeater {
+                model: 4
+                Rectangle {
+                    width: Variables.width / 16
+                    height: Math.max(2, (visualizer.audioData[index] || 0) * parent.height)
+                    color: Variables.buttonColor
+                    radius: Variables.barRadius
+                    
+                    anchors.top: parent.top 
+                    
+                    Behavior on height {
+                        NumberAnimation { 
+                            duration: visualizer.activePlayer.isPlaying ? 0 : Variables.animationDurationUI
+                            easing.type: Easing.InOutCubic
+                        }
+                    }
+                }
             }
         }
     }

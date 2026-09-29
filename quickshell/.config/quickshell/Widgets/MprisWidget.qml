@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import QtQuick.Effects
+import Quickshell.Io
 import "../"   
 import "../Modules"   
             
@@ -184,28 +185,181 @@ RowLayout {
                     }
                 }
 
-                Rectangle {
-                    id: uiColor
+                Item {
+                    id: visualizerProgressContainer
 
                     Layout.topMargin: Variables.height / 4
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Variables.height / 2
+                    Layout.preferredHeight: Variables.height * 3
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                    color: Variables.uiColor
-                    radius: Variables.barRadius
 
-                    Rectangle {
-                        id: progressFill
-                        height: parent.height
-                        radius: Variables.barRadius
-                        color: Variables.iconColor
+                    property real barScale: 0.3
+                    property int minBarHeight: 3
+                    property int barCount: 30
+                    property var audioData: new Array(barCount).fill(0)
+
+                    Process {
+                        id: cavaProc
+                        command: ["sh", "-c", "cava -p ~/.config/cava/config_quickshell"]
+                        running: mpris.activePlayer !== null && mpris.activePlayer.isPlaying
+                        
+                        stdout: SplitParser {
+                            onRead: data => {
+                                let val = data.trim()
+                                if (val === "") return
+                                let parts = val.split(";")
+                                
+                                if (parts.length >= visualizerProgressContainer.barCount) {
+                                    let newData = []
+                                    for (let i = 0; i < visualizerProgressContainer.barCount; i++) {
+                                        newData.push((parseInt(parts[i]) || 0) / 400.0)
+                                    }
+                                    visualizerProgressContainer.audioData = newData
+                                }
+                            }
+                        }
+                    }
+
+                    Connections {
+                        target: mpris.activePlayer
+                        ignoreUnknownSignals: true
+                        function onIsPlayingChanged() {
+                            if (!mpris.activePlayer || !mpris.activePlayer.isPlaying) {
+                                Qt.callLater(function() {
+                                    visualizerProgressContainer.audioData = new Array(visualizerProgressContainer.barCount).fill(0)
+                                })
+                            }
+                        }
+                    }
+
+                    Column {
+                        id: bgVisualizer
+                        anchors.fill: parent
+                        spacing: -visualizerProgressContainer.minBarHeight
+
+                        Row {
+                            width: parent.width
+                            height: parent.height / 2
+                            spacing: 2
+
+                            Repeater {
+                                model: visualizerProgressContainer.barCount
+                                Rectangle {
+                                    width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                    height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                    color: Variables.uiColor
+                                    radius: Variables.barRadius
+                                    anchors.bottom: parent.bottom
+                                    
+                                    Behavior on height {
+                                        NumberAnimation { 
+                                            duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                            easing.type: Easing.InOutCubic
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Row {
+                            width: parent.width
+                            height: parent.height / 2
+                            spacing: 2
+
+                            Repeater {
+                                model: visualizerProgressContainer.barCount
+                                Rectangle {
+                                    width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                    height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                    color: Variables.uiColor
+                                    radius: Variables.barRadius
+                                    anchors.top: parent.top
+                                    
+                                    Behavior on height {
+                                        NumberAnimation { 
+                                            duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                            easing.type: Easing.InOutCubic
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        
                         width: {
                             if (mpris.activePlayer && mpris.activePlayer.length > 0) {
                                 return parent.width * (mpris.activePlayer.position / mpris.activePlayer.length)
                             }
                             return 0
                         }
-                        Behavior on width { NumberAnimation { duration: Variables.fadeAnimation } }
+                        
+                        clip: true 
+
+                        Behavior on width { 
+                            NumberAnimation { 
+                                duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.fadeAnimation 
+                                easing.type: Easing.InOutCubic
+                            } 
+                        }
+
+                        Column {
+                            width: visualizerProgressContainer.width
+                            height: visualizerProgressContainer.height
+                            spacing: -visualizerProgressContainer.minBarHeight
+
+                            Row {
+                                width: parent.width
+                                height: parent.height / 2
+                                spacing: 2
+
+                                Repeater {
+                                    model: visualizerProgressContainer.barCount
+                                    Rectangle {
+                                        width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                        height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                        color: Variables.iconColor
+                                        radius: Variables.barRadius
+                                        anchors.bottom: parent.bottom
+                                        
+                                        Behavior on height {
+                                            NumberAnimation { 
+                                                duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                                easing.type: Easing.InOutCubic
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Row {
+                                width: parent.width
+                                height: parent.height / 2
+                                spacing: 2
+
+                                Repeater {
+                                    model: visualizerProgressContainer.barCount
+                                    Rectangle {
+                                        width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                        height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                        color: Variables.buttonColor
+                                        radius: Variables.barRadius
+                                        anchors.top: parent.top
+                                        
+                                        Behavior on height {
+                                            NumberAnimation { 
+                                                duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                                easing.type: Easing.InOutCubic
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

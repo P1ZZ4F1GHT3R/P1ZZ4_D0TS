@@ -1,9 +1,8 @@
 [general]
-bars = 4
+bars = 30
 framerate = 60
 
 [smoothing]
-# Keep these so Cava handles the smooth movements
 gravity = 100
 integral = 77
 
