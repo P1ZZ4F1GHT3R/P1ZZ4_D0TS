@@ -13,8 +13,8 @@ import "../"
 Rectangle {
     id: root
 
-    implicitWidth: 368
-    implicitHeight: 64
+    implicitWidth: Variables.userWidth
+    implicitHeight: Variables.userHeight
 
     color: Variables.backgroundColorUI
     radius: Variables.radius
@@ -126,8 +126,8 @@ Rectangle {
             }
         }
         Rectangle {
-            height: Variables.imgHeight
-            width: Variables.imgWidth
+            Layout.preferredHeight: Variables.imgHeight
+            Layout.preferredWidth: Variables.imgWidth
             color: Variables.buttonColor
             radius: Variables.imgRadius
             visible: pfpSave.savedPfp === ""

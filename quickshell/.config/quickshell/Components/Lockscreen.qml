@@ -18,10 +18,10 @@ Scope {
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
     property bool wait: false
 
-    Component.onCompleted: {
-        imagePath.running = true;
-        lockAnimation.start();
-    }
+    // Component.onCompleted: {
+    //     imagePath.running = true;
+    //     lockAnimation.start();
+    // }
 
     Process {
         id: imagePath
@@ -149,7 +149,7 @@ Scope {
                     anchors.fill: rectangle
                     source: lockscreenBackground
                     blurEnabled: true
-                    blurMax: 64
+                    blurMax: Variables.lockscreenBlurMax
                     blur: 1.0
                 }
                 
@@ -169,7 +169,7 @@ Scope {
                     Rectangle {
                         id: clockRectangle
                         anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -100
+                        anchors.verticalCenterOffset: Variables.lockscreenClockOffset
 
                         implicitWidth: clockColumn.implicitWidth + (Variables.spacing * 4)
                         implicitHeight: clockColumn.implicitHeight + (Variables.spacing * 4)
@@ -303,8 +303,8 @@ Scope {
                                 id: passwordInput
                                 anchors.centerIn: parent
                                 enabled: !wait
-                                width: inputHolder.implicitWidth / 1.2
-                                height: inputHolder.implicitHeight / 2
+                                implicitWidth: inputHolder.implicitWidth / 1.2
+                                implicitHeight: inputHolder.implicitHeight / 2
                                 echoMode: TextInput.Normal
                                 focus: true
                                 color: Variables.uiColor

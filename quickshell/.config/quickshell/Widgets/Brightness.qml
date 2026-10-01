@@ -8,8 +8,8 @@ import "../"
 Rectangle {
     id: root
 
-    width: 64 
-    height: 256
+    Layout.preferredWidth: Variables.volumeWidth
+    Layout.preferredHeight: Variables.volumeHeight
     radius: Variables.radius
     color: Variables.backgroundColorUI
     border.color: Variables.borderColor
@@ -43,8 +43,8 @@ Rectangle {
             background: Rectangle {
                 x: brightnessSlider.leftPadding + brightnessSlider.availableWidth / 2 - width / 2
                 y: brightnessSlider.topPadding
-                implicitWidth: 6
-                implicitHeight: 200
+                implicitWidth: Variables.sliderTrackWidth
+                implicitHeight: Variables.sliderTrackHeight
                 width: implicitWidth
                 height: brightnessSlider.availableHeight
                 radius: Variables.radius
@@ -63,8 +63,8 @@ Rectangle {
             handle: Rectangle {
                 x: brightnessSlider.leftPadding + brightnessSlider.availableWidth / 2 - width / 2
                 y: brightnessSlider.topPadding + brightnessSlider.visualPosition * (brightnessSlider.availableHeight - height)
-                implicitWidth: 16
-                implicitHeight: 16
+                implicitWidth: Variables.sliderHandleSize
+                implicitHeight: Variables.sliderHandleSize
                 radius: Variables.circleRadius
                 color: Variables.textColor
                 opacity: brightnessSlider.pressed ? 0.85 : 1.0
@@ -84,8 +84,8 @@ Rectangle {
             }
 
             background: Rectangle {
-                implicitWidth: 32
-                implicitHeight: 32
+                implicitWidth: Variables.sliderButtonSize
+                implicitHeight: Variables.sliderButtonSize
                 radius: Variables.radius
                 color: Variables.uiColor
                 border.color: Variables.textColor

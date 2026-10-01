@@ -8,8 +8,8 @@ import "../"
 Rectangle {
     id: pomodoroWidget
 
-    implicitWidth: 216
-    implicitHeight: 256 
+    implicitWidth: Variables.pomodoroWidth
+    implicitHeight: Variables.pomodoroHeight
     
     color: Variables.backgroundColorUI
     radius: Variables.radius

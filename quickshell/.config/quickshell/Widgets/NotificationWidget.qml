@@ -25,6 +25,20 @@ Item {
         }
     }
 
+    Connections {
+        target: daemon
+
+        function onPopupAdded() {
+            if (Variables.notifWidget && !root.expanded)
+                notifTimer.restart()
+        }
+
+        function onNotificationClosed() {
+            if (Variables.notifWidget && !root.expanded)
+                notifTimer.restart()
+        }
+    }
+
     RowLayout {
         id: notifLayout
 
@@ -98,8 +112,8 @@ Item {
 
                         Text {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
+                            anchors.leftMargin: Variables.notificationActionMargin
+                            anchors.rightMargin: Variables.notificationActionMargin
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             color: Variables.textColor
@@ -171,6 +185,8 @@ Item {
         onTriggered: {
             if (daemon && daemon.currentPopup) {
                 daemon.removePopup(daemon.currentPopup)
+                if (daemon.currentPopup && !expanded)
+                    notifTimer.restart()
             } else {
                 Variables.notifWidget = false 
             }

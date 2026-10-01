@@ -20,7 +20,7 @@ Rectangle {
         verticalCenter: parent.verticalCenter
     }
 
-    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : 12
+    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : Variables.controlCenterClosedWidth
     height: controlLayout.implicitHeight
     color: Variables.uiColor
     topLeftRadius: Variables.radius
@@ -35,7 +35,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Variables.borderWidth * 4
 
-        property real closedWidth: 12
+        property real closedWidth: Variables.controlCenterClosedWidth
         property real openWidth: controlLayout.implicitWidth + Variables.borderWidth * 4
         property real progress: Math.max(0, Math.min(1, (parent.width - closedWidth) / Math.max(1, openWidth - closedWidth)))
 
@@ -67,7 +67,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Variables.borderWidth * 4
 
-        property real closedWidth: 12
+        property real closedWidth: Variables.controlCenterClosedWidth
         property real openWidth: controlLayout.implicitWidth + Variables.borderWidth * 4
         property real progress: Math.max(0, Math.min(1, (parent.width - closedWidth) / Math.max(1, openWidth - closedWidth)))
 
@@ -172,8 +172,10 @@ Rectangle {
         Rectangle {
             id: buttonrowBackground
         
-            implicitWidth: 368
-            implicitHeight: 64 + Variables.topMargin * 2
+            implicitWidth: Math.max(Variables.controlCenterButtonWidth,
+                buttonRow.implicitWidth + Variables.borderWidth * 4)
+            implicitHeight: Math.max(Variables.controlCenterButtonHeight + Variables.topMargin * 2,
+                buttonRow.implicitHeight + Variables.borderWidth * 4)
             Layout.leftMargin: Variables.topMargin * 4
             Layout.rightMargin: Variables.topMargin * 4
 

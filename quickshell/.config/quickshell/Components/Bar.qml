@@ -45,6 +45,9 @@ Scope {
     PanelWindow {
         id: unifiedPanel 
 
+        Component.onCompleted: Variables.monitor = screen
+        onScreenChanged: Variables.monitor = screen
+
         HyprlandFocusGrab {
             active: Variables.powerMenu || Variables.wallpaperPicker
             windows: [ unifiedPanel ] 
@@ -254,7 +257,7 @@ Scope {
                 anchors {
                     right: parent.right
                 }
-                implicitWidth: 500
+                implicitWidth: Variables.barControlCenterWidth
             }
 
             WallpaperPicker {

@@ -18,8 +18,8 @@ Rectangle {
 
     property bool isApplying: false
 
-    implicitWidth: 800
-    implicitHeight: Variables.wallpaperPicker ? 250 : 0
+    implicitWidth: Variables.wallpaperPickerWidth
+    implicitHeight: Variables.wallpaperPicker ? Variables.wallpaperPickerHeight : 0
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     topRightRadius: Variables.radius
@@ -231,8 +231,8 @@ Rectangle {
             readonly property int distance: Math.abs(signedDistance)
 
             readonly property real itemOffsetX: {
-                if (signedDistance <= -2) return 70;  
-                if (signedDistance >= 2) return -70;  
+                if (signedDistance <= -2) return Variables.wallpaperItemOffset;
+                if (signedDistance >= 2) return -Variables.wallpaperItemOffset;
                 return 0;                             
             }
 
@@ -248,7 +248,7 @@ Rectangle {
                 return 0.20;                          
             }
 
-            width: 300
+            width: Variables.wallpaperCardWidth
             height: PathView.view.height
             z: distance === 0 ? 20 : (distance === 1 ? 10 : 0)
 
@@ -259,7 +259,7 @@ Rectangle {
                 anchors.horizontalCenterOffset: delegateRoot.itemOffsetX
                 
                 width: parent.width
-                height: parent.height - 30
+                height: parent.height - Variables.wallpaperCardInset
                 
                 scale: delegateRoot.itemScale
 
@@ -283,7 +283,7 @@ Rectangle {
 
                 ClippingWrapperRectangle {
                     anchors.fill: parent
-                    anchors.margins: 3
+                    anchors.margins: Variables.wallpaperCardMargin
                     radius: Variables.radius
                     color: Variables.uiColor
 
@@ -311,8 +311,8 @@ Rectangle {
         id: selectionBorder
         
         anchors.centerIn: wallpaperList
-        width: 300
-        height: wallpaperList.height - 30
+        width: Variables.wallpaperCardWidth
+        height: wallpaperList.height - Variables.wallpaperCardInset
         
         scale: 1.1 
         

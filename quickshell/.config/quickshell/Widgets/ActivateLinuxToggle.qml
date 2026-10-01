@@ -5,6 +5,8 @@ import "../"
 Button {
     id: activateLinuxToggle
 
+    padding: 0
+
     contentItem: Text {
         text: Variables.activateLinux ? "󰶐" : "󰍹"
         font.pixelSize: Variables.fontSize * 2
@@ -14,8 +16,8 @@ Button {
     }
 
     background: Rectangle {
-        implicitWidth: 64
-        implicitHeight: 64
+        implicitWidth: Variables.toggleSize
+        implicitHeight: Variables.toggleSize
         radius: Variables.radius
         color: Variables.activateLinux ? Variables.uiColor : Variables.iconColor
         border.color: Variables.activateLinux ? Variables.iconColor : Variables.uiColor

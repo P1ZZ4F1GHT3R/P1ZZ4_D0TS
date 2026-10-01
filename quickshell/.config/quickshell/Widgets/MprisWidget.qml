@@ -88,7 +88,7 @@ RowLayout {
                         source: blurredBgSource
                         anchors.fill: parent
                         blurEnabled: true
-                        blurMax: 64
+                        blurMax: Variables.musicBlurMax
                         blur: 0.69 //heh nice
                     }
 
@@ -109,8 +109,8 @@ RowLayout {
             spacing: Variables.spacing * 2
 
             ClippingWrapperRectangle {
-                Layout.preferredWidth: 128 
-                Layout.preferredHeight: 128
+                Layout.preferredWidth: Variables.musicArtSize
+                Layout.preferredHeight: Variables.musicArtSize
                 Layout.alignment: Qt.AlignVCenter
                 radius: Variables.imgRadius
 
@@ -194,7 +194,7 @@ RowLayout {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
 
                     property real barScale: 0.3
-                    property int minBarHeight: 3
+                    property int minBarHeight: Variables.mprisVisualizerMinHeight
                     property int barCount: 30
                     property var audioData: new Array(barCount).fill(0)
 
@@ -212,7 +212,7 @@ RowLayout {
                                 if (parts.length >= visualizerProgressContainer.barCount) {
                                     let newData = []
                                     for (let i = 0; i < visualizerProgressContainer.barCount; i++) {
-                                        newData.push((parseInt(parts[i]) || 0) / 400.0)
+                                        newData.push((parseInt(parts[i]) || 0) / 300.0)
                                     }
                                     visualizerProgressContainer.audioData = newData
                                 }
@@ -235,12 +235,12 @@ RowLayout {
                     Column {
                         id: bgVisualizer
                         anchors.fill: parent
-                        spacing: -visualizerProgressContainer.minBarHeight
+                        spacing: -visualizerProgressContainer.minBarHeight / 1.5
 
                         Row {
                             width: parent.width
                             height: parent.height / 2
-                            spacing: 2
+                            spacing: Variables.visualizerGap
 
                             Repeater {
                                 model: visualizerProgressContainer.barCount
@@ -264,7 +264,7 @@ RowLayout {
                         Row {
                             width: parent.width
                             height: parent.height / 2
-                            spacing: 2
+                            spacing: Variables.visualizerGap
 
                             Repeater {
                                 model: visualizerProgressContainer.barCount
@@ -310,12 +310,12 @@ RowLayout {
                         Column {
                             width: visualizerProgressContainer.width
                             height: visualizerProgressContainer.height
-                            spacing: -visualizerProgressContainer.minBarHeight
+                            spacing: -visualizerProgressContainer.minBarHeight / 1.5
 
                             Row {
                                 width: parent.width
                                 height: parent.height / 2
-                                spacing: 2
+                                spacing: Variables.visualizerGap
 
                                 Repeater {
                                     model: visualizerProgressContainer.barCount
@@ -339,7 +339,7 @@ RowLayout {
                             Row {
                                 width: parent.width
                                 height: parent.height / 2
-                                spacing: 2
+                                spacing: Variables.visualizerGap
 
                                 Repeater {
                                     model: visualizerProgressContainer.barCount
@@ -369,7 +369,7 @@ RowLayout {
                     spacing: Variables.spacing * 4
 
                     Rectangle {
-                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+                        Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
 
                         Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor}
 
@@ -381,7 +381,7 @@ RowLayout {
                     }
 
                     Rectangle {
-                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.iconColor
+                        Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.iconColor
 
                         Text { 
                             anchors.fill: parent
@@ -399,7 +399,7 @@ RowLayout {
                     }
 
                     Rectangle {
-                        width: Variables.circleWidth; height: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+                        Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
 
                         Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor }
 

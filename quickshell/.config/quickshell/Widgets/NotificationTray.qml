@@ -7,8 +7,8 @@ import "../"
 Rectangle {
     id: root
 
-    implicitWidth: 368
-    implicitHeight: 368
+    implicitWidth: Variables.notificationTraySize
+    implicitHeight: Variables.notificationTraySize
     radius: Variables.radius
     color: Variables.backgroundColorUI
     border.color: Variables.borderColor
@@ -18,6 +18,57 @@ Rectangle {
     property var seenNotifs: []
     property bool isClearingAll: false
     property string expandedGroupKey: ""
+    property var ungroupedGroupKeys: []
+
+    readonly property var displayGroups: buildDisplayGroups(
+        daemon ? daemon.groupedNotifications : [], ungroupedGroupKeys)
+
+    function buildDisplayGroups(groups, ungroupedKeys) {
+        var result = []
+
+        for (var i = 0; i < groups.length; i++) {
+            var group = groups[i]
+            var isUngrouped = ungroupedKeys.indexOf(group.key) !== -1
+
+            if (isUngrouped) {
+                for (var j = 0; j < group.notifications.length; j++) {
+                    var notification = group.notifications[j]
+                    result.push({
+                        key: group.key + ":" + notification.id,
+                        groupKey: group.key,
+                        appName: group.appName,
+                        notifications: [notification],
+                        isUngrouped: true,
+                        groupCount: group.notifications.length
+                    })
+                }
+            } else {
+                result.push({
+                    key: group.key,
+                    groupKey: group.key,
+                    appName: group.appName,
+                    notifications: group.notifications,
+                    isUngrouped: false,
+                    groupCount: group.notifications.length
+                })
+            }
+        }
+
+        return result
+    }
+
+    function toggleGroupGrouping(groupKey) {
+        var next = ungroupedGroupKeys.slice()
+        var index = next.indexOf(groupKey)
+
+        if (index === -1)
+            next.push(groupKey)
+        else
+            next.splice(index, 1)
+
+        ungroupedGroupKeys = next
+        expandedGroupKey = ""
+    }
 
     RowLayout {
         id: headerLayout
@@ -124,6 +175,7 @@ Rectangle {
                     root.isClearingAll = false; 
                     root.seenNotifs = []; 
                     root.expandedGroupKey = "";
+                    root.ungroupedGroupKeys = [];
                 }
             }
         }
@@ -143,35 +195,37 @@ Rectangle {
         spacing: Variables.topMargin
         clip: true
 
-        model: daemon ? daemon.groupedNotifications : []
+        model: root.displayGroups
 
         delegate: Item {
             id: delegateRect
 
-            width: notifList.width
+            implicitWidth: notifList.width
             
             property var group: modelData
-            property string groupKey: group && group.key ? group.key : Math.random().toString()
+            property string groupKey: group && group.groupKey ? group.groupKey
+                : (group && group.key ? group.key : Math.random().toString())
             property var notifications: group ? group.notifications : []
             property var latestNotification: notifications.length > 0 ? notifications[0] : null
-            property real maxStackOffset: notifications.length > 2 ? Variables.spacing * 1.5 : (notifications.length > 1 ? Variables.spacing * 0.75 : 0)
-            property bool isExpanded: root.expandedGroupKey !== "" && root.expandedGroupKey === groupKey
+            property bool isUngrouped: group && group.isUngrouped === true
+            property int relatedCount: group && group.groupCount ? group.groupCount : notifications.length
+            property bool isExpanded: !isUngrouped && root.expandedGroupKey !== "" && root.expandedGroupKey === groupKey
             property real targetHeight: isExpanded
                 ? expandedLayout.implicitHeight
-                : collapsedContainer.implicitHeight
+                : groupCard.implicitHeight
 
             property bool isReady: false
             property bool localRemoving: false
             property bool isRemoving: localRemoving || root.isClearingAll
             property bool animationsEnabled: false
 
-            height: (isReady && !isRemoving) ? targetHeight : 0
+            implicitHeight: (isReady && !isRemoving) ? targetHeight : 0
             opacity: (isReady && !isRemoving) ? 1.0 : 0.0
             scale: (isReady && !isRemoving) ? 1.0 : 0.9
             
             clip: true 
 
-            Behavior on height {
+            Behavior on implicitHeight {
                 enabled: animationsEnabled
                 NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
             }
@@ -200,13 +254,13 @@ Rectangle {
             }
 
             Item {
-                id: collapsedContainer
+                id: groupCard
 
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
-                
-                implicitHeight: mainCollapsedCard.height + delegateRect.maxStackOffset
+
+                implicitHeight: groupCardBackground.implicitHeight
                 
                 opacity: delegateRect.isExpanded ? 0.0 : 1.0
                 visible: opacity > 0
@@ -216,47 +270,14 @@ Rectangle {
                 }
 
                 Rectangle {
-                    id: stackBottomCard
+                    id: groupCardBackground
 
-                    visible: delegateRect.notifications.length > 2
-                    y: Variables.spacing * 1.5
-                    z: -2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width - (Variables.spacing * 4)
-                    height: mainCollapsedCard.height
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    implicitHeight: contentLayout.implicitHeight + (Variables.spacing * 2)
                     color: Variables.uiColor
                     radius: Variables.radius
-                    opacity: 0.5
-                    border.color: Variables.borderColor
-                    border.width: Variables.borderWidth
-                }
-
-                Rectangle {
-                    id: stackMiddleCard
-
-                    visible: delegateRect.notifications.length > 1
-                    y: Variables.spacing * 0.75
-                    z: -1
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width - (Variables.spacing * 2)
-                    height: mainCollapsedCard.height
-                    color: Variables.uiColor
-                    radius: Variables.radius
-                    opacity: 0.8
-                    border.color: Variables.borderColor
-                    border.width: Variables.borderWidth
-                }
-
-                Rectangle {
-                    id: mainCollapsedCard
-
-                    y: 0
-                    z: 0
-                    width: parent.width
-                    height: contentLayout.implicitHeight + (Variables.spacing * 2)
-                    color: Variables.uiColor
-                    radius: Variables.radius
-                    border.color: Variables.borderColor
+                    border.color: delegateRect.isUngrouped ? Variables.iconColor : Variables.borderColor
                     border.width: Variables.borderWidth
 
                     MouseArea {
@@ -264,12 +285,29 @@ Rectangle {
 
                         anchors.fill: parent
                         hoverEnabled: true
-                        cursorShape: delegateRect.notifications.length > 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: {
-                            if (delegateRect.notifications.length > 1) {
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        cursorShape: delegateRect.relatedCount > 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.RightButton && delegateRect.relatedCount > 1) {
+                                root.toggleGroupGrouping(delegateRect.groupKey)
+                            } else if (mouse.button === Qt.LeftButton
+                                       && !delegateRect.isUngrouped
+                                       && delegateRect.notifications.length > 1) {
                                 root.expandedGroupKey = delegateRect.groupKey
                             }
                         }
+                    }
+
+                    Rectangle {
+                        id: ungroupedMarker
+
+                        visible: delegateRect.isUngrouped && delegateRect.relatedCount > 1
+                        implicitWidth: Variables.borderWidth * 2
+                        implicitHeight: parent.height - Variables.spacing * 2
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: Variables.barRadius
+                        color: Variables.iconColor
                     }
 
                     RowLayout {
@@ -279,7 +317,11 @@ Rectangle {
                             left: parent.left
                             right: parent.right
                             top: parent.top
-                            margins: Variables.spacing
+                            topMargin: Variables.spacing
+                            rightMargin: Variables.spacing
+                            bottomMargin: Variables.spacing
+                            leftMargin: Variables.spacing
+                                + (ungroupedMarker.visible ? Variables.spacing : 0)
                         }
                         spacing: Variables.spacing
 
@@ -326,8 +368,10 @@ Rectangle {
                                     font.pixelSize: Variables.fontSize
                                     text: daemon && delegateRect.latestNotification
                                         ? daemon.notificationApp(delegateRect.latestNotification)
-                                          + (delegateRect.notifications.length > 1
-                                              ? " (" + delegateRect.notifications.length + ")" : "")
+                                          + (delegateRect.relatedCount > 1
+                                              ? (delegateRect.isUngrouped
+                                                  ? " [" + delegateRect.relatedCount + " related]"
+                                                  : " (" + delegateRect.notifications.length + ")") : "")
                                           + " - " + daemon.notificationTitle(delegateRect.latestNotification)
                                         : ""
                                 }
@@ -423,10 +467,11 @@ Rectangle {
                 }
 
                 Rectangle {
-                    id: collapseGroupBtn
+                    id: expandedGroupHeader
 
-                    width: parent.width
-                    height: Variables.fontSize * 2 + Variables.spacing
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    implicitHeight: Variables.fontSize * 2 + Variables.spacing
                     color: Variables.uiColor
                     radius: Variables.radius
                     border.color: Variables.borderColor
@@ -434,23 +479,26 @@ Rectangle {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "▴ Collapse Stack"
                         color: Variables.textColor
                         font.pixelSize: Variables.fontSize * 0.9
                         font.bold: true
+                        text: daemon && delegateRect.latestNotification
+                            ? daemon.notificationApp(delegateRect.latestNotification)
+                              + " (" + delegateRect.relatedCount + " notifications)"
+                            : "Notifications"
                     }
 
                     MouseArea {
-                        id: collapseGroupMouse
-
                         anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        onClicked: root.expandedGroupKey = ""
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.RightButton)
+                                root.toggleGroupGrouping(delegateRect.groupKey)
+                            else
+                                root.expandedGroupKey = ""
+                        }
                     }
-                    
-                    opacity: collapseGroupMouse.containsMouse ? 0.8 : 1.0
-                    Behavior on opacity { NumberAnimation { duration: Variables.animationDurationUI } }
                 }
 
                 Repeater {
@@ -464,12 +512,13 @@ Rectangle {
                         required property int index
                         required property var modelData
 
-                        width: expandedLayout.width
-                        height: groupedNotification.localRemoving
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        implicitHeight: groupedNotification.localRemoving
                             ? 0 : groupedNotification.implicitHeight
                         clip: true
 
-                        Behavior on height {
+                        Behavior on implicitHeight {
                             NumberAnimation {
                                 duration: Variables.animationDurationUI
                                 easing.type: Variables.animationTypeUI
@@ -483,7 +532,8 @@ Rectangle {
                             property bool localRemoving: false
                             property bool itemExpanded: false
 
-                            width: parent.width
+                            anchors.left: parent.left
+                            anchors.right: parent.right
                             
                             implicitHeight: groupedCardLayout.implicitHeight + (Variables.spacing * 2)
                             color: Variables.uiColor

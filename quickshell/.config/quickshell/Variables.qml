@@ -6,28 +6,70 @@ import "./"
 QtObject {
     id: root
 
-    readonly property int radius: 24
-    readonly property int height: 24
-    readonly property int width: 64
+    // The original layout was designed for a 2560x1440 monitor.
+    readonly property int referenceScreenWidth: 2560
+    readonly property int referenceScreenHeight: 1440
+    property var monitor: null
+    readonly property real uiScale: monitor && monitor.width > 0 && monitor.height > 0
+        ? Math.min(monitor.width / referenceScreenWidth, monitor.height / referenceScreenHeight)
+        : 1.0
+
+    function scaled(value) {
+        return Math.round(value * uiScale)
+    }
+
+    readonly property int radius: scaled(24)
+    readonly property int height: scaled(24)
+    readonly property int width: scaled(64)
     readonly property int leftMargin: rightMargin * 1.5
-    readonly property int rightMargin: 12
-    readonly property int topMargin: 4
-    readonly property int fontSize: 18
-    readonly property int spacing: 12
-    readonly property int exclusiveZoneTop: 36
+    readonly property int rightMargin: scaled(12)
+    readonly property int topMargin: scaled(4)
+    readonly property int fontSize: scaled(18)
+    readonly property int spacing: scaled(12)
+    readonly property int exclusiveZoneTop: scaled(36)
     readonly property int workspaceCount: 5
     readonly property int circleHeight: fontSize * (1 + 1/3)
     readonly property int circleWidth: circleHeight
     readonly property int circleRadius: circleHeight / 2
-    readonly property int borderWidth: 2
+    readonly property int borderWidth: scaled(2)
     readonly property int systemPoll: 2000
-    readonly property int imgHeight: 24
+    readonly property int imgHeight: scaled(24)
     readonly property int imgWidth: imgHeight
-    readonly property int imgRadius: 8
+    readonly property int imgRadius: scaled(8)
+    readonly property int toggleSize: scaled(64)
+    readonly property int userWidth: scaled(368)
+    readonly property int userHeight: scaled(64)
+    readonly property int notificationTraySize: scaled(368)
+    readonly property int pomodoroWidth: scaled(216)
+    readonly property int pomodoroHeight: scaled(256)
+    readonly property int volumeWidth: scaled(64)
+    readonly property int volumeHeight: scaled(256)
+    readonly property int sliderTrackWidth: scaled(6)
+    readonly property int sliderTrackHeight: scaled(200)
+    readonly property int sliderHandleSize: scaled(16)
+    readonly property int sliderButtonSize: scaled(32)
+    readonly property int wallpaperPickerWidth: scaled(800)
+    readonly property int wallpaperPickerHeight: scaled(250)
+    readonly property int wallpaperItemOffset: scaled(70)
+    readonly property int wallpaperCardWidth: scaled(300)
+    readonly property int wallpaperCardInset: scaled(30)
+    readonly property int wallpaperCardMargin: scaled(3)
+    readonly property int musicArtSize: scaled(128)
+    readonly property int musicBlurMax: scaled(64)
+    readonly property int visualizerGap: scaled(2)
+    readonly property int visualizerMinHeight: scaled(2)
+    readonly property int mprisVisualizerMinHeight: scaled(8)
+    readonly property int controlCenterClosedWidth: scaled(12)
+    readonly property int controlCenterButtonWidth: scaled(368)
+    readonly property int controlCenterButtonHeight: scaled(64)
+    readonly property int barControlCenterWidth: scaled(500)
+    readonly property int lockscreenBlurMax: scaled(64)
+    readonly property int lockscreenClockOffset: scaled(-100)
+    readonly property int notificationActionMargin: scaled(8)
     readonly property int animationTypeUI: Easing.OutBack
     readonly property int animationDurationUI: 450
     readonly property int hoverTimer: 250
-    readonly property int barRadius: 4
+    readonly property int barRadius: scaled(4)
     readonly property int notifTimer: 3000
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
