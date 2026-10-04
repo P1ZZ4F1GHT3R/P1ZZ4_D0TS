@@ -15,64 +15,19 @@ Rectangle {
     border.width: Variables.borderWidth
 
     property var daemon 
-    property var seenNotifs: []
     property bool isClearingAll: false
-    property string expandedGroupKey: ""
-    property var ungroupedGroupKeys: []
+    property var expandedGroups: []
 
-    readonly property var displayGroups: buildDisplayGroups(
-        daemon ? daemon.groupedNotifications : [], ungroupedGroupKeys)
-
-    function buildDisplayGroups(groups, ungroupedKeys) {
-        var result = []
-
-        for (var i = 0; i < groups.length; i++) {
-            var group = groups[i]
-            var isUngrouped = ungroupedKeys.indexOf(group.key) !== -1
-
-            if (isUngrouped) {
-                for (var j = 0; j < group.notifications.length; j++) {
-                    var notification = group.notifications[j]
-                    result.push({
-                        key: group.key + ":" + notification.id,
-                        groupKey: group.key,
-                        appName: group.appName,
-                        notifications: [notification],
-                        isUngrouped: true,
-                        groupCount: group.notifications.length
-                    })
-                }
-            } else {
-                result.push({
-                    key: group.key,
-                    groupKey: group.key,
-                    appName: group.appName,
-                    notifications: group.notifications,
-                    isUngrouped: false,
-                    groupCount: group.notifications.length
-                })
-            }
-        }
-
-        return result
-    }
-
-    function toggleGroupGrouping(groupKey) {
-        var next = ungroupedGroupKeys.slice()
-        var index = next.indexOf(groupKey)
-
-        if (index === -1)
-            next.push(groupKey)
-        else
-            next.splice(index, 1)
-
-        ungroupedGroupKeys = next
-        expandedGroupKey = ""
+    function toggleGroup(groupKey) {
+        var next = expandedGroups.slice()
+        var idx = next.indexOf(groupKey)
+        if (idx === -1) next.push(groupKey)
+        else next.splice(idx, 1)
+        expandedGroups = next
     }
 
     RowLayout {
         id: headerLayout
-
         anchors {
             top: parent.top
             right: parent.right
@@ -83,7 +38,6 @@ Rectangle {
 
         Rectangle {
             id: titleRect
-
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: Variables.uiColor
@@ -99,10 +53,8 @@ Rectangle {
 
         Button {
             id: togglePopupsButton
-
             Layout.preferredHeight: Variables.circleHeight * 1.5
             Layout.preferredWidth: Variables.circleWidth * 1.5
-
             text: Variables.disablePopups ? "" : ""
 
             contentItem: Text {
@@ -114,30 +66,21 @@ Rectangle {
             }
             
             background: Rectangle {
-                id: togglePopupsBg
-
                 radius: Variables.circleRadius * 1.5
                 color: Variables.disablePopups ? Variables.buttonColor : Variables.uiColor
                 border.color: Variables.disablePopups ? Variables.uiColor : Variables.buttonColor
                 border.width: Variables.borderWidth
-
-                Behavior on color {
-                    ColorAnimation { duration: Variables.animationDurationUI }
-                } 
+                Behavior on color { ColorAnimation { duration: Variables.animationDurationUI } } 
             }
 
-            onClicked: {
-                Variables.disablePopups = !Variables.disablePopups
-            }
+            onClicked: Variables.disablePopups = !Variables.disablePopups
         }
 
         Rectangle {
             id: closeAllRect
-
             Layout.alignment: Qt.AlignRight
             Layout.preferredHeight: Variables.circleHeight * 1.5
             Layout.preferredWidth: Variables.circleWidth * 1.5
-            
             radius: Variables.circleRadius * 1.5
             color: Variables.uiColor
             border.color: Variables.iconColor
@@ -153,13 +96,11 @@ Rectangle {
 
             MouseArea {
                 id: closeAllMouse
-
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     if (root.isClearingAll || notifList.count === 0) return; 
-                    
                     root.isClearingAll = true;
                     clearAllTimer.start();
                 }
@@ -167,15 +108,11 @@ Rectangle {
 
             Timer {
                 id: clearAllTimer
-
                 interval: Variables.animationDurationUI
-                repeat: false
                 onTriggered: {
                     daemon.clearAll();
                     root.isClearingAll = false; 
-                    root.seenNotifs = []; 
-                    root.expandedGroupKey = "";
-                    root.ungroupedGroupKeys = [];
+                    root.expandedGroups = [];
                 }
             }
         }
@@ -183,7 +120,6 @@ Rectangle {
 
     ListView {
         id: notifList
-
         anchors {
             top: headerLayout.bottom
             bottom: parent.bottom
@@ -191,563 +127,237 @@ Rectangle {
             right: parent.right
             margins: Variables.topMargin
         }
-
-        spacing: Variables.topMargin
+        spacing: Variables.spacing
         clip: true
 
-        model: root.displayGroups
+        model: root.daemon ? root.daemon.groupedNotifications : []
 
-        delegate: Item {
-            id: delegateRect
+        delegate: Column {
+            id: groupColumn
+            width: ListView.view.width
+            spacing: Variables.spacing / 2
 
-            implicitWidth: notifList.width
-            
             property var group: modelData
-            property string groupKey: group && group.groupKey ? group.groupKey
-                : (group && group.key ? group.key : Math.random().toString())
-            property var notifications: group ? group.notifications : []
-            property var latestNotification: notifications.length > 0 ? notifications[0] : null
-            property bool isUngrouped: group && group.isUngrouped === true
-            property int relatedCount: group && group.groupCount ? group.groupCount : notifications.length
-            property bool isExpanded: !isUngrouped && root.expandedGroupKey !== "" && root.expandedGroupKey === groupKey
-            property real targetHeight: isExpanded
-                ? expandedLayout.implicitHeight
-                : groupCard.implicitHeight
+            property bool isExpanded: root.expandedGroups.indexOf(group.key) !== -1
 
-            property bool isReady: false
-            property bool localRemoving: false
-            property bool isRemoving: localRemoving || root.isClearingAll
-            property bool animationsEnabled: false
+            Repeater {
+                model: groupColumn.group.notifications
 
-            implicitHeight: (isReady && !isRemoving) ? targetHeight : 0
-            opacity: (isReady && !isRemoving) ? 1.0 : 0.0
-            scale: (isReady && !isRemoving) ? 1.0 : 0.9
-            
-            clip: true 
+                delegate: Item {
+                    id: delegateWrapper
+                    width: groupColumn.width
+                    
+                    property var notification: modelData
+                    property bool isStackTop: !groupColumn.isExpanded && index === 0 && groupColumn.group.notifications.length > 1
+                    property int stackCount: groupColumn.group.notifications.length
+                    property bool isVisibleInStack: groupColumn.isExpanded || index === 0
+                    
+                    property real stackOffset: isStackTop ? Math.min(2, stackCount - 1) * (Variables.spacing * 0.8) : 0
+                    Behavior on stackOffset { NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI } }
+                    
+                    height: contentCard.height + stackOffset
+                    opacity: isVisibleInStack ? 1.0 : 0.0
+                    scale: isVisibleInStack ? 1.0 : 0.95
+                    clip: true
 
-            Behavior on implicitHeight {
-                enabled: animationsEnabled
-                NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
-            }
-            Behavior on opacity {
-                enabled: animationsEnabled
-                NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
-            }
-            Behavior on scale {
-                enabled: animationsEnabled
-                NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
-            }
-
-            function markNotificationsSeen() {
-                for (var i = 0; i < notifications.length; i++) {
-                    if (root.seenNotifs.indexOf(notifications[i].id) === -1)
-                        root.seenNotifs.push(notifications[i].id)
-                }
-            }
-
-            onNotificationsChanged: markNotificationsSeen()
-
-            Component.onCompleted: {
-                markNotificationsSeen()
-                isReady = true
-                Qt.callLater(function() { animationsEnabled = true })
-            }
-
-            Item {
-                id: groupCard
-
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                implicitHeight: groupCardBackground.implicitHeight
-                
-                opacity: delegateRect.isExpanded ? 0.0 : 1.0
-                visible: opacity > 0
-                Behavior on opacity {
-                    enabled: delegateRect.animationsEnabled
-                    NumberAnimation { duration: Variables.animationDurationUI }
-                }
-
-                Rectangle {
-                    id: groupCardBackground
-
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    implicitHeight: contentLayout.implicitHeight + (Variables.spacing * 2)
-                    color: Variables.uiColor
-                    radius: Variables.radius
-                    border.color: delegateRect.isUngrouped ? Variables.iconColor : Variables.borderColor
-                    border.width: Variables.borderWidth
-
-                    MouseArea {
-                        id: collapsedMouse
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        cursorShape: delegateRect.relatedCount > 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.RightButton && delegateRect.relatedCount > 1) {
-                                root.toggleGroupGrouping(delegateRect.groupKey)
-                            } else if (mouse.button === Qt.LeftButton
-                                       && !delegateRect.isUngrouped
-                                       && delegateRect.notifications.length > 1) {
-                                root.expandedGroupKey = delegateRect.groupKey
-                            }
-                        }
-                    }
+                    Behavior on opacity { NumberAnimation { duration: Variables.animationDurationUI } }
+                    Behavior on scale { NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI } }
 
                     Rectangle {
-                        id: ungroupedMarker
-
-                        visible: delegateRect.isUngrouped && delegateRect.relatedCount > 1
-                        implicitWidth: Variables.borderWidth * 2
-                        implicitHeight: parent.height - Variables.spacing * 2
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        radius: Variables.barRadius
-                        color: Variables.iconColor
-                    }
-
-                    RowLayout {
-                        id: contentLayout
-
                         anchors {
                             left: parent.left
                             right: parent.right
                             top: parent.top
-                            topMargin: Variables.spacing
-                            rightMargin: Variables.spacing
-                            bottomMargin: Variables.spacing
-                            leftMargin: Variables.spacing
-                                + (ungroupedMarker.visible ? Variables.spacing : 0)
+                            topMargin: Variables.spacing * 1.6
                         }
-                        spacing: Variables.spacing
-
-                        Rectangle {
-                            id: collapsedIconBox
-
-                            Layout.preferredWidth: Variables.fontSize * 2
-                            Layout.preferredHeight: Variables.fontSize * 2
-                            radius: Variables.imgRadius
-                            color: "transparent"
-                            Layout.alignment: Qt.AlignTop
-                            visible: daemon && delegateRect.latestNotification
-                                && daemon.notificationImage(delegateRect.latestNotification) !== ""
-
-                            Image {
-                                id: collapsedIconImage
-
-                                anchors.fill: parent
-                                source: daemon && delegateRect.latestNotification
-                                    ? daemon.notificationImage(delegateRect.latestNotification) : ""
-                                fillMode: Image.PreserveAspectCrop
-                                smooth: true
-                            }
-                        }
-
-                        ColumnLayout {
-                            id: collapsedTextColumn
-
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-
-                            RowLayout {
-                                id: collapsedHeaderRow
-
-                                Layout.fillWidth: true
-                                
-                                Text {
-                                    id: collapsedAppText
-
-                                    Layout.fillWidth: true
-                                    color: Variables.textColor
-                                    elide: Text.ElideRight
-                                    font.bold: true
-                                    font.pixelSize: Variables.fontSize
-                                    text: daemon && delegateRect.latestNotification
-                                        ? daemon.notificationApp(delegateRect.latestNotification)
-                                          + (delegateRect.relatedCount > 1
-                                              ? (delegateRect.isUngrouped
-                                                  ? " [" + delegateRect.relatedCount + " related]"
-                                                  : " (" + delegateRect.notifications.length + ")") : "")
-                                          + " - " + daemon.notificationTitle(delegateRect.latestNotification)
-                                        : ""
-                                }
-
-                                Text {
-                                    id: collapsedTimeText
-
-                                    color: Variables.textColor
-                                    opacity: 0.6
-                                    font.pixelSize: Variables.fontSize * 0.8
-                                    text: daemon && delegateRect.latestNotification
-                                        ? daemon.notificationTime(delegateRect.latestNotification) : ""
-                                }
-                            }
-
-                            Text {
-                                id: collapsedBodyText
-
-                                Layout.fillWidth: true
-                                color: Variables.textColor
-                                elide: Text.ElideRight
-                                wrapMode: Text.Wrap
-                                maximumLineCount: 2
-                                font.pixelSize: Variables.fontSize
-                                text: daemon && delegateRect.latestNotification
-                                    ? daemon.notificationBody(delegateRect.latestNotification) : ""
-                            }
-                        }
-
-                        Rectangle {
-                            id: collapsedCloseBtn
-
-                            Layout.preferredWidth: Variables.circleWidth
-                            Layout.preferredHeight: Variables.circleHeight 
-                            Layout.alignment: Qt.AlignTop
-                            radius: Variables.circleRadius
-                            color: Variables.buttonColor
-
-                            Text {
-                                id: collapsedCloseText
-
-                                anchors.fill: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                color: Variables.textColor
-                                text: "X"
-                                font.bold: true
-                            }
-
-                            MouseArea {
-                                id: collapsedCloseMouse
-                                
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (delegateRect.isRemoving) return; 
-                                    delegateRect.localRemoving = true;
-                                    delegateRect.opacity = 0.0
-                                    delegateRect.scale = 0.9
-                                    
-                                    collapsedRemovalTimer.start()
-                                }
-                            }
-
-                            Timer {
-                                id: collapsedRemovalTimer
-
-                                interval: Variables.animationDurationUI
-                                repeat: false
-                                onTriggered: daemon.dismissNotification(delegateRect.latestNotification)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Column {
-                id: expandedLayout
-
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                }
-                spacing: Variables.topMargin
-                
-                opacity: delegateRect.isExpanded ? 1.0 : 0.0
-                visible: opacity > 0
-                Behavior on opacity {
-                    enabled: delegateRect.animationsEnabled
-                    NumberAnimation { duration: Variables.animationDurationUI }
-                }
-
-                Rectangle {
-                    id: expandedGroupHeader
-
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    implicitHeight: Variables.fontSize * 2 + Variables.spacing
-                    color: Variables.uiColor
-                    radius: Variables.radius
-                    border.color: Variables.borderColor
-                    border.width: Variables.borderWidth
-
-                    Text {
-                        anchors.centerIn: parent
-                        color: Variables.textColor
-                        font.pixelSize: Variables.fontSize * 0.9
-                        font.bold: true
-                        text: daemon && delegateRect.latestNotification
-                            ? daemon.notificationApp(delegateRect.latestNotification)
-                              + " (" + delegateRect.relatedCount + " notifications)"
-                            : "Notifications"
+                        height: contentCard.height
+                        color: Variables.uiColor
+                        radius: Variables.radius
+                        border.color: Variables.borderColor
+                        border.width: Variables.borderWidth
+                        visible: delegateWrapper.isStackTop && delegateWrapper.stackCount > 2
+                        opacity: 0.85
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.RightButton)
-                                root.toggleGroupGrouping(delegateRect.groupKey)
-                            else
-                                root.expandedGroupKey = ""
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            topMargin: Variables.spacing * 0.8
                         }
+                        height: contentCard.height
+                        color: Variables.uiColor
+                        radius: Variables.radius
+                        border.color: Variables.borderColor
+                        border.width: Variables.borderWidth
+                        visible: delegateWrapper.isStackTop && delegateWrapper.stackCount > 1
+                        opacity: 0.9
                     }
-                }
 
-                Repeater {
-                    id: expandedRepeater
-
-                    model: delegateRect.notifications
-
-                    delegate: Item {
-                        id: groupedNotificationWrapper
-
-                        required property int index
-                        required property var modelData
-
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        implicitHeight: groupedNotification.localRemoving
-                            ? 0 : groupedNotification.implicitHeight
+                    Rectangle {
+                        id: contentCard
+                        width: parent.width
+                        
+                        property bool localRemoving: false
+                        property bool isRemoving: localRemoving || root.isClearingAll
+                        property bool itemExpanded: false
+                        
+                        height: (isRemoving || !delegateWrapper.isVisibleInStack) ? 0 : contentLayout.implicitHeight + (Variables.spacing * 2)
+                        
+                        color: Variables.uiColor
+                        radius: Variables.radius
+                        border.color: Variables.borderColor
+                        border.width: Variables.borderWidth
                         clip: true
 
-                        Behavior on implicitHeight {
-                            NumberAnimation {
-                                duration: Variables.animationDurationUI
-                                easing.type: Variables.animationTypeUI
+                        Behavior on height { NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI } }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: (mouse) => {
+                                if (mouse.button === Qt.RightButton && groupColumn.group.notifications.length > 1) {
+                                    root.toggleGroup(groupColumn.group.key)
+                                } else if (mouse.button === Qt.LeftButton) {
+                                    contentCard.itemExpanded = !contentCard.itemExpanded
+                                }
                             }
                         }
 
-                        Rectangle {
-                            id: groupedNotification
-
-                            property var notification: groupedNotificationWrapper.modelData
-                            property bool localRemoving: false
-                            property bool itemExpanded: false
-
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            
-                            implicitHeight: groupedCardLayout.implicitHeight + (Variables.spacing * 2)
-                            color: Variables.uiColor
-                            radius: Variables.radius
-                            opacity: localRemoving ? 0 : 1
-                            scale: localRemoving ? 0.9 : 1
-                            border.color: Variables.borderColor
-                            border.width: Variables.borderWidth
-
-                            Behavior on opacity {
-                                NumberAnimation { duration: Variables.animationDurationUI }
+                        RowLayout {
+                            id: contentLayout
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: Variables.spacing
                             }
-                            Behavior on scale {
-                                NumberAnimation { duration: Variables.animationDurationUI }
-                            }
+                            spacing: Variables.spacing
 
-                            MouseArea {
-                                id: itemToggleMouse
+                            Rectangle {
+                                Layout.preferredWidth: Variables.fontSize * 2
+                                Layout.preferredHeight: Variables.fontSize * 2
+                                radius: Variables.imgRadius
+                                color: "transparent"
+                                Layout.alignment: Qt.AlignTop
+                                visible: daemon && notification && daemon.notificationImage(notification) !== ""
 
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                z: -1
-                                onClicked: groupedNotification.itemExpanded = !groupedNotification.itemExpanded
-                            }
-
-                            RowLayout {
-                                id: groupedCardLayout
-
-                                anchors {
-                                    left: parent.left
-                                    right: parent.right
-                                    top: parent.top
-                                    margins: Variables.spacing
+                                Image {
+                                    anchors.fill: parent
+                                    source: daemon && notification ? daemon.notificationImage(notification) : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    smooth: true
                                 }
-                                spacing: Variables.spacing
+                            }
 
-                                Rectangle {
-                                    id: expandedIconBox
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
 
-                                    Layout.preferredWidth: Variables.fontSize * 2
-                                    Layout.preferredHeight: Variables.fontSize * 2
-                                    radius: Variables.imgRadius
-                                    color: "transparent"
-                                    Layout.alignment: Qt.AlignTop
-                                    visible: daemon && groupedNotification.notification
-                                        && daemon.notificationImage(groupedNotification.notification) !== ""
-
-                                    Image {
-                                        id: expandedIconImage
-
-                                        anchors.fill: parent
-                                        source: daemon && groupedNotification.notification
-                                            ? daemon.notificationImage(groupedNotification.notification) : ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        smooth: true
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    id: expandedTextColumn
-
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    RowLayout {
-                                        id: expandedHeaderRow
-
+                                    
+                                    Text {
                                         Layout.fillWidth: true
-
-                                        Text {
-                                            id: expandedAppText
-
-                                            Layout.fillWidth: true
-                                            color: Variables.textColor
-                                            elide: Text.ElideRight
-                                            font.bold: true
-                                            font.pixelSize: Variables.fontSize
-                                            text: daemon && groupedNotification.notification
-                                                ? daemon.notificationApp(groupedNotification.notification)
-                                                  + " - "
-                                                  + daemon.notificationTitle(groupedNotification.notification)
-                                                : ""
-                                        }
-
-                                        Text {
-                                            id: expandedTimeText
-
-                                            color: Variables.textColor
-                                            opacity: 0.6
-                                            font.pixelSize: Variables.fontSize * 0.8
-                                            text: daemon && groupedNotification.notification
-                                                ? daemon.notificationTime(groupedNotification.notification) : ""
+                                        color: Variables.textColor
+                                        elide: Text.ElideRight
+                                        font.bold: true
+                                        font.pixelSize: Variables.fontSize
+                                        text: {
+                                            if (!daemon || !notification) return "";
+                                            let title = daemon.notificationTitle(notification);
+                                            let app = daemon.notificationApp(notification);
+                                            let stackCountStr = delegateWrapper.isStackTop ? " (" + delegateWrapper.stackCount + ")" : "";
+                                            return app + stackCountStr + " - " + title;
                                         }
                                     }
 
                                     Text {
-                                        id: expandedBodyText
-
-                                        Layout.fillWidth: true
                                         color: Variables.textColor
-                                        wrapMode: Text.Wrap
-                                        elide: Text.ElideRight
-                                        
-                                        maximumLineCount: groupedNotification.itemExpanded ? 999 : 2
-                                        
-                                        font.pixelSize: Variables.fontSize
-                                        text: daemon && groupedNotification.notification
-                                            ? daemon.notificationBody(groupedNotification.notification) : ""
+                                        opacity: 0.6
+                                        font.pixelSize: Variables.fontSize * 0.8
+                                        text: daemon && notification ? daemon.notificationTime(notification) : ""
                                     }
+                                }
 
-                                    RowLayout {
-                                        id: expandedActionsRow
+                                Text {
+                                    Layout.fillWidth: true
+                                    color: Variables.textColor
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.Wrap
+                                    maximumLineCount: contentCard.itemExpanded ? 999 : 2
+                                    font.pixelSize: Variables.fontSize
+                                    text: daemon && notification ? daemon.notificationBody(notification) : ""
+                                }
 
-                                        Layout.fillWidth: true
-                                
-                                        visible: groupedNotification.itemExpanded
-                                            && groupedNotification.notification
-                                            && groupedNotification.notification.actions
-                                            ? groupedNotification.notification.actions.length > 0 : false
-                                        spacing: Variables.spacing / 2
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    visible: contentCard.itemExpanded && notification && notification.actions && notification.actions.length > 0
+                                    spacing: Variables.spacing / 2
 
-                                        Repeater {
-                                            id: actionsRepeater
+                                    Repeater {
+                                        model: parent.visible && notification && notification.actions ? Math.min(notification.actions.length, 2) : 0
+                                        
+                                        delegate: Rectangle {
+                                            required property int index
+                                            readonly property var action: notification.actions[index]
 
-                                            model: parent.visible && groupedNotification.notification
-                                                && groupedNotification.notification.actions
-                                                ? Math.min(groupedNotification.notification.actions.length, 2) : 0
+                                            Layout.preferredHeight: Variables.circleHeight
+                                            Layout.fillWidth: true
+                                            radius: Variables.radius
+                                            color: Variables.buttonColor
+                                            
+                                            Text {
+                                                anchors.centerIn: parent
+                                                color: Variables.textColor
+                                                font.pixelSize: Variables.fontSize * 0.9
+                                                text: action && action.text ? action.text : ""
+                                            }
 
-                                            delegate: Rectangle {
-                                                id: groupedActionButton
-
-                                                required property int index
-                                                readonly property var action: groupedNotification.notification
-                                                    && groupedNotification.notification.actions
-                                                    ? groupedNotification.notification.actions[index] : null
-
-                                                Layout.preferredHeight: Variables.circleHeight
-                                                Layout.fillWidth: true
-                                                radius: Variables.radius
-                                                color: Variables.buttonColor
-                                                opacity: groupedActionMouse.pressed ? 0.85 : 1
-
-                                                Text {
-                                                    id: actionButtonText
-
-                                                    anchors.centerIn: parent
-                                                    color: Variables.textColor
-                                                    textFormat: Text.PlainText
-                                                    elide: Text.ElideRight
-                                                    font.pixelSize: Variables.fontSize * 0.9
-                                                    text: groupedActionButton.action && groupedActionButton.action.text
-                                                        ? groupedActionButton.action.text : ""
-                                                }
-
-                                                MouseArea {
-                                                    id: groupedActionMouse
-
-                                                    anchors.fill: parent
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: {
-                                                        if (groupedActionButton.action)
-                                                            daemon.invokeAction(groupedActionButton.action,
-                                                                groupedNotification.notification)
-                                                    }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (action) daemon.invokeAction(action, notification)
                                                 }
                                             }
                                         }
                                     }
                                 }
+                            }
 
-                                Rectangle {
-                                    id: expandedCloseBtn
+                            Rectangle {
+                                Layout.preferredWidth: Variables.circleWidth
+                                Layout.preferredHeight: Variables.circleHeight 
+                                Layout.alignment: Qt.AlignTop
+                                radius: Variables.circleRadius
+                                color: Variables.buttonColor
 
-                                    Layout.preferredWidth: Variables.circleWidth
-                                    Layout.preferredHeight: Variables.circleHeight
-                                    Layout.alignment: Qt.AlignTop
-                                    radius: Variables.circleRadius
-                                    color: Variables.buttonColor
+                                Text {
+                                    anchors.fill: parent
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    color: Variables.textColor
+                                    text: "X"
+                                    font.bold: true
+                                }
 
-                                    Text {
-                                        id: expandedCloseText
-
-                                        anchors.fill: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        color: Variables.textColor
-                                        text: "X"
-                                        font.bold: true
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (contentCard.isRemoving) return; 
+                                        contentCard.localRemoving = true;
+                                        collapsedRemovalTimer.start()
                                     }
+                                }
 
-                                    MouseArea {
-                                        id: expandedCloseMouse
-
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (groupedNotification.localRemoving)
-                                                return
-
-                                            groupedNotification.localRemoving = true
-                                            groupedRemovalTimer.start()
-                                        }
-                                    }
-
-                                    Timer {
-                                        id: groupedRemovalTimer
-
-                                        interval: Variables.animationDurationUI
-                                        repeat: false
-                                        onTriggered: {
-                                            if (daemon)
-                                                daemon.dismissNotification(groupedNotification.notification)
-                                        }
-                                    }
+                                Timer {
+                                    id: collapsedRemovalTimer
+                                    interval: Variables.animationDurationUI
+                                    onTriggered: daemon.dismissNotification(notification)
                                 }
                             }
                         }
@@ -757,8 +367,6 @@ Rectangle {
         }
 
         Text {
-            id: emptyStateText
-
             anchors.centerIn: parent
             text: "A tumbleweed tumbles..."
             color: Variables.textColor
