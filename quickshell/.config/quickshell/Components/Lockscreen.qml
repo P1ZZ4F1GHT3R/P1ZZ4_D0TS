@@ -9,6 +9,7 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import "../"
 import "../Components"
+import "../Widgets"
 
 Scope {
     id: lockScreen
@@ -18,10 +19,10 @@ Scope {
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
     property bool wait: false
 
-    Component.onCompleted: {
-        imagePath.running = true;
-        lockAnimation.start();
-    }
+    // Component.onCompleted: {
+    //     imagePath.running = true;
+    //     lockAnimation.start();
+    // }
 
     Process {
         id: imagePath
@@ -176,7 +177,7 @@ Scope {
 
                         color: Variables.uiColor
                         radius: Variables.radius
-                        opacity: 0.5
+                        opacity: 0.7
 
                         Column {
                             id: clockColumn

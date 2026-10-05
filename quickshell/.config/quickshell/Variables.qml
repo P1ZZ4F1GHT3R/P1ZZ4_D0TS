@@ -129,6 +129,9 @@ QtObject {
     property bool wallpaperPreview: false
     property string previewPath: ""
     property bool activateLinux: false
+    property bool volumeOSD: false
+    property bool brightnessOSD: false
+    property bool osdPreExpanded: false
 
 
 

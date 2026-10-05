@@ -16,7 +16,7 @@ Rectangle {
     implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height + Variables.borderWidth * 4
     implicitWidth: {
         if (Variables.notchHidden) return 0; 
-        return Variables.expandedState ? notch.implicitWidth + Variables.width * 8 : notch.implicitWidth + Variables.width;
+        return Variables.expandedState ? notch.implicitWidth + Variables.width * 10 : notch.implicitWidth + Variables.width;
         }
     bottomLeftRadius: Variables.radius
     bottomRightRadius: Variables.radius
@@ -30,6 +30,8 @@ Rectangle {
             if (powerMenuLoader.active) {
                 Variables.powerMenu = true;
                 Variables.expandedState = false;
+                volumeOsd.cancelOsd();
+                brightnessOsd.cancelOsd();
             }
             else {
                 Variables.powerMenu = false;
@@ -174,7 +176,7 @@ Rectangle {
 
         MprisWidget {
             id: mprisWidget
-            visible: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null
+            visible: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD
         }
 
         ClockWidget {
@@ -182,7 +184,7 @@ Rectangle {
             
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget
+            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.brightnessOSD
         }
 
         NotificationWidget {
@@ -203,7 +205,35 @@ Rectangle {
         VisualizerWidget {
             id: visualizerWidget 
             activePlayer: mprisWidget.activePlayer
-            visible: !Variables.powerMenu && !Variables.expandedState && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null
+            visible: !Variables.powerMenu && !Variables.expandedState && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD
+        }
+
+        VolumeOSD {
+            id: volumeOsd
+
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            z: 10
+
+            opacity: Variables.volumeOSD ? 1.0 : 0.0
+            visible: Variables.volumeOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.brightnessOSD
+
+            Behavior on opacity {
+                NumberAnimation { duration: Variables.fadeAnimation }
+            }
+        }
+
+        BrightnessOSD {
+            id: brightnessOSD
+
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            z: 10
+
+            opacity: Variables.brightnessOSD ? 1.0 : 0.0
+            visible: Variables.brightnessOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD
+
+            Behavior on opacity {
+                NumberAnimation { duration: Variables.fadeAnimation }
+            }
         }
     }
 }
