@@ -85,6 +85,7 @@ QtObject {
     
     readonly property bool hoverEnabled: false
     readonly property bool clickEnabled: hoverEnabled ? false : true
+    readonly property bool lockScreenMpris: true
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground

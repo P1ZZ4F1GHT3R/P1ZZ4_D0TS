@@ -21,6 +21,8 @@ Rectangle {
     bottomLeftRadius: Variables.radius
     bottomRightRadius: Variables.radius
     color: Variables.uiColor
+    scale: Variables.lockScreen ? 1.25 : 1.0
+    transformOrigin: Item.Top
 
     IpcHandler {
         target: "powermenu"
@@ -39,28 +41,74 @@ Rectangle {
         }
     }
 
-    Connections {
+    Timer {
+        id: lockTransitionTimer
+        interval: 250
+        repeat: false
+        property bool isLocking: false
+
+        onTriggered: {
+            if (isLocking) {
+                if (Variables.lockScreenMpris && mprisWidget.activePlayer !== null) {
+                    Variables.expandedState = true;
+                    Variables.notchHidden = false;
+                }
+            } else {
+                Variables.activeAnimationUI = Variables.bouncingAnimationUI;
+                Variables.activeDurationUI = Variables.bouncingDurationUI;
+                Variables.expandedState = false;
+                Variables.notchHidden = false;
+                if (!Variables.pomodoroClock) {
+                    Variables.workspacesHidden = false;
+                    Variables.systemHidden = false;
+                }
+                animationSwitch.start();
+            }
+        }
+    }
+
+   Connections {
         target: Variables
         
         function onlockScreenChanged() {
+            lockTransitionTimer.stop();
             if (Variables.lockScreen) {
                 Variables.powerMenu = false;
                 powerMenuLoader.active = false;
                 Variables.expandedState = false;
-                Variables.notchHidden = true
-                Variables.workspacesHidden = true
-                Variables.systemHidden = true
+                Variables.notchHidden = true;
+                Variables.workspacesHidden = true;
+                Variables.systemHidden = true;
                 hovertimer.stop();
+
+                lockTransitionTimer.isLocking = true;
+                lockTransitionTimer.start();
             }
             else {
-                Variables.activeAnimationUI = Variables.bouncingAnimationUI;
-                Variables.activeDurationUI = Variables.bouncingDurationUI;
-                Variables.notchHidden = false
-                if (!Variables.pomodoroClock) {
-                    Variables.workspacesHidden = false
-                    Variables.systemHidden = false
+                Variables.expandedState = false; 
+                
+                Variables.notchHidden = true;
+                hovertimer.stop();
+
+                lockTransitionTimer.isLocking = false;
+                lockTransitionTimer.start();
+            }
+        }
+    }
+
+    Connections {
+        target: mprisWidget
+        ignoreUnknownSignals: true
+
+        function onActivePlayerChanged() {
+            if (Variables.lockScreen && Variables.lockScreenMpris) {
+                if (mprisWidget.activePlayer !== null) {
+                    Variables.expandedState = true;
+                    Variables.notchHidden = false;
+                } else {
+                    Variables.expandedState = false;
+                    Variables.notchHidden = true;
                 }
-                animationSwitch.start();
             }
         }
     }
@@ -76,7 +124,7 @@ Rectangle {
         height: cornerSize
         anchors.top: parent.top
         anchors.right: parent.left
-        anchors.topMargin: Variables.borderWidth * 4
+        anchors.topMargin: Variables.borderWidth * 4 / notchRoot.scale
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -105,7 +153,7 @@ Rectangle {
         height: cornerSize
         anchors.top: parent.top
         anchors.left: parent.right
-        anchors.topMargin: Variables.borderWidth * 4
+        anchors.topMargin: Variables.borderWidth * 4 / notchRoot.scale
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -123,14 +171,13 @@ Rectangle {
         }
     }
 
-     Behavior on implicitWidth {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+    Behavior on implicitWidth {
+        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
     }
-
 
     MouseArea {
         id: mousearea
@@ -138,9 +185,18 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
 
-        onClicked: Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu && !Variables.notifWidget ? Variables.expandedState = true : Variables.expandedState = false
-        onEntered: Variables.hoverEnabled && !Variables.powerMenu && !Variables.notifWidget ? hovertimer.start() : null
-        onExited: Variables.hoverEnabled ? (Variables.expandedState = false, hovertimer.stop()) : null
+        onClicked: {
+            if (Variables.lockScreen) return; 
+            Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu && !Variables.notifWidget ? Variables.expandedState = true : Variables.expandedState = false
+        }
+        onEntered: {
+            if (Variables.lockScreen) return;
+            Variables.hoverEnabled && !Variables.powerMenu && !Variables.notifWidget ? hovertimer.start() : null
+        }
+        onExited: {
+            if (Variables.lockScreen) return;
+            Variables.hoverEnabled ? (Variables.expandedState = false, hovertimer.stop()) : null
+        }
     }
 
     Timer {

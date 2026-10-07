@@ -9,7 +9,7 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import "../"
 import "../Components"
-import "../Widgets"
+import "../Modules"
 
 Scope {
     id: lockScreen
@@ -19,10 +19,10 @@ Scope {
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
     property bool wait: false
 
-    // Component.onCompleted: {
-    //     imagePath.running = true;
-    //     lockAnimation.start();
-    // }
+    Component.onCompleted: {
+        imagePath.running = true;
+        lockAnimation.start();
+    }
 
     Process {
         id: imagePath
@@ -165,6 +165,13 @@ Scope {
                         shadowBlur: Variables.shadowBlur
                         shadowVerticalOffset: 0
                         shadowHorizontalOffset: 0
+                    }
+
+                    Notch {
+                        anchors {
+                            top: parent.top
+                            horizontalCenter: parent.horizontalCenter
+                        }
                     }
 
                     Rectangle {
@@ -312,6 +319,19 @@ Scope {
                                 horizontalAlignment: TextInput.AlignHCenter
                                 verticalAlignment: TextInput.AlignVCenter
                                 font.pixelSize: Variables.fontSize
+
+                                onActiveFocusChanged: {
+                                    if (!activeFocus && !wait && Variables.lockScreen) {
+                                        forceActiveFocus();
+                                    }
+                                }
+
+                                Timer {
+                                    interval: 50
+                                    running: Variables.lockScreen && !wait && !passwordInput.activeFocus
+                                    repeat: true
+                                    onTriggered: passwordInput.forceActiveFocus()
+                                }
 
                                 property string realPassword: ""
                                 property var symbolPool: Variables.oneZero

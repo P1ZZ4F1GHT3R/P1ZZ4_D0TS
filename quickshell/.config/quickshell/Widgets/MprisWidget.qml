@@ -118,7 +118,7 @@ RowLayout {
 
             lyricsLoading = false
             if (request.status < 200 || request.status >= 300) {
-                resetLyrics("Lyrics unavailable")
+                resetLyrics("(╯°□°)╯︵ ┻━┻")
                 return
             }
 
@@ -126,7 +126,7 @@ RowLayout {
                 const response = JSON.parse(request.responseText)
                 parseLyrics(response.syncedLyrics, response.plainLyrics)
             } catch (error) {
-                resetLyrics("Lyrics unavailable")
+                resetLyrics("(╯°□°)╯︵ ┻━┻")
             }
         }
         request.open("GET", `https://lrclib.net/api/get?${params}`)

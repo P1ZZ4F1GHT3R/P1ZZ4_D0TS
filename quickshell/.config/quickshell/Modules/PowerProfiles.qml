@@ -10,7 +10,7 @@ Rectangle {
 
 
     Layout.alignment: Qt.AlignTop
-    Layout.topMargin: Variables.borderWidth * 4 + Variables.topMargin
+    Layout.topMargin: Variables.borderWidth * 6 + Variables.topMargin
     implicitHeight: Variables.circleHeight * 1.3
     implicitWidth: Variables.circleWidth * 1.3
     color: Variables.uiColor
