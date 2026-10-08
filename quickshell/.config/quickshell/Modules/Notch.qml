@@ -246,7 +246,7 @@ Rectangle {
         NotificationWidget {
             id: notificationWidget
             daemon: notchRoot.notifServer
-            visible: Variables.notifWidget && !Variables.powerMenu
+            visible: Variables.notifWidget && !Variables.powerMenu && !Variables.lockScreen
         }
 
         Loader {

@@ -91,7 +91,7 @@ RowLayout {
 
             lyricLines = plainLines
             lyricsSynced = false
-            lyricsStatus = plainLines.length > 0 ? "Unsynced lyrics" : "No lyrics found"
+            lyricsStatus = plainLines.length > 0 ? "Unsynced lyrics" : "(╯°□°)╯︵ ┻━┻"
         }
         updateCurrentLyric()
     }
@@ -101,6 +101,8 @@ RowLayout {
         const requestId = ++lyricsRequestId
         const artist = player ? String(player.trackArtist || "").trim() : ""
         const title = player ? String(player.trackTitle || "").trim() : ""
+
+        if (!Variables.enableLyrics) return
 
         if (!artist || !title) {
             lyricsLoading = false
@@ -149,9 +151,22 @@ RowLayout {
     Timer {
         id: lyricsUpdateTimer
         interval: 250
-        running: mpris.lyricsSynced && mpris.lyricLines.length > 0 && mpris.activePlayer !== null
+        running: Variables.enableLyrics && mpris.lyricsSynced && mpris.lyricLines.length > 0 && mpris.activePlayer !== null
         repeat: true
         onTriggered: mpris.updateCurrentLyric()
+    }
+
+    Timer {
+        id: lyricsRetryTimer
+        interval: 10000 
+        running: Variables.enableLyrics && mpris.activePlayer !== null && mpris.lyricLines.length === 0 && !mpris.lyricsLoading
+        repeat: true
+        
+        onTriggered: {
+            if (mpris.lyricsStatus === "(╯°□°)╯︵ ┻━┻") {
+                mpris.fetchLyrics()
+            }
+        }
     }
 
     Connections {
@@ -560,6 +575,7 @@ RowLayout {
                 Layout.fillHeight: true
                 Layout.alignment: Qt.AlignVCenter
                 spacing: Variables.spacing
+                visible: Variables.enableLyrics
 
                 Item {
                     Layout.fillWidth: true
