@@ -198,7 +198,11 @@ Rectangle {
                     return;
 
                 previewProcess.running = false;
-                applyProcess.command = ["/bin/bash", root.syncScript, currentItem.imagePath];
+                applyProcess.command = [
+                    "/bin/bash",
+                    "-c",
+                    "setsid \"" + root.syncScript + "\" \"" + currentItem.imagePath + "\" >/dev/null 2>&1 &"
+                ]
                 applyProcess.running = true;
                 
                 root.isApplying = true;
@@ -294,6 +298,9 @@ Rectangle {
                         asynchronous: true
                         
                         opacity: delegateRoot.itemOpacity
+
+                        sourceSize.width: Variables.wallpaperCardWidth
+                        sourceSize.height: Variables.wallpaperCardHeight
 
                         Behavior on opacity {
                             NumberAnimation {

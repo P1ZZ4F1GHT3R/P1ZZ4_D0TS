@@ -119,6 +119,7 @@ Rectangle {
 
     RowLayout{
         id: rowLayout
+        visible: !Variables.workspacesHidden
 
         anchors {
             fill: parent
@@ -126,7 +127,6 @@ Rectangle {
             rightMargin: Variables.rightMargin
         }
         spacing: Variables.spacing
-        visible: !Variables.workspacesHidden
         
         Repeater {
         model: Variables.workspaceCount
@@ -172,4 +172,3 @@ Rectangle {
         }
     }
 }
-

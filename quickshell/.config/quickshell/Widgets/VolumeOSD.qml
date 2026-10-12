@@ -12,6 +12,9 @@ RowLayout {
     implicitWidth: osdContent.implicitWidth
     implicitHeight: osdContent.implicitHeight
 
+    Layout.preferredWidth: visible ? implicitWidth : 0
+    Layout.preferredHeight: visible ? implicitHeight : 0
+
     PwObjectTracker {
         objects: [ Pipewire.defaultAudioSink ]
     }

@@ -27,6 +27,16 @@ Scope {
 
     Lockscreen{
         id: lockScreen
+        notifServer: notifDaemon
+    }
+
+    Process {
+    id: applyWallpaperProcess
+    }
+
+    function applyWallpaper(path) {
+        applyWallpaperProcess.command = ["/bin/bash", root.syncScript, path];
+        applyWallpaperProcess.running = true;
     }
     
     PanelWindow {
@@ -133,47 +143,53 @@ Scope {
             onTriggered: Variables.wallpaperPreview = false
         }
 
-        Item {
+        Loader {
+            id: wallpaperPreviewLoader
             anchors.fill: parent
-            visible: Variables.wallpaperPreview
+            active: Variables.wallpaperPreview
+            sourceComponent: Component {
+                Item {
+                    anchors.fill: parent
 
-            Image {
-                id: oldWallpaper
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-            }
-
-            Image {
-                id: previewWallpaper
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                
-                Connections {
-                    target: Variables
-                    function onPreviewPathChanged() {
-                        if (String(previewWallpaper.source) === String(Variables.previewPath)) 
-                            return;
-
-                        oldWallpaper.source = previewWallpaper.source;
-                        previewWallpaper.source = Variables.previewPath;
-                        previewWallpaper.opacity = 0.0;
-                        crossfadeAnim.restart();
+                    Image {
+                        id: oldWallpaper
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
                     }
 
-                    function onWallpaperPickerChanged() {
-                        if (!Variables.wallpaperPicker) {
-                            previewWallpaper.source = "";
-                            oldWallpaper.source = "";
-                            Variables.previewPath = "";
-                            
-                            crossfadeAnim.stop();
-                            previewWallpaper.opacity = 1.0;
+                    Image {
+                        id: previewWallpaper
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+
+                        Connections {
+                            target: Variables
+                            function onPreviewPathChanged() {
+                                if (String(previewWallpaper.source) === String(Variables.previewPath))
+                                    return;
+
+                                oldWallpaper.source = previewWallpaper.source;
+                                previewWallpaper.source = Variables.previewPath;
+                                previewWallpaper.opacity = 0.0;
+                                crossfadeAnim.restart();
+                            }
+
+                            function onWallpaperPickerChanged() {
+                                if (!Variables.wallpaperPicker) {
+                                    previewWallpaper.source = "";
+                                    oldWallpaper.source = "";
+                                    Variables.previewPath = "";
+
+                                    crossfadeAnim.stop();
+                                    previewWallpaper.opacity = 1.0;
+                                }
+                            }
+                        }
+
+                        NumberAnimation on opacity {
+                            id: crossfadeAnim; to: 1.0; duration: Variables.fadeAnimation
                         }
                     }
-                }
-
-                NumberAnimation on opacity {
-                    id: crossfadeAnim; to: 1.0; duration: Variables.fadeAnimation
                 }
             }
         }
@@ -229,7 +245,11 @@ Scope {
                 anchors { left: parent.left; top: parent.top }
                 spacing: Variables.spacing
 
-                Workspaces {}
+                Loader {
+                    active: true
+                    asynchronous: true
+                    source: "../Modules/Workspaces.qml"
+                }
                 UpdateButton {}
             }
 
@@ -246,9 +266,16 @@ Scope {
                 id: right
                 anchors { right: parent.right; top: parent.top }
 
-                PowerProfiles{}
+                Loader {
+                    active: !Variables.systemHidden && !Variables.lockScreen
+                    source: "../Modules/PowerProfiles.qml"
+                }
                 Item { Layout.fillWidth: true }
-                System {}
+                Loader {
+                    active: true
+                    asynchronous: true
+                    source: "../Modules/System.qml"
+                }
             }
 
             ControlCenter {
@@ -260,9 +287,11 @@ Scope {
                 implicitWidth: Variables.barControlCenterWidth
             }
 
-            WallpaperPicker {
+            Loader {
                 id: wallpaperSwitcher
-                visible: Variables.wallpaperPreview
+                active: Variables.wallpaperPreview
+                focus: Variables.wallpaperPicker
+                source: "../Modules/WallpaperPicker.qml"
                 anchors {
                     bottom: parent.bottom
                     horizontalCenter: parent.horizontalCenter
@@ -274,10 +303,10 @@ Scope {
     PanelWindow {
         id: activateLinux
 
-        implicitHeight: watermark.implicitHeight + Variables.borderWidth * 12
-        implicitWidth: watermark.implicitWidth + Variables.borderWidth * 12
+        implicitHeight: activateLinuxLoader.implicitHeight + Variables.borderWidth * 12
+        implicitWidth: activateLinuxLoader.implicitWidth + Variables.borderWidth * 12
 
-        visible: Variables.activateLinux
+        visible: activateLinuxLoader.active
         color: "transparent"
 
         anchors {
@@ -289,9 +318,10 @@ Scope {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
 
-        ActivateLinux{
-            id: watermark
-
+        Loader {
+            id: activateLinuxLoader
+            active: Variables.activateLinux
+            source: "../Widgets/ActivateLinux.qml"
             anchors {
                 top: parent.top
                 left: parent.left

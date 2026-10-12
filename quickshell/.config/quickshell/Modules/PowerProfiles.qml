@@ -18,9 +18,13 @@ Rectangle {
     border.color: Variables.borderColor
     border.width: Variables.borderWidth
     opacity: actionMouse.containsMouse ? 0.85 : 1
-    visible: !Variables.systemHidden
 
     property string currentProfile: Variables.currentProfile
+
+    function refresh() {
+        if (!getProf.running)
+            getProf.running = true
+    }
 
     readonly property var profileIcons: ({
         "performance": "",
@@ -67,13 +71,24 @@ Rectangle {
         }
 
     Timer {
-        interval: Variables.systemPoll
-        running: true
+        interval: Variables.profilePoll
+        running: !Variables.systemHidden && !Variables.lockScreen
         triggeredOnStart: true
-        onTriggered: {
-            if (!getProf.running) {
-            getProf.running = true;
-            }
+        onTriggered: powerProfiles.refresh()
+
+    }
+
+    Connections {
+        target: Variables
+
+        function onSystemHiddenChanged() {
+            if (!Variables.systemHidden)
+                powerProfiles.refresh()
+        }
+
+        function onLockScreenChanged() {
+            if (!Variables.lockScreen && !Variables.systemHidden)
+                powerProfiles.refresh()
         }
 
     }

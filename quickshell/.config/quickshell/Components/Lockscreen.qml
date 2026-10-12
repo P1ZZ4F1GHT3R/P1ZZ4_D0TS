@@ -18,11 +18,12 @@ Scope {
     property url currentWallpaper: ""
     readonly property string txtDir: Quickshell.env("HOME") + "/.config/wallpaper/wallpaper.txt"
     property bool wait: false
+    property var notifServer: null
 
-    Component.onCompleted: {
-        imagePath.running = true;
-        lockAnimation.start();
-    }
+    // Component.onCompleted: {
+    //     imagePath.running = true;
+    //     lockAnimation.start();
+    // }
 
     Process {
         id: imagePath
@@ -167,10 +168,18 @@ Scope {
                         shadowHorizontalOffset: 0
                     }
 
-                    Notch {
+                    Loader {
+                        id: lockNotchLoader
+                        active: sessionLock.locked
                         anchors {
                             top: parent.top
                             horizontalCenter: parent.horizontalCenter
+                        }
+                        sourceComponent: Component {
+                            Notch {
+                                notifServer: lockScreen.notifServer
+                                enablePowerMenuIpc: false
+                            }
                         }
                     }
 
@@ -309,7 +318,6 @@ Scope {
 
                             TextField {
                                 id: passwordInput
-                                anchors.centerIn: parent
                                 enabled: !wait
                                 implicitWidth: inputHolder.implicitWidth / 1.2
                                 implicitHeight: inputHolder.implicitHeight / 2

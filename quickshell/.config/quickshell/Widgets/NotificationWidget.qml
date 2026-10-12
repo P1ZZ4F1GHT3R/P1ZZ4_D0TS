@@ -7,12 +7,12 @@ import "../"
 Item {
     id: root
 
-    property var daemon
+    property var daemon: null
     readonly property var notification: daemon ? daemon.currentPopup : Variables.currentNotif
     property bool expanded: false
 
-    Layout.preferredWidth: expanded ? Math.min(notifLayout.implicitWidth, Variables.width * 8) : Variables.width * 5
-    Layout.preferredHeight: expanded ? Variables.height + notifLayout.implicitHeight : Variables.height * 3
+    implicitWidth: expanded ? Math.min(notifLayout.implicitWidth, Variables.width * 8) : Variables.width * 5
+    implicitHeight: expanded ? Variables.height + notifLayout.implicitHeight : Variables.height * 3
     Layout.fillWidth: expanded
 
     Connections {
@@ -26,7 +26,9 @@ Item {
     }
 
     Connections {
-        target: daemon
+        target: daemon || null
+        enabled: daemon !== null
+        ignoreUnknownSignals: true
 
         function onPopupAdded() {
             if (Variables.notifWidget && !root.expanded)

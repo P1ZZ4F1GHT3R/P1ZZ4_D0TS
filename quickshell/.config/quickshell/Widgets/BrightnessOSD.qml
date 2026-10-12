@@ -10,6 +10,9 @@ RowLayout {
     implicitWidth: osdContent.implicitWidth
     implicitHeight: osdContent.implicitHeight
 
+    Layout.preferredWidth: visible ? implicitWidth : 0
+    Layout.preferredHeight: visible ? implicitHeight : 0
+
     function cancelOsd() {
         osdTimer.stop();
         Variables.brightnessOSD = false;

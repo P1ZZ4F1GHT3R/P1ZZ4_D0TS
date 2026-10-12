@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick.Shapes
 import QtQuick.Effects
+import Quickshell.Services.Mpris
 import "../"
 import "../Widgets"
 
@@ -12,20 +13,34 @@ Rectangle {
     id: notchRoot
 
     property var notifServer
+    property bool enablePowerMenuIpc: true
+
+    property var activePlayer: {
+        let players = Mpris.players.values;
+        for (let i = 0; i < players.length; i++) {
+            let p = players[i];
+            if (p.identity.toLowerCase() === "spotify" || p.desktopEntry.toLowerCase() === "spotify") {
+                return p;
+            }
+        }
+        return null; 
+    }
 
     implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height + Variables.borderWidth * 4
-    implicitWidth: {
-        if (Variables.notchHidden) return 0; 
-        return Variables.expandedState ? notch.implicitWidth + Variables.width * 10 : notch.implicitWidth + Variables.width;
-        }
+    implicitWidth: Variables.notchHidden ? 0 : notch.implicitWidth + Variables.width
     bottomLeftRadius: Variables.radius
     bottomRightRadius: Variables.radius
     color: Variables.uiColor
-    scale: Variables.lockScreen ? 1.25 : 1.0
+    scale: Variables.lockScreen ? 1.2 : 1.0
     transformOrigin: Item.Top
+
+    Behavior on scale {
+        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
+    }
 
     IpcHandler {
         target: "powermenu"
+        enabled: notchRoot.enablePowerMenuIpc
 
         function toggle(): void {
             powerMenuLoader.active = !powerMenuLoader.active
@@ -33,7 +48,7 @@ Rectangle {
                 Variables.powerMenu = true;
                 Variables.expandedState = false;
                 volumeOsd.cancelOsd();
-                brightnessOsd.cancelOsd();
+                brightnessOSD.cancelOsd();
             }
             else {
                 Variables.powerMenu = false;
@@ -49,7 +64,7 @@ Rectangle {
 
         onTriggered: {
             if (isLocking) {
-                if (Variables.lockScreenMpris && mprisWidget.activePlayer !== null) {
+                if (Variables.lockScreenMpris && notchRoot.activePlayer !== null && !Variables.pomodoroClock) {
                     Variables.expandedState = true;
                     Variables.notchHidden = false;
                 }
@@ -67,10 +82,22 @@ Rectangle {
         }
     }
 
-   Connections {
+    onActivePlayerChanged: {
+        if (Variables.lockScreen && Variables.lockScreenMpris && !Variables.pomodoroClock) {
+            if (notchRoot.activePlayer !== null) {
+                Variables.expandedState = true;
+                Variables.notchHidden = false;
+            } else {
+                Variables.expandedState = false;
+                Variables.notchHidden = true;
+            }
+        }
+    }
+
+    Connections {
         target: Variables
         
-        function onlockScreenChanged() {
+        function onLockScreenChanged() {
             lockTransitionTimer.stop();
             if (Variables.lockScreen) {
                 Variables.powerMenu = false;
@@ -86,7 +113,6 @@ Rectangle {
             }
             else {
                 Variables.expandedState = false; 
-                
                 Variables.notchHidden = true;
                 hovertimer.stop();
 
@@ -94,20 +120,15 @@ Rectangle {
                 lockTransitionTimer.start();
             }
         }
-    }
 
-    Connections {
-        target: mprisWidget
-        ignoreUnknownSignals: true
-
-        function onActivePlayerChanged() {
-            if (Variables.lockScreen && Variables.lockScreenMpris) {
-                if (mprisWidget.activePlayer !== null) {
-                    Variables.expandedState = true;
-                    Variables.notchHidden = false;
-                } else {
+        function onPomodoroClockChanged() {
+            if (Variables.lockScreen) {
+                if (Variables.pomodoroClock) {
                     Variables.expandedState = false;
                     Variables.notchHidden = true;
+                } else if (Variables.lockScreenMpris && notchRoot.activePlayer !== null) {
+                    Variables.expandedState = true;
+                    Variables.notchHidden = false;
                 }
             }
         }
@@ -116,7 +137,7 @@ Rectangle {
     Shape {
         id: leftConcave
         
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height))) / notchRoot.scale
         
         visible: cornerSize > 0
 
@@ -124,7 +145,7 @@ Rectangle {
         height: cornerSize
         anchors.top: parent.top
         anchors.right: parent.left
-        anchors.topMargin: Variables.borderWidth * 4 / notchRoot.scale
+        anchors.topMargin: (Variables.borderWidth * 4) / notchRoot.scale
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -145,7 +166,7 @@ Rectangle {
     Shape {
         id: rightConcave
 
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height))) / notchRoot.scale
         
         visible: cornerSize > 0
         
@@ -153,7 +174,7 @@ Rectangle {
         height: cornerSize
         anchors.top: parent.top
         anchors.left: parent.right
-        anchors.topMargin: Variables.borderWidth * 4 / notchRoot.scale
+        anchors.topMargin: (Variables.borderWidth * 4) / notchRoot.scale
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -186,7 +207,7 @@ Rectangle {
         hoverEnabled: true
 
         onClicked: {
-            if (Variables.lockScreen) return; 
+            if (Variables.lockScreen) return;
             Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu && !Variables.notifWidget ? Variables.expandedState = true : Variables.expandedState = false
         }
         onEntered: {
@@ -219,76 +240,112 @@ Rectangle {
         }
     }
 
-    RowLayout {
-        id: notch
-
+    Rectangle {
+        id: clipContainer
+        
+        color: "transparent"
+        radius: Variables.radius
         clip: true
-
         anchors {
             fill: parent
-            leftMargin: Variables.rightMargin
-            rightMargin: Variables.rightMargin
-        } 
-
-        MprisWidget {
-            id: mprisWidget
-            visible: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD
         }
+        
+        RowLayout {
+            id: notch
 
-        ClockWidget {
-            id: clockWidget 
-            
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            spacing: Variables.spacing
 
-            visible: !(mprisWidget.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.brightnessOSD
-        }
+            anchors.centerIn: parent
 
-        NotificationWidget {
-            id: notificationWidget
-            daemon: notchRoot.notifServer
-            visible: Variables.notifWidget && !Variables.powerMenu && !Variables.lockScreen
-        }
+            Loader {
+                id: mprisWidgetLoader
 
-        Loader {
-            id: powerMenuLoader
-            active: Variables.powerMenu
-            visible: active
-            source: "../Widgets/PowerMenuWidget.qml"
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            focus: true
-        }
-
-        VisualizerWidget {
-            id: visualizerWidget 
-            activePlayer: mprisWidget.activePlayer
-            visible: !Variables.powerMenu && !Variables.expandedState && !Variables.notifWidget && !Variables.pomodoroClock && mprisWidget.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD
-        }
-
-        VolumeOSD {
-            id: volumeOsd
-
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            z: 10
-
-            opacity: Variables.volumeOSD ? 1.0 : 0.0
-            visible: Variables.volumeOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.brightnessOSD
-
-            Behavior on opacity {
-                NumberAnimation { duration: Variables.fadeAnimation }
+                Layout.preferredWidth: item ? item.implicitWidth : 0
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                visible: active
+                active: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD  && !Variables.notchHidden
+                sourceComponent: Component {
+                    MprisWidget {
+                        activePlayer: notchRoot.activePlayer
+                    }
+                }
             }
-        }
 
-        BrightnessOSD {
-            id: brightnessOSD
+            Loader {
+                id: clockWidgetLoader
 
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            z: 10
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                visible: active
+                active: !(notchRoot.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.brightnessOSD && !Variables.notchHidden
+                sourceComponent: Component {
+                    ClockWidget {
+                        activePlayer: notchRoot.activePlayer
+                    }
+                }
+            }
 
-            opacity: Variables.brightnessOSD ? 1.0 : 0.0
-            visible: Variables.brightnessOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD
+            Loader {
+                id: notificationWidgetLoader
 
-            Behavior on opacity {
-                NumberAnimation { duration: Variables.fadeAnimation }
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                visible: active
+                active: Variables.notifWidget && !Variables.powerMenu  && !Variables.notchHidden
+                sourceComponent: Component {
+                    NotificationWidget {
+                        daemon: notchRoot.notifServer
+                    }
+                }
+            }
+
+            Loader {
+                id: powerMenuLoader
+                active: Variables.powerMenu && !Variables.notchHidden
+                visible: active
+                source: "../Widgets/PowerMenuWidget.qml"
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                focus: true
+            }
+
+            Loader {
+                id: visualizerWidgetLoader
+
+                Layout.alignment: Qt.AlignVCenter
+                
+                visible: active
+                active: !Variables.powerMenu && !Variables.expandedState && !Variables.lockScreen && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD  && !Variables.notchHidden
+                sourceComponent: Component {
+                    VisualizerWidget {
+                        activePlayer: notchRoot.activePlayer
+                    }
+                }
+            }
+
+            VolumeOSD {
+                id: volumeOsd
+
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                z: 10
+
+                opacity: Variables.volumeOSD ? 1.0 : 0.0
+                visible: Variables.volumeOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.brightnessOSD && !Variables.notchHidden
+
+                Behavior on opacity {
+                    NumberAnimation { duration: Variables.fadeAnimation }
+                }
+            }
+
+            BrightnessOSD {
+                id: brightnessOSD
+
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                z: 10
+
+                opacity: Variables.brightnessOSD ? 1.0 : 0.0
+                visible: Variables.brightnessOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.notchHidden
+
+                Behavior on opacity {
+                    NumberAnimation { duration: Variables.fadeAnimation }
+                }
             }
         }
     }

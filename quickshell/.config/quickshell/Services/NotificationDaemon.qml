@@ -56,19 +56,14 @@ Item {
 
     function buildNotificationGroups(values) {
         var groups = []
+        var groupsByKey = {}
         var notifications = values.slice().reverse()
 
         for (var i = 0; i < notifications.length; i++) {
             var notification = notifications[i]
             var appName = notificationApp(notification)
-            var group = null
-
-            for (var j = 0; j < groups.length; j++) {
-                if (groups[j].key === appName.toLowerCase()) {
-                    group = groups[j]
-                    break
-                }
-            }
+            var key = "$" + appName.toLowerCase()
+            var group = groupsByKey[key] || null
 
             if (!group) {
                 group = {
@@ -76,6 +71,7 @@ Item {
                     appName: appName,
                     notifications: []
                 }
+                groupsByKey[key] = group
                 groups.push(group)
             }
 

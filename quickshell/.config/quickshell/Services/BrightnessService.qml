@@ -2,12 +2,14 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../"
 
 Item {
     id: root
     
     property real level: 0.0
     property real _maxLevel: 1.0
+    property real _pendingLevel: -1.0
 
     Process {
         id: maxProcess
@@ -42,25 +44,54 @@ Item {
         id: setProcess
         command: []
         running: false
+
+        onExited: {
+            if (root._pendingLevel >= 0)
+                setTimer.restart()
+        }
     }
 
     function setBrightness(percent) {
         let safePercent = Math.max(0.02, Math.min(1.0, percent))
-        let stringPercent = Math.round(safePercent * 100) + "%"
-        
-        setProcess.command = ["brightnessctl", "set", stringPercent]
-        setProcess.running = true
-        root.level = safePercent 
+        root._pendingLevel = safePercent
+        root.level = safePercent
+        setTimer.restart()
     }
 
     Timer {
-        interval: 2000
-        running: true
-        repeat: true
+        id: setTimer
+        interval: 40
+        repeat: false
         onTriggered: {
-            if (root._maxLevel > 1.0) {
-                currentProcess.running = true 
+            if (setProcess.running) {
+                setTimer.restart()
+                return
             }
+
+            if (root._pendingLevel < 0)
+                return
+
+            const pending = root._pendingLevel
+            root._pendingLevel = -1.0
+            setProcess.command = ["brightnessctl", "set", Math.round(pending * 100) + "%"]
+            setProcess.running = true
+        }
+    }
+
+    Timer {
+        interval: Variables.brightnessPoll
+        running: !Variables.lockScreen
+        repeat: true
+        onTriggered: if (root._maxLevel > 1.0 && !currentProcess.running)
+            currentProcess.running = true
+    }
+
+    Connections {
+        target: Variables
+
+        function onLockScreenChanged() {
+            if (!Variables.lockScreen && root._maxLevel > 1.0)
+                currentProcess.running = true
         }
     }
 }

@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import QtQuick.Effects
-import Quickshell.Io
+import "../Services"
 import "../"   
 import "../Modules"   
             
@@ -11,16 +11,9 @@ import "../Modules"
 RowLayout {
     id: mpris
 
-    property var activePlayer: {
-        let players = Mpris.players.values;
-        for (let i = 0; i < players.length; i++) {
-            let p = players[i];
-            if (p.identity.toLowerCase() === "spotify" || p.desktopEntry.toLowerCase() === "spotify") {
-                return p;
-            }
-        }
-        return null; 
-    }
+    Layout.preferredWidth: item ? item.implicitWidth : 0
+
+    property var activePlayer: null
 
     property var lyricLines: []
     property bool lyricsSynced: false
@@ -28,6 +21,7 @@ RowLayout {
     property string lyricsStatus: ""
     property int currentLyricIndex: -1
     property int lyricsRequestId: 0
+    property var lyricsCache: ({})
     property string lyricTrackKey: {
         const player = mpris.activePlayer
         return player ? `${player.trackArtist || ""}\u0000${player.trackTitle || ""}` : ""
@@ -48,15 +42,22 @@ RowLayout {
 
         const position = Number(mpris.activePlayer.position || 0)
         
-        for (let i = lyricLines.length - 1; i >= 0; i--) {
-            if (position >= lyricLines[i].time) {
-                if (currentLyricIndex !== i) {
-                    currentLyricIndex = i
-                }
-                return
+        let low = 0
+        let high = lyricLines.length - 1
+        let found = -1
+
+        while (low <= high) {
+            const middle = Math.floor((low + high) / 2)
+            if (position >= lyricLines[middle].time) {
+                found = middle
+                low = middle + 1
+            } else {
+                high = middle - 1
             }
         }
-        currentLyricIndex = -1
+
+        if (currentLyricIndex !== found)
+            currentLyricIndex = found
     }
 
     function parseLyrics(syncedLyrics, plainLyrics) {
@@ -101,12 +102,19 @@ RowLayout {
         const requestId = ++lyricsRequestId
         const artist = player ? String(player.trackArtist || "").trim() : ""
         const title = player ? String(player.trackTitle || "").trim() : ""
+        const cacheKey = `${artist}\u0000${title}`
 
-        if (!Variables.enableLyrics) return
+        if (!Variables.enableLyrics || !Variables.expandedState) return
 
         if (!artist || !title) {
             lyricsLoading = false
             resetLyrics("No lyrics available")
+            return
+        }
+
+        if (Object.prototype.hasOwnProperty.call(mpris.lyricsCache, cacheKey)) {
+            const cached = mpris.lyricsCache[cacheKey]
+            mpris.parseLyrics(cached.syncedLyrics, cached.plainLyrics)
             return
         }
 
@@ -126,6 +134,10 @@ RowLayout {
 
             try {
                 const response = JSON.parse(request.responseText)
+                mpris.lyricsCache[cacheKey] = {
+                    syncedLyrics: response.syncedLyrics || "",
+                    plainLyrics: response.plainLyrics || ""
+                }
                 parseLyrics(response.syncedLyrics, response.plainLyrics)
             } catch (error) {
                 resetLyrics("(╯°□°)╯︵ ┻━┻")
@@ -151,7 +163,7 @@ RowLayout {
     Timer {
         id: lyricsUpdateTimer
         interval: 250
-        running: Variables.enableLyrics && mpris.lyricsSynced && mpris.lyricLines.length > 0 && mpris.activePlayer !== null
+        running: Variables.enableLyrics && Variables.expandedState && mpris.lyricsSynced && mpris.lyricLines.length > 0 && mpris.activePlayer !== null
         repeat: true
         onTriggered: mpris.updateCurrentLyric()
     }
@@ -159,7 +171,7 @@ RowLayout {
     Timer {
         id: lyricsRetryTimer
         interval: 10000 
-        running: Variables.enableLyrics && mpris.activePlayer !== null && mpris.lyricLines.length === 0 && !mpris.lyricsLoading
+        running: Variables.enableLyrics && Variables.expandedState && mpris.activePlayer !== null && mpris.lyricLines.length === 0 && !mpris.lyricsLoading
         repeat: true
         
         onTriggered: {
@@ -175,17 +187,25 @@ RowLayout {
 
         function onTrackTitleChanged() { lyricsFetchTimer.restart() }
         function onTrackArtistChanged() { lyricsFetchTimer.restart() }
-        function onPositionChanged() { mpris.updateCurrentLyric() }
     }
 
-    visible: mpris.activePlayer !== null
+    Connections {
+        target: Variables
+
+        function onExpandedStateChanged() {
+            if (Variables.expandedState) {
+                lyricsFetchTimer.restart()
+                mpris.updateCurrentLyric()
+            }
+        }
+    }
 
     ClippingWrapperRectangle{
         id: musicIcon
 
         Layout.topMargin: -(Variables.topMargin)
-        Layout.preferredHeight: Variables.imgHeight
-        Layout.preferredWidth: Variables.imgWidth
+        Layout.preferredHeight: visible ? Variables.imgHeight : 0
+        Layout.preferredWidth: visible ? Variables.imgWidth : 0
         radius: Variables.imgRadius
 
         opacity: Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
@@ -204,18 +224,19 @@ RowLayout {
 
     }
 
-   Item {
-        id: expandedContainer
-        
-        visible: mpris.activePlayer !== null && Variables.expandedState
-        opacity: !Variables.expandedState ? 0.0 : 1.0
+    Loader {
+        id: expandedContainerLoader
 
-        Layout.fillWidth: true
-        Layout.preferredHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
+        active: mpris.activePlayer !== null && Variables.expandedState
+        Layout.preferredWidth: active && item ? item.implicitWidth : 0
+        Layout.preferredHeight: active && item ? item.implicitHeight : 0
 
-        Behavior on opacity {
-            NumberAnimation { duration: Variables.fadeAnimation }
-        }
+        sourceComponent: Component {
+            Item {
+                id: expandedContainer
+
+                implicitWidth: expandedContent.implicitWidth + (Variables.spacing * 4)
+                implicitHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
 
         Rectangle {
             anchors.fill: parent
@@ -352,41 +373,7 @@ RowLayout {
                     property real barScale: 0.3
                     property int minBarHeight: Variables.mprisVisualizerMinHeight
                     property int barCount: 30
-                    property var audioData: new Array(barCount).fill(0)
-
-                    Process {
-                        id: cavaProc
-                        command: ["sh", "-c", "cava -p ~/.config/cava/config_quickshell"]
-                        running: mpris.activePlayer !== null && mpris.activePlayer.isPlaying
-                        
-                        stdout: SplitParser {
-                            onRead: data => {
-                                let val = data.trim()
-                                if (val === "") return
-                                let parts = val.split(";")
-                                
-                                if (parts.length >= visualizerProgressContainer.barCount) {
-                                    let newData = []
-                                    for (let i = 0; i < visualizerProgressContainer.barCount; i++) {
-                                        newData.push((parseInt(parts[i]) || 0) / 300.0)
-                                    }
-                                    visualizerProgressContainer.audioData = newData
-                                }
-                            }
-                        }
-                    }
-
-                    Connections {
-                        target: mpris.activePlayer
-                        ignoreUnknownSignals: true
-                        function onIsPlayingChanged() {
-                            if (!mpris.activePlayer || !mpris.activePlayer.isPlaying) {
-                                Qt.callLater(function() {
-                                    visualizerProgressContainer.audioData = new Array(visualizerProgressContainer.barCount).fill(0)
-                                })
-                            }
-                        }
-                    }
+                    readonly property var audioData: AudioVisualizerService.audioData
 
                     Column {
                         id: bgVisualizer
@@ -571,7 +558,7 @@ RowLayout {
             ColumnLayout {
                 id: lyricsColumn
 
-                Layout.preferredWidth: Variables.musicArtSize
+                Layout.preferredWidth: visible ? Variables.musicArtSize : 0
                 Layout.fillHeight: true
                 Layout.alignment: Qt.AlignVCenter
                 spacing: Variables.spacing
@@ -636,6 +623,8 @@ RowLayout {
                             }
                         }
                     }
+                }
+            }
                 }
             }
         }

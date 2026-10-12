@@ -21,6 +21,57 @@ Rectangle {
     property string cpuUsage: "0%"
     property string ramUsage: "0%"
     property string diskUsage: "0 GB"
+    property var previousCpu: null
+
+    function refresh() {
+        cpuFile.reload()
+        memoryFile.reload()
+        if (system.previousCpu === null)
+            cpuWarmupTimer.restart()
+    }
+
+    function refreshDisk() {
+        if (!diskProc.running)
+            diskProc.running = true
+    }
+
+    function updateCpu() {
+        const lines = String(cpuFile.text() || "").split("\n")
+        let cpuLine = ""
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].indexOf("cpu ") === 0) {
+                cpuLine = lines[i]
+                break
+            }
+        }
+
+        const fields = cpuLine.trim().split(/\s+/).slice(1).map(Number)
+        if (fields.length < 4 || fields.some(value => !isFinite(value)))
+            return
+
+        const idle = fields[3]
+        const total = fields[0] + fields[1] + fields[2] + fields[3]
+        if (system.previousCpu !== null) {
+            const idleDelta = idle - system.previousCpu.idle
+            const totalDelta = total - system.previousCpu.total
+            if (totalDelta > 0)
+                system.cpuUsage = Math.round((totalDelta - idleDelta) * 100 / totalDelta) + "%"
+        }
+        system.previousCpu = { idle: idle, total: total }
+    }
+
+    function updateMemory() {
+        const text = String(memoryFile.text() || "")
+        const totalMatch = text.match(/^MemTotal:\s+(\d+)/m)
+        const availableMatch = text.match(/^MemAvailable:\s+(\d+)/m)
+        if (!totalMatch || !availableMatch)
+            return
+
+        const total = Number(totalMatch[1])
+        const available = Number(availableMatch[1])
+        if (total > 0)
+            system.ramUsage = Math.round((1 - available / total) * 100) + "%"
+    }
 
     
     Behavior on implicitWidth {
@@ -32,28 +83,38 @@ Rectangle {
         NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
     }
 
+    FileView {
+        id: cpuFile
+        path: "/proc/stat"
+        watchChanges: false
+        onTextChanged: system.updateCpu()
+    }
+
+    FileView {
+        id: memoryFile
+        path: "/proc/meminfo"
+        watchChanges: false
+        onTextChanged: system.updateMemory()
+    }
+
     Process {
-        id: sysProc
-            command: [
-            "sh", "-c",
-            "ram=$(awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END {printf \"%d%%\", (1-a/t)*100}' /proc/meminfo); " +
-            "read -r _ u1 n1 s1 i1 _ < /proc/stat; sleep 0.2; read -r _ u2 n2 s2 i2 _ < /proc/stat; " +
-            "idle=$((i2 - i1)); total=$(( (u2+n2+s2+i2) - (u1+n1+s1+i1) )); " +
-            "cpu=$(( (total - idle) * 100 / total )); " +
-            "disk=$(df --output=avail -h / | tail -n 1 | tr -dc '0-9.'); " +
-            "echo \"$cpu% $ram ${disk} GB\""
-        ]
+        id: diskProc
+        command: ["df", "--output=avail", "-h", "/"]
 
         stdout: SplitParser {
             onRead: data => {
-                let parts = data.trim().split(" ");
-                if (parts.length === 4) {
-                    system.cpuUsage = parts[0];
-                    system.ramUsage = parts[1];
-                    system.diskUsage = parts[2] + " " + parts[3];
-                }
+                const value = String(data).trim().replace(/[^0-9.]/g, "")
+                if (value !== "")
+                    system.diskUsage = value + " GB"
             }
         }
+    }
+
+    Timer {
+        id: cpuWarmupTimer
+        interval: 250
+        repeat: false
+        onTriggered: system.refresh()
     }
 
     Shape {
@@ -114,12 +175,34 @@ Rectangle {
 
     Timer {
         interval: Variables.systemPoll
-        running: true
+        running: !Variables.systemHidden && !Variables.lockScreen
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            if (!sysProc.running) {
-                sysProc.running = true;
+        onTriggered: system.refresh()
+    }
+
+    Timer {
+        interval: 60000
+        running: !Variables.systemHidden && !Variables.lockScreen
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: system.refreshDisk()
+    }
+
+    Connections {
+        target: Variables
+
+        function onSystemHiddenChanged() {
+            if (!Variables.systemHidden) {
+                system.refresh()
+                system.refreshDisk()
+            }
+        }
+
+        function onLockScreenChanged() {
+            if (!Variables.lockScreen && !Variables.systemHidden) {
+                system.refresh()
+                system.refreshDisk()
             }
         }
     }

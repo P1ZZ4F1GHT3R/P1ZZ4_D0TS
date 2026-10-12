@@ -129,6 +129,7 @@ Rectangle {
         }
         spacing: Variables.spacing
         clip: true
+        cacheBuffer: 0
 
         model: root.daemon ? root.daemon.groupedNotifications : []
 
@@ -141,7 +142,13 @@ Rectangle {
             property bool isExpanded: root.expandedGroups.indexOf(group.key) !== -1
 
             Repeater {
-                model: groupColumn.group.notifications
+                // A collapsed stack only needs its top card; the remaining
+                // notifications become delegates when the group is expanded.
+                model: groupColumn.isExpanded
+                    ? groupColumn.group.notifications
+                    : (groupColumn.group.notifications.length > 0
+                        ? [groupColumn.group.notifications[0]]
+                        : [])
 
                 delegate: Item {
                     id: delegateWrapper

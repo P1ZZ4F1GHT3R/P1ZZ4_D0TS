@@ -6,6 +6,7 @@ Text {
 
     property bool showSeconds: true
     property string format: "HH:mm"
+    property var activePlayer: null
 
     function formatPomodoro(seconds) {
         let m = Math.floor(seconds / 60)
@@ -26,7 +27,7 @@ Text {
 
     font.pixelSize: Variables.fontSize
     color: Variables.textColor
-    opacity: mprisWidget.activePlayer && Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
+    opacity: clockItem.activePlayer && Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
 
     Behavior on opacity {
         NumberAnimation { duration: Variables.fadeAnimation }

@@ -27,23 +27,37 @@ Rectangle {
         FileView {
             id: uptimeFile
             path: "/proc/uptime"
+            watchChanges: false
         }
 
         Timer {
-            interval: 1000
-            running: true
+            interval: uptimeChecker.totalSeconds < 3600 ? 1000 : 60000
+            running: Variables.controlCenter
             repeat: true
             onTriggered: uptimeFile.reload()
+        }
+
+        Connections {
+            target: Variables
+
+            function onControlCenterChanged() {
+                if (Variables.controlCenter)
+                    uptimeFile.reload()
+            }
+        }
+
+        readonly property int totalSeconds: {
+            const raw = uptimeFile.text()
+            return raw ? Math.floor(parseFloat(raw.split(" ")[0])) : 0
         }
 
         readonly property string uptimeText: {
             if (!uptimeFile.text()) return "Loading..."
             
-            const totalSeconds = Math.floor(parseFloat(uptimeFile.text().split(" ")[0]))
-            const days = Math.floor(totalSeconds / 86400)
-            const hours = Math.floor((totalSeconds % 86400) / 3600)
-            const minutes = Math.floor((totalSeconds % 3600) / 60)
-            const seconds = Math.floor(totalSeconds % 60)
+            const days = Math.floor(uptimeChecker.totalSeconds / 86400)
+            const hours = Math.floor((uptimeChecker.totalSeconds % 86400) / 3600)
+            const minutes = Math.floor((uptimeChecker.totalSeconds % 3600) / 60)
+            const seconds = Math.floor(uptimeChecker.totalSeconds % 60)
 
             if (days > 0) {
                 return `${days} day${days === 1 ? '' : 's'}, ${hours} hr${hours === 1 ? '' : 's'}`

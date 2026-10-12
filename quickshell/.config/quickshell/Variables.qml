@@ -32,7 +32,9 @@ QtObject {
     readonly property int circleWidth: circleHeight
     readonly property int circleRadius: circleHeight / 2
     readonly property int borderWidth: scaled(2)
-    readonly property int systemPoll: 2000
+    readonly property int systemPoll: 5000
+    readonly property int profilePoll: 30000
+    readonly property int brightnessPoll: 2000
     readonly property int imgHeight: scaled(24)
     readonly property int imgWidth: imgHeight
     readonly property int imgRadius: scaled(8)
