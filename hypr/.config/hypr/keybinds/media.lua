@@ -12,6 +12,5 @@ hl.bind("XF86AudioNext", hl.dsp.exec_cmd(volumeBrightness .. " next_track"), { l
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(volumeBrightness .. " prev_track"), { locked = true })
 
 -- Tools
-hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("quickshell -c QuickSnip -n"))
-hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("~/.config/scripts/utils/screenshot.sh"))
+hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("qs ipc call capture toggle"))
 

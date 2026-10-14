@@ -72,7 +72,7 @@ QtObject {
     readonly property int animationDurationUI: 450
     readonly property int hoverTimer: 250
     readonly property int barRadius: scaled(4)
-    readonly property int notifTimer: 3000
+    readonly property int notifTimer: 2000
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
     readonly property int updateNotifRunning: 900000
@@ -97,7 +97,7 @@ QtObject {
     readonly property color buttonColor: Colors.color9
     readonly property color lockscreenColor: Colors.color11
     readonly property color backgroundColorUI: Colors.color8
-    readonly property color shadowColor: "#000000"
+    readonly property color shadowColor: '#000000'
     
     readonly property var oneZero: ["1", "0"]
     readonly property var fullRandom: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
@@ -136,6 +136,10 @@ QtObject {
     property bool volumeOSD: false
     property bool brightnessOSD: false
     property bool osdPreExpanded: false
+    property bool toolBar: false
+    property bool snippingMode: false
+    property string captureAction: "screenshot"
+    property bool isRecording: false
 
 
 

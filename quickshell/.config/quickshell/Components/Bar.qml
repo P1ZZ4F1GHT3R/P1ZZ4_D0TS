@@ -59,7 +59,7 @@ Scope {
         onScreenChanged: Variables.monitor = screen
 
         HyprlandFocusGrab {
-            active: Variables.powerMenu || Variables.wallpaperPicker
+            active: Variables.powerMenu || Variables.wallpaperPicker || Variables.toolBar
             windows: [ unifiedPanel ] 
         }
 

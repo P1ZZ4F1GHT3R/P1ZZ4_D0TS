@@ -25,7 +25,7 @@ fontMono = "Ligma SFMono Nerd Font"
 gapsIn = 5
 gapsOut = 15
 borderSize = 2
-rounding = 22
+rounding = 16
 masterRatio = 0.6
 scrollingRatio = 0.6
 

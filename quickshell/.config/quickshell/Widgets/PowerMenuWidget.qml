@@ -28,6 +28,7 @@ RowLayout {
 
     Keys.onReturnPressed: triggerSelected()
     Keys.onEnterPressed: triggerSelected()
+    Keys.onEscapePressed: Variables.powerMenu = false
 
     function triggerSelected() {
         let currentAction = repeater.model[selectedIndex].action

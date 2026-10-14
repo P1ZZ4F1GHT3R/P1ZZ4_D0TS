@@ -228,7 +228,7 @@ RowLayout {
         id: expandedContainerLoader
 
         active: mpris.activePlayer !== null && Variables.expandedState
-        Layout.preferredWidth: active && item ? item.implicitWidth : 0
+        Layout.preferredWidth: active && item ? item.implicitWidth: 0
         Layout.preferredHeight: active && item ? item.implicitHeight : 0
 
         sourceComponent: Component {
@@ -237,6 +237,7 @@ RowLayout {
 
                 implicitWidth: expandedContent.implicitWidth + (Variables.spacing * 4)
                 implicitHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
+
 
         Rectangle {
             anchors.fill: parent

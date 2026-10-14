@@ -189,6 +189,7 @@ Rectangle {
 
         Keys.onLeftPressed: decrementCurrentIndex()
         Keys.onRightPressed: incrementCurrentIndex()
+        Keys.onEscapePressed: Variables.wallpaperPicker = false
 
         onCurrentItemChanged: root.previewCurrentWallpaper()
         
