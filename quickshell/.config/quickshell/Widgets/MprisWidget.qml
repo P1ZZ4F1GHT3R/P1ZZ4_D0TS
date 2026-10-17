@@ -302,7 +302,7 @@ RowLayout {
             ColumnLayout {
                 id: controlsColumn
 
-                Layout.fillWidth: true
+                Layout.preferredWidth: Variables.width * 5
                 Layout.alignment: Qt.AlignVCenter
                 spacing: Variables.spacing
 
@@ -589,10 +589,13 @@ RowLayout {
                         clip: true
                         model: mpris.lyricLines
                         currentIndex: mpris.currentLyricIndex
-                        preferredHighlightBegin: height / 2 - Variables.fontSize
-                        preferredHighlightEnd: height / 2 + Variables.fontSize
+                        preferredHighlightBegin: height / 2 - (currentItem ? currentItem.height / 2 : 0)
+                        preferredHighlightEnd: height / 2 + (currentItem ? currentItem.height / 2 : 0)
                         highlightRangeMode: ListView.StrictlyEnforceRange
                         spacing: Variables.spacing / 2
+
+                        header: Item { width: lyricsList.width; height: lyricsList.height / 2 }
+                        footer: Item { width: lyricsList.width; height: lyricsList.height / 2 }
 
                         onVisibleChanged: {
                             if (visible && mpris.currentLyricIndex >= 0) {
