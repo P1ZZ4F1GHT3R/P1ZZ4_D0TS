@@ -49,7 +49,7 @@ chmod +x ./install.sh
 ./install.sh
 ```
 
-The opening menu includes installation, update, restore, removal, and status actions. Choose **Install or reinstall dotfiles** to run the full installer. It will create a backup of `~/.config` before applying the stow-managed symlinks.
+The opening menu includes installation, update, restore, removal, and status actions. It supports arrow keys or `j`/`k`, plus Enter/Space to select and `q` to return. Choose **Install or reinstall dotfiles** to review the package plan, then run the full installer. It will create a backup of `~/.config` before applying the stow-managed symlinks.
 
 ### Managing an existing installation
 

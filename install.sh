@@ -13,6 +13,11 @@ MAGENTA="\033[1;35m"
 CYAN="\033[1;36m"
 WHITE="\033[1;37m"
 
+UI_TERMINAL=false
+if [[ -t 0 && -t 1 ]]; then
+    UI_TERMINAL=true
+fi
+
 info()    { echo -e "${CYAN}  •${RESET} $*"; }
 success() { echo -e "${GREEN}  ✓${RESET} $*"; }
 warn()    { echo -e "${YELLOW}  ⚠${RESET}  $*"; }
@@ -24,17 +29,125 @@ header() {
     echo -e "${BOLD}${MAGENTA}══════════════════════════════════════${RESET}"
 }
 
-confirm() {
-    local question="$1" default="${2:-n}" prompt reply
-    if [[ "$default" == y ]]; then prompt="${BOLD}[Y/n]${RESET}"; else prompt="${BOLD}[y/N]${RESET}"; fi
+# stdout is later mirrored through tee for the log, which turns its file
+# descriptor into a pipe.  Capture the original terminal state before that
+# redirection so interactive menus remain available during installation.
+ui_is_interactive() { [[ "$UI_TERMINAL" == true ]]; }
+
+restore_terminal() {
+    printf '\e[?25h' 2>/dev/null || true
+    stty echo icanon 2>/dev/null || true
+}
+
+# Read one key and normalize terminal escape sequences.  This keeps the
+# installer dependency-free while providing the same arrow-key interaction as
+# a full-screen TUI.
+read_key() {
+    local key="" rest=""
+    IFS= read -rsn1 key 2>/dev/null
+    if [[ "$key" == $'\x1b' ]]; then
+        read -rsn2 -t 0.05 rest 2>/dev/null || true
+        case "$rest" in
+            '[A'|OA) printf 'UP\n' ;;
+            '[B'|OB) printf 'DOWN\n' ;;
+            '[C'|OC) printf 'RIGHT\n' ;;
+            '[D'|OD) printf 'LEFT\n' ;;
+            *) printf 'ESC\n' ;;
+        esac
+    elif [[ -z "$key" || "$key" == $'\n' || "$key" == $'\r' ]]; then
+        printf 'ENTER\n'
+    elif [[ "$key" == ' ' ]]; then
+        printf 'SPACE\n'
+    else
+        printf '%s\n' "$key"
+    fi
+}
+
+# Sets MENU_INDEX (zero-based) when an item is chosen.  Number keys, arrows,
+# j/k, Enter, and Space all work; Esc/q cancels with a non-zero return.
+ui_menu() {
+    local title="$1" description="$2"
+    shift 2
+    local -a items=("$@")
+    local selected=0 key item_index
+
+    ui_is_interactive || return 1
+    printf '\e[?25l'
     while true; do
-        echo -en "\n${YELLOW}  ?${RESET}  $question $prompt: "
-        read -r reply
-        reply="${reply:-$default}"
-        case "$reply" in
-            y|Y|yes|YES) return 0 ;;
-            n|N|no|NO) return 1 ;;
-            *) echo -e "${RED}  Please answer y or n.${RESET}" ;;
+        clear
+        printf '%b\n' "${BOLD}${MAGENTA}══════════════════════════════════════════════════════════════${RESET}"
+        printf '%b\n' "${BOLD}${MAGENTA}  $title${RESET}"
+        printf '%b\n\n' "${BOLD}${MAGENTA}══════════════════════════════════════════════════════════════${RESET}"
+        [[ -n "$description" ]] && printf '%b\n\n' "${DIM}  $description${RESET}"
+        printf '%b\n' "${DIM}  ↑/↓ or j/k to move • Enter/Space to select • q to go back${RESET}"
+        printf '\n'
+        for item_index in "${!items[@]}"; do
+            if (( item_index == selected )); then
+                printf '%b\n' "${BOLD}${CYAN}  ▸ ${items[$item_index]}${RESET}"
+            else
+                printf '    %s\n' "${items[$item_index]}"
+            fi
+        done
+
+        key="$(read_key)"
+        case "$key" in
+            UP|k|K) selected=$(( (selected + ${#items[@]} - 1) % ${#items[@]} )) ;;
+            DOWN|j|J) selected=$(( (selected + 1) % ${#items[@]} )) ;;
+            [1-9])
+                item_index=$((key - 1))
+                if (( item_index < ${#items[@]} )); then
+                    MENU_INDEX="$item_index"
+                    restore_terminal
+                    return 0
+                fi
+                ;;
+            ENTER|SPACE)
+                MENU_INDEX="$selected"
+                restore_terminal
+                return 0
+                ;;
+            ESC|q|Q)
+                restore_terminal
+                return 1
+                ;;
+        esac
+    done
+}
+
+confirm() {
+    local question="$1" default="${2:-n}" reply key selected=1
+    [[ "$default" == y ]] && selected=0
+
+    # Keep piped/non-interactive use compatible with the original y/n prompt.
+    if ! ui_is_interactive; then
+        local prompt
+        [[ "$default" == y ]] && prompt="${BOLD}[Y/n]${RESET}" || prompt="${BOLD}[y/N]${RESET}"
+        while true; do
+            echo -en "\n${YELLOW}  ?${RESET}  $question $prompt: "
+            read -r reply
+            reply="${reply:-$default}"
+            case "$reply" in
+                y|Y|yes|YES) return 0 ;;
+                n|N|no|NO) return 1 ;;
+                *) echo -e "${RED}  Please answer y or n.${RESET}" ;;
+            esac
+        done
+    fi
+
+    printf '\n%b\n' "${YELLOW}  ?${RESET}  $question"
+    printf '\e[?25l'
+    while true; do
+        if (( selected == 0 )); then
+            printf '\r\033[K    %b  %s' "${BOLD}${GREEN}[ Yes ]${RESET}" "${DIM}  No ${RESET}"
+        else
+            printf '\r\033[K    %s  %b' "${DIM}  Yes ${RESET}" "${BOLD}${GREEN}[ No ]${RESET}"
+        fi
+        key="$(read_key)"
+        case "$key" in
+            LEFT|UP|h|H|k|K|y|Y) selected=0 ;;
+            RIGHT|DOWN|l|L|j|J|n|N) selected=1 ;;
+            ENTER|SPACE) restore_terminal; printf '\n'; (( selected == 0 )) && return 0 || return 1 ;;
+            ESC|q|Q) restore_terminal; printf '\n'; return 1 ;;
         esac
     done
 }
@@ -57,11 +170,29 @@ FAILED_PACKAGES=()
 FAILED_STEPS=()
 TEMP_DIRS=()
 
+# Defined once so the installer dashboard can show the exact plan before any
+# system change is made.  The installation flow below uses these same arrays.
+BASE_PACKAGES=(
+    git base-devel stow rsync curl wget tar ripgrep pacman-contrib
+    sassc gtk-engine-murrine gnome-themes-extra
+)
+PACMAN_PACKAGES=(
+    bash zsh thunar fastfetch yazi btop ghostty awww vscodium
+    sddm python python-pip zen-browser quickshell qt6ct noto-fonts
+    imagemagick hyprpm nwg-displays nwg-look brightnessctl power-profiles-daemon
+    ttf-dejavu-nerd fzf pkgfile
+)
+AUR_PACKAGES=(
+    vicinae wallust sunsetr ttf-material-symbols-variable-git
+    waybound pipes-rs papirus-icon-theme quicksnip-git
+)
+
 cleanup_temp_dirs() {
     local temp_dir
     for temp_dir in "${TEMP_DIRS[@]}"; do
         [[ -d "$temp_dir" ]] && rm -rf -- "$temp_dir"
     done
+    restore_terminal
 }
 trap cleanup_temp_dirs EXIT
 
@@ -86,9 +217,10 @@ run_step() {
 }
 
 install_pacman_packages() {
-    local package
+    local package current=0 total=$#
     for package in "$@"; do
-        step "Installing pacman package: $package"
+        ((current += 1))
+        step "[$current/$total] pacman • $package"
         if sudo pacman -S --needed --noconfirm "$package"; then
             success "$package installed or already present"
         else
@@ -99,9 +231,10 @@ install_pacman_packages() {
 }
 
 install_yay_packages() {
-    local package
+    local package current=0 total=$#
     for package in "$@"; do
-        step "Installing AUR package: $package"
+        ((current += 1))
+        step "[$current/$total] AUR • $package"
         if yay -S --needed --noconfirm "$package"; then
             success "$package installed or already present"
         else
@@ -129,6 +262,90 @@ show_failure_summary() {
         warn "The following non-package steps failed or were incomplete:"
         printf '  %s\n' "${FAILED_STEPS[@]}"
     fi
+}
+
+draw_install_dashboard() {
+    local os_name cpu_name gpu_name
+    os_name="$(. /etc/os-release 2>/dev/null && printf '%s' "${PRETTY_NAME:-Unknown Linux}")"
+    cpu_name="$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | xargs || true)"
+    gpu_name="$(lspci 2>/dev/null | sed -nE '/VGA|3D|Display/{s/.*: //;p;q}' || true)"
+    [[ -n "$cpu_name" ]] || cpu_name="Unknown CPU"
+    [[ -n "$gpu_name" ]] || gpu_name="Unknown GPU"
+
+    clear
+    printf '%b\n' "${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════╗${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║                       P1ZZ4_D0TS                              ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║                 Hyprland dotfiles installer                   ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
+    printf '\n'
+    printf '  %b %-25s %b %s\n' "${BOLD}User:${RESET}" "$INSTALL_USER" "${BOLD}OS:${RESET}" "$os_name"
+    printf '  %b %-25s %b %s\n' "${BOLD}CPU:${RESET}" "$cpu_name" "${BOLD}GPU:${RESET}" "$gpu_name"
+    printf '  %b %s\n\n' "${BOLD}Install log:${RESET}" "$INSTALL_LOG"
+}
+
+show_package_group() {
+    local group_name="$1"
+    shift
+    local package installed_mark
+    printf '%b\n' "${BOLD}${BLUE}  $group_name${RESET}"
+    for package in "$@"; do
+        if pacman -Q "$package" >/dev/null 2>&1; then
+            installed_mark="${GREEN}✓${RESET}"
+        else
+            installed_mark="${DIM}○${RESET}"
+        fi
+        printf '    %b %s\n' "$installed_mark" "$package"
+    done
+    printf '\n'
+}
+
+show_package_plan() {
+    draw_install_dashboard
+    printf '%b\n' "${BOLD}${MAGENTA}  Package plan${RESET}"
+    printf '%b\n\n' "${DIM}  ✓ installed already • ○ will be installed when available${RESET}"
+    show_package_group "Base tools (${#BASE_PACKAGES[@]})" "${BASE_PACKAGES[@]}"
+    show_package_group "Official packages (${#PACMAN_PACKAGES[@]})" "${PACMAN_PACKAGES[@]}"
+    show_package_group "AUR packages (${#AUR_PACKAGES[@]})" "${AUR_PACKAGES[@]}"
+    printf '%b\n' "${BOLD}${BLUE}  Additional actions${RESET}"
+    printf '%s\n' \
+        '    • Oh My Zsh and zsh-autosuggestions' \
+        '    • VSCodium Wallust extension and Hyprland plugins' \
+        '    • Colloid GTK themes, Vimix cursor, PAM/SDDM setup' \
+        '    • ~/.config backup, username patching, and dotfile stowing'
+    printf '\n%b' "${DIM}  No changes have been made. Press any key to return.${RESET}"
+    if ui_is_interactive; then
+        read_key >/dev/null
+    else
+        read -r _ || true
+    fi
+}
+
+run_install_wizard() {
+    # Preserve the original prompt-driven flow for piped sessions and other
+    # terminals that cannot provide single-key input.
+    if ! ui_is_interactive; then
+        header "Installation plan"
+        info "Base tools: ${#BASE_PACKAGES[@]} • official packages: ${#PACMAN_PACKAGES[@]} • AUR packages: ${#AUR_PACKAGES[@]}"
+        info "Run from an interactive terminal to browse the full package dashboard."
+        confirm "Ready to begin?" y
+        return $?
+    fi
+
+    while true; do
+        if ! ui_menu \
+            "P1ZZ4_D0TS installation" \
+            "Review exactly what will run before the installer changes your system." \
+            "Review package plan" \
+            "Begin installation" \
+            "Cancel and return"; then
+            return 1
+        fi
+        case "$MENU_INDEX" in
+            0) show_package_plan ;;
+            1) return 0 ;;
+            2) return 1 ;;
+        esac
+    done
 }
 
 install_dotfiles() {
@@ -184,19 +401,14 @@ if [[ "$EUID" -eq 0 ]]; then
 fi
 success "Running as regular user: ${WHITE}${INSTALL_USER}${RESET}"
 
-echo
-info "This script will:"
-echo -e "  ${DIM}  1. Update the system with pacman, yay, and hyprpm where available${RESET}"
-echo -e "  ${DIM}  2. Install base tools, official packages, and AUR packages${RESET}"
-echo -e "  ${DIM}  3. Install Hyprland plugins, Colloid Light/Dark, Vimix, and VSCodium theming${RESET}"
-echo -e "  ${DIM}  4. Set up Oh My Zsh, zsh autosuggestions, and the default shell${RESET}"
-echo -e "  ${DIM}  5. Create standard user directories and install PAM/SDDM configuration${RESET}"
-echo -e "  ${DIM}  6. Back up ~/.config, patch local usernames, and stow the dotfiles${RESET}"
-
-if ! confirm "Ready to begin?" y; then
+if ! run_install_wizard; then
     info "Aborted. Nothing was changed."
-    exit 0
+    return 0
 fi
+
+draw_install_dashboard
+header "Installation starting"
+info "Plan approved. Actions and package progress are shown below."
 
 header "System update"
 if confirm "Update the system now? (recommended)" y; then
@@ -240,10 +452,6 @@ else
 fi
 
 header "Base tools"
-BASE_PACKAGES=(
-    git base-devel stow rsync curl wget tar ripgrep pacman-contrib
-    sassc gtk-engine-murrine gnome-themes-extra
-)
 step "The following base tools will be installed:"
 printf '    %s\n' "${BASE_PACKAGES[@]}"
 install_pacman_packages "${BASE_PACKAGES[@]}"
@@ -273,12 +481,6 @@ else
 fi
 
 header "Official packages (pacman)"
-PACMAN_PACKAGES=(
-    bash zsh thunar fastfetch yazi btop ghostty awww vscodium
-    sddm python python-pip zen-browser quickshell qt6ct noto-fonts
-    imagemagick hyprpm nwg-displays nwg-look brightnessctl power-profiles-daemon
-    ttf-dejavu-nerd fzf pkgfile
-)
 step "The following official packages will be installed:"
 printf '    %s\n' "${PACMAN_PACKAGES[@]}"
 install_pacman_packages "${PACMAN_PACKAGES[@]}"
@@ -341,10 +543,6 @@ else
 fi
 
 header "AUR packages (yay)"
-AUR_PACKAGES=(
-    vicinae wallust sunsetr ttf-material-symbols-variable-git
-    waybound pipes-rs papirus-icon-theme quicksnip-git
-)
 if command -v yay >/dev/null 2>&1; then
     step "The following AUR packages will be installed:"
     printf '    %s\n' "${AUR_PACKAGES[@]}"
@@ -842,6 +1040,26 @@ manager_preflight() {
 run_manager_menu() {
     manager_preflight || return 1
     while true; do
+        if ui_is_interactive; then
+            if ! ui_menu \
+                "P1ZZ4_D0TS manager" \
+                "Update the clone, restore a saved configuration, or safely remove managed links." \
+                "Update dotfiles" \
+                "Restore a backup" \
+                "Delete dotfiles" \
+                "Show status" \
+                "Back"; then
+                return 0
+            fi
+            case "$MENU_INDEX" in
+                0) update_dotfiles ;;
+                1) restore_backup ;;
+                2) delete_dotfiles ;;
+                3) show_status ;;
+                4) return 0 ;;
+            esac
+            continue
+        fi
         echo
         info "What would you like to manage?"
         select option in "Update dotfiles" "Restore a backup" "Delete dotfiles" "Show status" "Back"; do
@@ -874,7 +1092,30 @@ EOF
 }
 
 run_main_menu() {
+    local menu_state="No completed installation state recorded."
     while true; do
+        if ui_is_interactive; then
+            if [[ -r "$STATE_FILE" ]]; then
+                menu_state="$(sed -nE 's/^RESULT="(.*)"$/Last installation: \1/p' "$STATE_FILE")"
+            fi
+            if ! ui_menu \
+                "P1ZZ4_D0TS" \
+                "$menu_state  •  Use arrow keys or j/k, then press Enter." \
+                "Install or reinstall dotfiles" \
+                "Manage existing installation" \
+                "Show status" \
+                "Exit"; then
+                info "Goodbye."
+                return 0
+            fi
+            case "$MENU_INDEX" in
+                0) install_dotfiles; return $? ;;
+                1) run_manager_menu ;;
+                2) show_status; read -rsn1 -p "Press any key to return..." ;;
+                3) info "Goodbye."; return 0 ;;
+            esac
+            continue
+        fi
         draw_main_banner
         show_status --no-clear
         info "Choose an action:"
