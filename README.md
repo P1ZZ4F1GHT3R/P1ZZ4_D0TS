@@ -43,20 +43,20 @@ git clone https://github.com/P1ZZ4F1GHT3R/P1ZZ4_D0TS.git
 cd P1ZZ4_D0TS
 ```
 
-3. Make the installer executable and run it:
+3. Make the unified installer/manager executable and run it:
 ```bash
 chmod +x ./install.sh
 ./install.sh
 ```
 
-The script will create a backup of `~/.config` before applying the stow-managed symlinks.
+The opening menu includes installation, update, restore, removal, and status actions. Choose **Install or reinstall dotfiles** to run the full installer. It will create a backup of `~/.config` before applying the stow-managed symlinks.
 
 ### Managing an existing installation
 
-The installer marks the manager executable. Run it from the repository (or by its full path):
+Use the same script from the repository (or by its full path):
 
 ```bash
-./manager.sh
+./install.sh manage
 ```
 
 The manager can:
@@ -68,9 +68,19 @@ The manager can:
 
 It will not pull while the local clone has uncommitted changes.
 
+Useful direct commands are:
+
+```bash
+./install.sh install  # full installation
+./install.sh update   # system/repository update and re-stow
+./install.sh restore  # restore a saved ~/.config backup
+./install.sh remove   # remove only managed symlinks
+./install.sh status   # show install, repository, and backup state
+```
+
 ## Uninstallation / Restore
 
-Use `./manager.sh` and select **Delete dotfiles**. It removes only the symlinks managed by GNU Stow and keeps the repository itself. It then offers to restore one of the dated backups from `~/.dotfiles-backup`.
+Run `./install.sh remove` or open `./install.sh manage` and select **Delete dotfiles**. It removes only the symlinks managed by GNU Stow and keeps the repository itself. It then offers to restore one of the dated backups from `~/.dotfiles-backup`.
 
 ## Customization
 

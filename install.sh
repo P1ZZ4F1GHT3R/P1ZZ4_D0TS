@@ -131,6 +131,7 @@ show_failure_summary() {
     fi
 }
 
+install_dotfiles() {
 exec > >(tee -a "$INSTALL_LOG") 2>&1
 
 clear
@@ -535,11 +536,10 @@ if [[ -d "$SCRIPTS_DIR" ]]; then
 else
     warn "Scripts directory not found at $SCRIPTS_DIR"
 fi
-if [[ -f "$REPO_ROOT/manager.sh" ]]; then
-    chmod +x "$REPO_ROOT/manager.sh"
-    success "manager.sh marked executable"
+if chmod +x "$REPO_ROOT/install.sh"; then
+    success "install.sh marked executable"
 else
-    warn "manager.sh not found at $REPO_ROOT/manager.sh"
+    warn "Could not mark install.sh executable"
 fi
 
 header "Stowing dotfiles"
@@ -571,6 +571,10 @@ else
 fi
 echo -e "${DIM}  Full log saved to: $INSTALL_LOG${RESET}"
 
+# Record the result before offering a reboot; a successful reboot request may
+# not return to this shell.
+write_install_state
+
 echo
 if confirm "Everything is done. Reboot now to apply all changes?" n; then
     echo -e "\n${YELLOW}  Rebooting in 3 seconds... (Ctrl+C to cancel)${RESET}"
@@ -580,3 +584,361 @@ else
     info "Reboot skipped."
     echo -e "${DIM}  When you're ready: ${WHITE}sudo systemctl reboot${RESET}"
 fi
+}
+
+# ============================================================================
+# Unified installer and manager
+#
+# The functions below replace the separate manager.sh entry point.  They keep
+# the installer above intact and expose its lifecycle alongside safe update,
+# backup, restore, removal, and status actions from one script.
+# ============================================================================
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/p1zz4-d0ts"
+STATE_FILE="$STATE_DIR/install-state"
+UPDATE_CHECK="$SCRIPTS_DIR/system/package-updates.sh"
+UPDATE_SERVICE="$SCRIPTS_DIR/system/update-service"
+MANAGER_LOG="$HOME/hyprland-manager-$TIMESTAMP.log"
+
+# Keep this list aligned with scripts/.config/scripts/system/stowall.sh.  It is
+# deliberately allow-listed so removal can never walk arbitrary files in $HOME.
+PACKAGES=(
+    "hypr" "wallust" "bash" "btop" "chrome-flags.conf" "code-flags.conf"
+    "fastfetch" "ghostty" "quickshell" "scripts" "shell.env" "Thunar"
+    "vicinae" "yazi" ".zshenv" ".zshrc" "waybound" "cava" "qt6ct"
+)
+
+write_install_state() {
+    local commit="not-a-git-clone" result="completed-with-warnings"
+    if [[ -d "$REPO_ROOT/.git" ]]; then
+        commit="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    fi
+    if (( ${#FAILED_PACKAGES[@]} == 0 && ${#FAILED_STEPS[@]} == 0 )); then
+        result="completed"
+    fi
+
+    if mkdir -p "$STATE_DIR"; then
+        cat > "$STATE_FILE" <<EOF
+P1ZZ4_D0TS_COMMIT="$commit"
+INSTALLED_AT="$(date --iso-8601=seconds)"
+RESULT="$result"
+EOF
+        success "Saved installation state to $STATE_FILE"
+    else
+        warn "Could not save installation state to $STATE_FILE"
+    fi
+}
+
+read_install_state() {
+    if [[ -r "$STATE_FILE" ]]; then
+        # This file is written by write_install_state above and contains only
+        # key/value metadata; display it without evaluating its contents.
+        sed -nE 's/^(P1ZZ4_D0TS_COMMIT|INSTALLED_AT|RESULT)="(.*)"$/\1: \2/p' "$STATE_FILE"
+    else
+        printf 'No completed installation state recorded.\n'
+    fi
+}
+
+list_backups() {
+    BACKUPS=()
+    shopt -s nullglob
+    local backup
+    for backup in "$BACKUP_ROOT"/config-*; do
+        [[ -d "$backup" ]] && BACKUPS+=("$backup")
+    done
+    shopt -u nullglob
+}
+
+restore_backup() {
+    header "Restore a configuration backup"
+    list_backups
+    if (( ${#BACKUPS[@]} == 0 )); then
+        warn "No config-* backups were found in $BACKUP_ROOT"
+        return 0
+    fi
+
+    local selected
+    echo -e "${DIM}  Available backups:${RESET}"
+    select selected in "${BACKUPS[@]##*/}" "Cancel"; do
+        if [[ "$selected" == "Cancel" ]]; then
+            info "Restore cancelled."
+            return 0
+        elif [[ -z "$selected" ]]; then
+            warn "Please choose a listed backup."
+            continue
+        fi
+        selected="$BACKUP_ROOT/$selected"
+        break
+    done
+
+    if ! confirm "Restore $selected into ~/.config? Existing files with the same names will be replaced." n; then
+        info "Restore cancelled."
+        return 0
+    fi
+
+    mkdir -p "$HOME/.config"
+    cp -a "$selected/." "$HOME/.config/"
+    success "Your pre-install configuration has been restored"
+}
+
+delete_dotfiles() {
+    header "Delete stowed dotfiles"
+    warn "This removes only symlinks that point from your home directory into this repository."
+    warn "The repository and normal files are left untouched."
+    if ! confirm "Remove the managed dotfile symlinks now?" n; then
+        info "Deletion cancelled."
+        return 0
+    fi
+
+    local package source target source_real target_real removed=0
+    for package in "${PACKAGES[@]}"; do
+        [[ -d "$REPO_ROOT/$package" ]] || continue
+        while IFS= read -r -d '' source; do
+            target="$HOME/${source#"$REPO_ROOT/$package/"}"
+            [[ -L "$target" ]] || continue
+            source_real="$(readlink -f -- "$source")"
+            target_real="$(readlink -f -- "$target" 2>/dev/null || true)"
+            if [[ "$target_real" == "$source_real" ]]; then
+                rm -- "$target"
+                ((removed += 1))
+            fi
+        done < <(find "$REPO_ROOT/$package" -type f -print0)
+    done
+
+    success "Removed $removed managed symlink(s)"
+    if confirm "Restore one of your saved ~/.config backups now?" y; then
+        restore_backup
+    else
+        info "Your backups remain in $BACKUP_ROOT"
+    fi
+}
+
+check_system_updates() {
+    header "Checking for package updates"
+    if [[ ! -x "$UPDATE_CHECK" ]]; then
+        warn "package-updates.sh is not executable; skipping the package check."
+        return 0
+    fi
+
+    local update_output update_count
+    if ! update_output="$("$UPDATE_CHECK" 2>&1)"; then
+        warn "Package update check could not finish. You can still update with pacman."
+        info "$update_output"
+        return 0
+    fi
+
+    update_count="$(sed -nE 's/.*"text"[[:space:]]*:[[:space:]]*"([0-9]+)".*/\1/p' <<< "$update_output" | tail -n 1)"
+    if [[ -z "$update_count" ]]; then
+        warn "Could not read the package update count."
+        return 0
+    fi
+
+    if (( update_count > 0 )); then
+        info "$update_count package update(s) available."
+        if confirm "Update the system before checking the dotfiles repository?" y; then
+            if "$UPDATE_SERVICE"; then
+                success "System updated"
+            else
+                warn "One or more update steps failed. Review update-service output above."
+            fi
+        else
+            warn "System update skipped."
+        fi
+    else
+        success "System is up to date"
+    fi
+}
+
+update_dotfiles() {
+    check_system_updates
+
+    header "Checking P1ZZ4_D0TS"
+    if [[ ! -d "$REPO_ROOT/.git" ]]; then
+        error "Updates require a Git clone of the dotfiles repository."
+        return 1
+    fi
+    if [[ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]]; then
+        warn "Local changes were found; refusing to pull so none of your work is overwritten."
+        info "Commit, stash, or discard those changes, then run the manager again."
+        return 0
+    fi
+
+    step "Checking the remote for changes"
+    if ! git -C "$REPO_ROOT" fetch --quiet origin; then
+        error "Could not contact the remote repository. Check your connection and Git remote."
+        return 1
+    fi
+
+    local branch local_commit remote_commit
+    branch="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD || true)"
+    if [[ -z "$branch" ]]; then
+        warn "Detached HEAD detected; skipping repository update."
+        return 0
+    fi
+    local_commit="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+    remote_commit="$(git -C "$REPO_ROOT" rev-parse "origin/$branch" 2>/dev/null || true)"
+    if [[ -z "$remote_commit" ]]; then
+        warn "No origin/$branch branch was found; skipping repository update."
+        return 0
+    fi
+    if [[ "$local_commit" == "$remote_commit" ]]; then
+        success "Dotfiles are already up to date"
+        return 0
+    fi
+
+    info "Updates are available on origin/$branch."
+    if ! confirm "Pull and re-stow the updated dotfiles?" y; then
+        info "Repository update skipped."
+        return 0
+    fi
+    if ! git -C "$REPO_ROOT" pull --ff-only origin "$branch"; then
+        error "The fast-forward update failed. Your working tree was left unchanged."
+        return 1
+    fi
+    success "Repository updated"
+
+    step "Re-stowing dotfiles"
+    if "$STOWALL"; then
+        success "Updated dotfiles are active"
+    else
+        error "The repository updated, but re-stowing failed."
+        return 1
+    fi
+}
+
+show_status() {
+    [[ "${1:-}" == "--no-clear" ]] || clear
+    header "P1ZZ4_D0TS system overview"
+    local os_name compositor commit backup_count
+    os_name="$(. /etc/os-release 2>/dev/null && printf '%s' "${PRETTY_NAME:-Unknown Linux}")"
+    compositor="${XDG_CURRENT_DESKTOP:-${DESKTOP_SESSION:-not detected}}"
+    commit="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo not-a-git-clone)"
+    list_backups
+    backup_count="${#BACKUPS[@]}"
+    printf '  User:        %s\n' "$(id -un)"
+    printf '  OS:          %s\n' "$os_name"
+    printf '  Session:     %s\n' "$compositor"
+    printf '  Repository:  %s\n' "$commit"
+    printf '  Backups:     %s in %s\n' "$backup_count" "$BACKUP_ROOT"
+    printf '\n  Installation state:\n'
+    read_install_state | sed 's/^/    /'
+    printf '\n'
+}
+
+manager_preflight() {
+    if ! command -v pacman >/dev/null 2>&1; then
+        error "Not running on Arch Linux (pacman not found)."
+        return 1
+    fi
+    if [[ ! -x "$STOWALL" ]]; then
+        error "stowall.sh not found or not executable at: $STOWALL"
+        return 1
+    fi
+    if [[ "$EUID" -eq 0 ]]; then
+        error "Don't run this script as root or with sudo."
+        return 1
+    fi
+}
+
+run_manager_menu() {
+    manager_preflight || return 1
+    while true; do
+        echo
+        info "What would you like to manage?"
+        select option in "Update dotfiles" "Restore a backup" "Delete dotfiles" "Show status" "Back"; do
+            case "$option" in
+                "Update dotfiles") update_dotfiles; break ;;
+                "Restore a backup") restore_backup; break ;;
+                "Delete dotfiles") delete_dotfiles; break ;;
+                "Show status") show_status; break ;;
+                "Back") return 0 ;;
+                *) warn "Please enter a number between 1 and 5." ;;
+            esac
+        done
+    done
+}
+
+draw_main_banner() {
+    clear
+    echo -e "${BOLD}${MAGENTA}"
+    cat << 'EOF'
+
+██████╗  ██╗███████╗███████╗██╗  ██╗        ██████╗  ██████╗ ████████╗███████╗
+██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║        ██╔══██╗██╔═████╗╚══██╔══╝██╔════╝
+██████╔╝╚██║  ███╔╝   ███╔╝ ███████╗        ██║  ██║██║██╔██║   ██║   ███████╗
+██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║        ██║  ██║████╔╝██║   ██║   ╚════██║
+██║      ██║███████╗███████╗     ██║███████╗██████╔╝╚██████╔╝   ██║   ███████║
+╚═╝      ╚═╝╚══════╝╚══════╝      ╚═╝╚══════╝╚═════╝  ╚═════╝   ╚═════╝
+
+EOF
+    echo -e "${RESET}${DIM}  unified installer & manager  •  $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
+}
+
+run_main_menu() {
+    while true; do
+        draw_main_banner
+        show_status --no-clear
+        info "Choose an action:"
+        select option in "Install or reinstall dotfiles" "Manage existing installation" "Show status" "Exit"; do
+            case "$option" in
+                "Install or reinstall dotfiles") install_dotfiles; return $? ;;
+                "Manage existing installation") run_manager_menu; break ;;
+                "Show status") show_status; read -r -p "Press Enter to return to the menu..."; break ;;
+                "Exit") info "Goodbye."; return 0 ;;
+                *) warn "Please enter a number between 1 and 4." ;;
+            esac
+        done
+    done
+}
+
+show_usage() {
+    cat <<'EOF'
+Usage: ./install.sh [command]
+
+Commands:
+  install   Run the full dotfiles installation (the original installer flow).
+  manage    Open update, backup restore, removal, and status actions.
+  update    Check system/repository updates and re-stow when updated.
+  restore   Restore one saved ~/.config backup.
+  remove    Remove only managed dotfile symlinks.
+  status    Display installation, repository, and backup status.
+  menu      Open the unified interactive menu (default).
+  help      Show this help text.
+EOF
+}
+
+main() {
+    case "${1:-menu}" in
+        install) install_dotfiles ;;
+        manage)
+            exec > >(tee -a "$MANAGER_LOG") 2>&1
+            info "Manager log: $MANAGER_LOG"
+            run_manager_menu
+            ;;
+        update)
+            exec > >(tee -a "$MANAGER_LOG") 2>&1
+            manager_preflight && update_dotfiles
+            ;;
+        restore)
+            exec > >(tee -a "$MANAGER_LOG") 2>&1
+            manager_preflight && restore_backup
+            ;;
+        remove)
+            exec > >(tee -a "$MANAGER_LOG") 2>&1
+            manager_preflight && delete_dotfiles
+            ;;
+        status) show_status ;;
+        menu)
+            exec > >(tee -a "$MANAGER_LOG") 2>&1
+            info "Session log: $MANAGER_LOG"
+            run_main_menu
+            ;;
+        help|-h|--help) show_usage ;;
+        *)
+            error "Unknown command: $1"
+            show_usage
+            return 2
+            ;;
+    esac
+}
+
+main "$@"
