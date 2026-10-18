@@ -72,7 +72,7 @@ QtObject {
     readonly property int animationDurationUI: 450
     readonly property int hoverTimer: 250
     readonly property int barRadius: scaled(4)
-    readonly property int notifTimer: 2000
+    readonly property int notifTimer: 3000
     readonly property int fadeAnimation: 300
     readonly property int updateNotifStart: 300000
     readonly property int updateNotifRunning: 900000
@@ -89,6 +89,7 @@ QtObject {
     readonly property bool clickEnabled: hoverEnabled ? false : true
     readonly property bool lockScreenMpris: true
     readonly property bool enableLyrics: true
+    readonly property bool wallpaperPreviewEnabled: true
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground

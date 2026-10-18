@@ -72,7 +72,7 @@ set_wallpaper() {
     local -r wallpaper="$1"
 
     log_info "Setting wallpaper with awww: $wallpaper"
-    if ! awww img -t center --transition-duration 1 --transition-fps 180 "$wallpaper" >/dev/null 2>&1; then
+    if ! awww img -t grow --transition-duration 1 --transition-fps 180 --transition-pos bottom "$wallpaper" >/dev/null 2>&1; then
         die "Failed to set wallpaper with awww: $wallpaper"
     fi
 }

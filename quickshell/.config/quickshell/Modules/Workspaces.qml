@@ -167,7 +167,7 @@ Rectangle {
                 color: Variables.borderColor
                 radius: Variables.circleRadius
                 
-                Text { text: "S"; anchors.centerIn: parent }
+                Text { text: "S"; anchors.centerIn: parent; color: Variables.textColor }
             }
         }
     }

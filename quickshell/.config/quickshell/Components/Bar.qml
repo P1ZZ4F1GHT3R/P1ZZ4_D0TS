@@ -146,7 +146,7 @@ Scope {
         Loader {
             id: wallpaperPreviewLoader
             anchors.fill: parent
-            active: Variables.wallpaperPreview
+            active: Variables.wallpaperPreview && Variables.wallpaperPreviewEnabled
             sourceComponent: Component {
                 Item {
                     anchors.fill: parent

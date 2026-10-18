@@ -12,7 +12,7 @@ Item {
     property bool expanded: false
 
     implicitWidth: expanded ? Math.min(notifLayout.implicitWidth, Variables.width * 8) : Variables.width * 5
-    implicitHeight: expanded ? Variables.height + notifLayout.implicitHeight : Variables.height * 3
+    implicitHeight: (expanded ? Variables.height + notifLayout.implicitHeight : Math.max(Variables.height * 3, notifLayout.implicitHeight)) + progressBarTrack.height
     Layout.fillWidth: expanded
 
     Connections {
@@ -31,20 +31,26 @@ Item {
         ignoreUnknownSignals: true
 
         function onPopupAdded() {
-            if (Variables.notifWidget && !root.expanded)
-                notifTimer.restart()
+            if (Variables.notifWidget && !root.expanded) {
+                progressAnim.restart()
+            }
         }
 
         function onNotificationClosed() {
-            if (Variables.notifWidget && !root.expanded)
-                notifTimer.restart()
+            if (Variables.notifWidget && !root.expanded) {
+                progressAnim.restart()
+            }
         }
     }
 
     RowLayout {
         id: notifLayout
 
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: progressBarTrack.top
+        anchors.bottomMargin: Variables.spacing
         spacing: Variables.spacing
         opacity: !Variables.notifWidget ? 0.0 : 1.0
 
@@ -71,6 +77,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignVCenter
+            clip: true
 
             Text {
                 Layout.fillWidth: true
@@ -169,29 +176,53 @@ Item {
         }
     }
 
+    Rectangle {
+        id: progressBarTrack
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: Variables.borderWidth
+        color: "transparent"
+        visible: Variables.notifWidget
+
+        Rectangle {
+            id: progressBarFill
+
+            height: parent.height
+            color: Variables.textColor
+            radius: height / 2
+        }
+
+        NumberAnimation {
+            id: progressAnim
+
+            target: progressBarFill
+            property: "width"
+            from: progressBarTrack.width
+            to: 0
+            duration: Variables.notifTimer
+            running: Variables.notifWidget
+            paused: root.expanded
+
+            onFinished: {
+                if (daemon && daemon.currentPopup) {
+                    daemon.removePopup(daemon.currentPopup)
+                    if (daemon.currentPopup && !root.expanded) {
+                        progressAnim.restart()
+                    }
+                } else {
+                    Variables.notifWidget = false
+                }
+            }
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         hoverEnabled: true
-        onEntered: (expanded = true, notifTimer.stop())
-        onExited: (expanded = false, notifTimer.start())
-    }
-
-    Timer {
-        id: notifTimer
-
-        interval: Variables.notifTimer
-        running: Variables.notifWidget && !expanded
-        repeat: false
-        triggeredOnStart: false
-        onTriggered: {
-            if (daemon && daemon.currentPopup) {
-                daemon.removePopup(daemon.currentPopup)
-                if (daemon.currentPopup && !expanded)
-                    notifTimer.restart()
-            } else {
-                Variables.notifWidget = false 
-            }
-        }
+        onEntered: root.expanded = true
+        onExited: root.expanded = false
     }
 }

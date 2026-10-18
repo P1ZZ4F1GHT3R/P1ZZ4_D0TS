@@ -12,13 +12,18 @@
    "$schema": "https://vicinae.com/schemas/config.json",
    "theme": {
       "dark": {
-         "name": "wallust"
+         "name": "wallust",
+         "icon_theme": "Papirus-Dark"
       }
    },
-   "favorites": [
-      "applications:claude-desktop",
-      "applications:steam",
-      "applications:github-desktop",
-      "clipboard:history"
-   ]
+   "launcher_window": {
+      "opacity": 0.9,
+      "client_side_decorations": {
+         "enabled": true
+      },
+      "compact_mode": {
+         "enabled": true
+      },
+      "material": "blur"
+   }
 }

@@ -40,7 +40,7 @@ Rectangle {
     }
 
     function previewCurrentWallpaper() {
-        if (!Variables.wallpaperPicker || !wallpaperList.currentItem)
+        if (!Variables.wallpaperPicker || !Variables.wallpaperPreviewEnabled || !wallpaperList.currentItem)
             return;
 
         Variables.previewPath = wallpaperList.currentItem.imagePath;
@@ -339,7 +339,7 @@ Rectangle {
             if (!Variables.wallpaperPicker) {
                 if (root.isApplying) {
                     root.isApplying = false;
-                } else {
+                } else if (Variables.wallpaperPreviewEnabled) {
                     previewProcess.running = false;
                     previewProcess.command = [
                         "/bin/bash", 
@@ -371,7 +371,7 @@ Rectangle {
         repeat: false
 
         onTriggered: {
-            if (!wallpaperList.currentItem)
+            if (!Variables.wallpaperPreviewEnabled || !wallpaperList.currentItem)
                 return;
 
             previewProcess.running = false;
