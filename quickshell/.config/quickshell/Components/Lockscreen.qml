@@ -6,6 +6,7 @@ import Quickshell.Services.Pam
 import Quickshell.Io
 import Quickshell.Widgets
 import QtQuick.Effects
+import QtQuick.Layouts
 import QtQuick.Shapes
 import "../"
 import "../Components"
@@ -20,10 +21,12 @@ Scope {
     property bool wait: false
     property var notifServer: null
 
-    // Component.onCompleted: {
-    //     imagePath.running = true;
-    //     lockAnimation.start();
-    // }
+    Component.onCompleted: {
+        if (Variables.lockOnStart) {
+            imagePath.running = true;
+            lockAnimation.start();
+        }
+    }
 
     Process {
         id: imagePath
@@ -254,7 +257,7 @@ Scope {
                             bottomMargin: Variables.borderWidth * 4
                         }
 
-                        implicitHeight: Variables.lockScreen && !wait ? rectangle.height / 12.5 : 0
+                        implicitHeight: Variables.lockScreen && !wait ? rectangle.height / 18 : 0
                         implicitWidth: rectangle.width / 7
                         color: Variables.uiColor
                         topLeftRadius: Variables.radius
@@ -312,15 +315,15 @@ Scope {
                             NumberAnimation { duration: Variables.bouncingDurationUI; easing.type: Variables.bouncingAnimationUI}
                         }
 
-                        Column {
+                        ColumnLayout {
                             anchors.centerIn: parent
                             spacing: Variables.spacing
 
                             TextField {
                                 id: passwordInput
                                 enabled: !wait
-                                implicitWidth: inputHolder.implicitWidth / 1.2
-                                implicitHeight: inputHolder.implicitHeight / 2
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: inputHolder.implicitHeight - Variables.spacing * 2
                                 echoMode: TextInput.Normal
                                 focus: true
                                 color: Variables.uiColor

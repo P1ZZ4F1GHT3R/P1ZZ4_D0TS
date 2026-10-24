@@ -59,7 +59,7 @@ Scope {
         onScreenChanged: Variables.monitor = screen
 
         HyprlandFocusGrab {
-            active: Variables.powerMenu || Variables.wallpaperPicker || Variables.toolBar
+            active: Variables.powerMenu || Variables.wallpaperPicker || Variables.toolBar || Variables.launcherOpen
             windows: [ unifiedPanel ] 
         }
 
@@ -72,8 +72,7 @@ Scope {
 
         color: "transparent"
         WlrLayershell.layer: Variables.wallpaperPicker ? WlrLayer.Overlay : WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        
+        WlrLayershell.keyboardFocus: Variables.launcherOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore 
 
         mask: Region {
@@ -82,6 +81,7 @@ Scope {
             Region { item: right }
             Region { item: controlCenter }
             Region { item: wallpaperSwitcher }
+            Region { item: launcher }
         }
 
         IpcHandler {
@@ -110,8 +110,22 @@ Scope {
                     closeWallpaperTimer.start();
                 }
                 else {
+                    Variables.launcherOpen = false;
                     Variables.wallpaperPreview = true;
                     Variables.wallpaperPicker = true; 
+                }
+            }
+        }
+
+        IpcHandler {
+            target: "launcher"
+
+            function toggle(): void {
+                if (Variables.launcherOpen) {
+                    Variables.launcherOpen = false;
+                } else {
+                    Variables.wallpaperPicker = false;
+                    Variables.launcherOpen = true; 
                 }
             }
         }
@@ -292,6 +306,17 @@ Scope {
                 active: Variables.wallpaperPreview
                 focus: Variables.wallpaperPicker
                 source: "../Modules/WallpaperPicker.qml"
+                anchors {
+                    bottom: parent.bottom
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Loader {
+                id: launcher
+                active: true
+                focus: Variables.launcherOpen
+                source: "../Modules/Launcher.qml"
                 anchors {
                     bottom: parent.bottom
                     horizontalCenter: parent.horizontalCenter

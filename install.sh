@@ -75,8 +75,18 @@ ui_menu() {
     printf '\e[?25l'
     while true; do
         clear
-        printf '%b\n' "${BOLD}${MAGENTA}══════════════════════════════════════════════════════════════${RESET}"
-        printf '%b\n' "${BOLD}${MAGENTA}  $title${RESET}"
+        printf '%b\n' "${BOLD}${MAGENTA}"
+        cat << 'EOF'
+
+██████╗  ██╗███████╗███████╗██╗  ██╗        ██████╗  ██████╗ ████████╗███████╗
+██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║        ██╔══██╗██╔═████╗╚══██╔══╝██╔════╝
+██████╔╝╚██║  ███╔╝   ███╔╝ ███████╗        ██║  ██║██║██╔██║   ██║   ███████╗
+██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║        ██║  ██║████╔╝██║   ██║   ╚════██║
+██║      ██║███████╗███████╗     ██║███████╗██████╔╝╚██████╔╝   ██║   ███████║
+╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚══════╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
+
+EOF
+        printf '%b\n' "${RESET}${BOLD}${MAGENTA}  $title${RESET}"
         printf '%b\n\n' "${BOLD}${MAGENTA}══════════════════════════════════════════════════════════════${RESET}"
         [[ -n "$description" ]] && printf '%b\n\n' "${DIM}  $description${RESET}"
         printf '%b\n' "${DIM}  ↑/↓ or j/k to move • Enter/Space to select • q to go back${RESET}"
@@ -138,9 +148,9 @@ confirm() {
     printf '\e[?25l'
     while true; do
         if (( selected == 0 )); then
-            printf '\r\033[K    %b  %s' "${BOLD}${GREEN}[ Yes ]${RESET}" "${DIM}  No ${RESET}"
+            printf '\r\033[K    %b  %b' "${BOLD}${GREEN}[ Yes ]${RESET}" "${DIM}  No ${RESET}"
         else
-            printf '\r\033[K    %s  %b' "${DIM}  Yes ${RESET}" "${BOLD}${GREEN}[ No ]${RESET}"
+            printf '\r\033[K    %b  %b' "${DIM}  Yes ${RESET}" "${BOLD}${GREEN}[ No ]${RESET}"
         fi
         key="$(read_key)"
         case "$key" in
@@ -183,8 +193,8 @@ PACMAN_PACKAGES=(
     ttf-dejavu-nerd fzf pkgfile
 )
 AUR_PACKAGES=(
-    vicinae wallust sunsetr ttf-material-symbols-variable-git
-    waybound pipes-rs papirus-icon-theme quicksnip-git
+    wallust sunsetr ttf-material-symbols-variable-git
+    waybound pipes-rs papirus-icon-theme fd
 )
 
 cleanup_temp_dirs() {
@@ -273,10 +283,16 @@ draw_install_dashboard() {
     [[ -n "$gpu_name" ]] || gpu_name="Unknown GPU"
 
     clear
-    printf '%b\n' "${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════╗${RESET}"
-    printf '%b\n' "${BOLD}${CYAN}║                       P1ZZ4_D0TS                              ║${RESET}"
-    printf '%b\n' "${BOLD}${CYAN}║                 Hyprland dotfiles installer                   ║${RESET}"
-    printf '%b\n' "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════════════════════════╗${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║                                                                                  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║  ██████╗  ██╗███████╗███████╗██╗  ██╗        ██████╗  ██████╗ ████████╗███████╗  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║  ██╔══██╗███║╚══███╔╝╚══███╔╝██║  ██║        ██╔══██╗██╔═████╗╚══██╔══╝██╔════╝  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║  ██████╔╝╚██║  ███╔╝   ███╔╝ ███████║        ██║  ██║██║██╔██║   ██║   ███████╗  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║  ██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║        ██║  ██║████╔╝██║   ██║   ╚════██║  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║  ██║      ██║███████╗███████╗     ██║███████╗██████╔╝╚██████╔╝   ██║   ███████║  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║  ╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚══════╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝  ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}║                            Hyprland dotfiles installer                           ║${RESET}"
+    printf '%b\n' "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════════════════════════╝${RESET}"
     printf '\n'
     printf '  %b %-25s %b %s\n' "${BOLD}User:${RESET}" "$INSTALL_USER" "${BOLD}OS:${RESET}" "$os_name"
     printf '  %b %-25s %b %s\n' "${BOLD}CPU:${RESET}" "$cpu_name" "${BOLD}GPU:${RESET}" "$gpu_name"
@@ -1085,7 +1101,7 @@ draw_main_banner() {
 ██████╔╝╚██║  ███╔╝   ███╔╝ ███████╗        ██║  ██║██║██╔██║   ██║   ███████╗
 ██╔═══╝  ██║ ███╔╝   ███╔╝  ╚════██║        ██║  ██║████╔╝██║   ██║   ╚════██║
 ██║      ██║███████╗███████╗     ██║███████╗██████╔╝╚██████╔╝   ██║   ███████║
-╚═╝      ╚═╝╚══════╝╚══════╝      ╚═╝╚══════╝╚═════╝  ╚═════╝   ╚═════╝
+╚═╝      ╚═╝╚══════╝╚══════╝     ╚═╝╚══════╝╚═════╝  ╚═════╝    ╚═╝    ╚═════╝
 
 EOF
     echo -e "${RESET}${DIM}  unified installer & manager  •  $(date '+%Y-%m-%d %H:%M:%S')${RESET}"

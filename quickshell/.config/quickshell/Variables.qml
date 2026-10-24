@@ -84,12 +84,16 @@ QtObject {
     readonly property int idleLockTime: 300
     readonly property int idleSleepTime: 900
     readonly property int workspaceAnimationType: Easing.InOutBack
+    readonly property int launcherWidth: scaled(666)
+    readonly property int launcherSearchHeight: scaled(64)
+    readonly property int launcherExpandedHeight: scaled(400)
     
     readonly property bool hoverEnabled: false
     readonly property bool clickEnabled: hoverEnabled ? false : true
     readonly property bool lockScreenMpris: true
     readonly property bool enableLyrics: true
     readonly property bool wallpaperPreviewEnabled: true
+    readonly property bool lockOnStart: true
 
     readonly property color uiColor: Colors.background
     readonly property color textColor: Colors.foreground
@@ -141,6 +145,7 @@ QtObject {
     property bool snippingMode: false
     property string captureAction: "screenshot"
     property bool isRecording: false
+    property bool launcherOpen: false
 
 
 
