@@ -365,7 +365,7 @@ Scope {
 
                                 background: Rectangle {
                                     implicitHeight: inputHolder.implicitHeight / 2
-                                    implicitWidth: inputHolder.implicitWidth / 1.2
+                                    implicitWidth: inputHolder.implicitWidth / 1.05
                                     color: wait ? Variables.uiColor : Variables.lockscreenColor
                                     radius: Variables.radius
                                     Behavior on color { ColorAnimation {duration: Variables.animationDurationUI} }

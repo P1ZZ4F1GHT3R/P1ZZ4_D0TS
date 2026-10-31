@@ -131,6 +131,11 @@ for pkg in "${existing[@]}"; do
     fi
 done
 
+# --- Step 3: Reload hyprland ---
+echo ""
+echo "Step 3: Reloading hyprland..."
+sleep 3 && hyprctl reload 
+
 # --- Summary ---
 echo ""
 if [ ${#failed[@]} -gt 0 ]; then
@@ -143,7 +148,7 @@ else
 fi
 
 echo ""
-read -r -p "Reboot now? [y/N]: " REBOOT_CHOICE
+read -r -p "Do you want to reboot? [y/N]: " REBOOT_CHOICE
 case "$REBOOT_CHOICE" in
     y|Y|yes|YES)
         echo "Rebooting in 3 seconds... (Ctrl+C to cancel)"
@@ -151,6 +156,6 @@ case "$REBOOT_CHOICE" in
         sudo systemctl reboot
         ;;
     *)
-        echo "Reboot skipped. Run 'sudo systemctl reboot' when ready."
+        echo "Reboot skipped."
         ;;
 esac

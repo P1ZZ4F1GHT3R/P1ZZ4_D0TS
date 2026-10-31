@@ -25,6 +25,7 @@ Rectangle {
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
+    
 
     property var notifServer
 
@@ -132,85 +133,96 @@ Rectangle {
         onTriggered: Variables.controlCenter = true
     }
 
-    ColumnLayout {
-        id: controlLayout
+
+    Rectangle {
+        id: clipContainer
         
+        color: "transparent"
+        radius: Variables.radius
+        clip: true
         anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            bottom: parent.bottom
+            fill: parent
         }
+        ColumnLayout {
+            id: controlLayout
+            
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                bottom: parent.bottom
+            }
 
-        spacing: Variables.spacing
-        opacity: Variables.controlCenter ? 1.0 : 0.0
-
-        Behavior on opacity {
-            NumberAnimation { duration: Variables.fadeAnimation }
-        }
-
-        User{
-            Layout.topMargin: Variables.topMargin * 4
-            Layout.leftMargin: Variables.topMargin * 4
-            Layout.rightMargin: Variables.topMargin * 4
-        }
-
-        RowLayout {
-            id: sliderRow
-
-            Layout.leftMargin: Variables.topMargin * 4
-            Layout.rightMargin: Variables.topMargin * 4
             spacing: Variables.spacing
+            opacity: Variables.controlCenter ? 1.0 : 0.0
 
-            Volume{}
+            Behavior on opacity {
+                NumberAnimation { duration: Variables.fadeAnimation }
+            }
 
-            PomodoroTimer{}
-
-            Brightness{}
-        }
-
-        Rectangle {
-            id: buttonrowBackground
-        
-            implicitWidth: Math.max(Variables.controlCenterButtonWidth,
-                buttonRow.implicitWidth + Variables.borderWidth * 4)
-            implicitHeight: Math.max(Variables.controlCenterButtonHeight + Variables.topMargin * 2,
-                buttonRow.implicitHeight + Variables.borderWidth * 4)
-            Layout.leftMargin: Variables.topMargin * 4
-            Layout.rightMargin: Variables.topMargin * 4
-
-            color: Variables.backgroundColorUI
-            radius: Variables.radius
-            border.color: Variables.borderColor
-            border.width: Variables.borderWidth
+            User{
+                Layout.topMargin: Variables.topMargin * 4
+                Layout.leftMargin: Variables.topMargin * 4
+                Layout.rightMargin: Variables.topMargin * 4
+            }
 
             RowLayout {
-                id: buttonRow
+                id: sliderRow
 
-                anchors {
-                    centerIn: parent
-                    margins: Variables.topMargin * 4
-                }
-                spacing: Variables.spacing / 1.2
+                Layout.leftMargin: Variables.topMargin * 4
+                Layout.rightMargin: Variables.topMargin * 4
+                spacing: Variables.spacing
 
-                IdleMonitorToggle{}
+                Volume{}
 
-                FocusModeToggle{}
+                PomodoroTimer{}
 
-                ActivateLinuxToggle{}
-                
-                Test{}
-
-                Test{}
+                Brightness{}
             }
-        }
 
-        NotificationTray {
-            Layout.leftMargin: Variables.topMargin * 4
-            Layout.rightMargin: Variables.topMargin * 4
-            Layout.bottomMargin: Variables.topMargin * 4
+            Rectangle {
+                id: buttonrowBackground
             
-            daemon: controlCenter.notifServer 
+                implicitWidth: Math.max(Variables.controlCenterButtonWidth,
+                    buttonRow.implicitWidth + Variables.borderWidth * 4)
+                implicitHeight: Math.max(Variables.controlCenterButtonHeight + Variables.topMargin * 2,
+                    buttonRow.implicitHeight + Variables.borderWidth * 4)
+                Layout.leftMargin: Variables.topMargin * 4
+                Layout.rightMargin: Variables.topMargin * 4
+
+                color: Variables.backgroundColorUI
+                radius: Variables.radius
+                border.color: Variables.borderColor
+                border.width: Variables.borderWidth
+
+                RowLayout {
+                    id: buttonRow
+
+                    anchors {
+                        centerIn: parent
+                        margins: Variables.topMargin * 4
+                    }
+                    spacing: Variables.spacing / 1.2
+
+                    IdleMonitorToggle{}
+
+                    FocusModeToggle{}
+
+                    ActivateLinuxToggle{}
+                    
+                    Test{}
+
+                    Test{}
+                }
+            }
+
+            NotificationTray {
+                Layout.leftMargin: Variables.topMargin * 4
+                Layout.rightMargin: Variables.topMargin * 4
+                Layout.bottomMargin: Variables.topMargin * 4
+                
+                daemon: controlCenter.notifServer 
+            }
         }
     }
 }

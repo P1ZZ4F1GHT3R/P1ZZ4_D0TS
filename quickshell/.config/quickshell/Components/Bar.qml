@@ -102,29 +102,25 @@ Scope {
         }
 
         IpcHandler {
-            target: "wallpaper"
-
-            function toggle(): void {
-                if (Variables.wallpaperPicker) {
-                    Variables.wallpaperPicker = false;
-                    closeWallpaperTimer.start();
-                }
-                else {
-                    Variables.launcherOpen = false;
-                    Variables.wallpaperPreview = true;
-                    Variables.wallpaperPicker = true; 
-                }
-            }
-        }
-
-        IpcHandler {
             target: "launcher"
 
+            // Triggered by 'qsipc call launcher toggle'
             function toggle(): void {
-                if (Variables.launcherOpen) {
+                if (Variables.launcherOpen && Variables.launcherMode === "apps") {
                     Variables.launcherOpen = false;
                 } else {
-                    Variables.wallpaperPicker = false;
+                    Variables.launcherMode = "apps";
+                    Variables.launcherOpen = true; 
+                }
+            }
+
+            // Triggered by 'qsipc call launcher toggleMode <mode>'
+            function toggleMode(mode: string): void {
+                if (Variables.launcherOpen && Variables.launcherMode === mode) {
+                    Variables.launcherOpen = false;
+                } else {
+                    Variables.launcherMode = mode;
+                    if (mode === "wallpaper") Variables.wallpaperPreview = true;
                     Variables.launcherOpen = true; 
                 }
             }
@@ -299,17 +295,6 @@ Scope {
                     right: parent.right
                 }
                 implicitWidth: Variables.barControlCenterWidth
-            }
-
-            Loader {
-                id: wallpaperSwitcher
-                active: Variables.wallpaperPreview
-                focus: Variables.wallpaperPicker
-                source: "../Modules/WallpaperPicker.qml"
-                anchors {
-                    bottom: parent.bottom
-                    horizontalCenter: parent.horizontalCenter
-                }
             }
 
             Loader {

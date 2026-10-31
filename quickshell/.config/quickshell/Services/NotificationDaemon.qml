@@ -194,7 +194,7 @@ Item {
             tempTimes[notification.id] = hours + ":" + minutes;
             notificationTimestamps = tempTimes;
 
-            if (!notification.lastGeneration && !Variables.disablePopups) {
+            if (!notification.lastGeneration && !Variables.disablePopups && !Variables.lockScreen) {
                 root.showPopup(notification)
             }
         }

@@ -46,6 +46,7 @@ hl.config({
             popups = true,
             input_methods = true,
             input_methods_ignorealpha = 0.8,
+            variant = "drops",
         },
     },
 

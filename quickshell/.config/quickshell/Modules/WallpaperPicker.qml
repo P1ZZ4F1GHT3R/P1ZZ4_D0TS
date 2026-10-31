@@ -28,6 +28,16 @@ Rectangle {
         NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
     }
 
+    Component.onCompleted: {
+        wallpaperList.forceActiveFocus();
+    }
+
+    onActiveFocusChanged: {
+        if (activeFocus) {
+            wallpaperList.forceActiveFocus();
+        }
+    }
+
     function localPath(fileUrl) {
         var path = String(fileUrl || "");
         if (path.indexOf("file://") === 0)
@@ -166,7 +176,7 @@ Rectangle {
 
         anchors.fill: parent
         anchors.margins: Variables.spacing
-        focus: Variables.wallpaperPicker
+        focus: true
         clip: true
         interactive: true
         model: shuffledModel
@@ -187,9 +197,24 @@ Rectangle {
             }
         }
 
+        WheelHandler {
+            onWheel: (event) => {
+                if (event.angleDelta.y > 0 || event.angleDelta.x < 0) {
+                    wallpaperList.decrementCurrentIndex();
+                } else if (event.angleDelta.y < 0 || event.angleDelta.x > 0) {
+                    wallpaperList.incrementCurrentIndex();
+                }
+            }
+        }
+
         Keys.onLeftPressed: decrementCurrentIndex()
         Keys.onRightPressed: incrementCurrentIndex()
-        Keys.onEscapePressed: Variables.wallpaperPicker = false
+        Keys.onUpPressed: decrementCurrentIndex()
+        Keys.onDownPressed: incrementCurrentIndex()
+        Keys.onEscapePressed: {
+            Variables.wallpaperPicker = false;
+            Variables.launcherOpen = false;
+        }
 
         onCurrentItemChanged: root.previewCurrentWallpaper()
         
@@ -208,6 +233,7 @@ Rectangle {
                 
                 root.isApplying = true;
                 Variables.wallpaperPicker = false;
+                Variables.launcherOpen = false;
                 
                 wallpaperTimer.start();
                 event.accepted = true;
@@ -329,7 +355,7 @@ Rectangle {
         border.width: Variables.borderWidth * 2
         radius: Variables.radius
         z: 30
-        visible: Variables.wallpaperPicker && wallpaperList.count > 0
+        visible: (Variables.wallpaperPicker || root.parent.searchMode === "wallpaper") && wallpaperList.count > 0
     }
 
     Connections {

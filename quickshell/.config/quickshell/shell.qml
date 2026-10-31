@@ -13,6 +13,7 @@ Scope {
 
     Bar{}
     IdleMonitor{}
+    SettingsPanel{}
 
     Loader {
         active: Variables.snippingMode

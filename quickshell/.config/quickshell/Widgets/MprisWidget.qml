@@ -7,7 +7,6 @@ import "../Services"
 import "../"   
 import "../Modules"   
             
-        
 RowLayout {
     id: mpris
 
@@ -22,6 +21,7 @@ RowLayout {
     property int currentLyricIndex: -1
     property int lyricsRequestId: 0
     property var lyricsCache: ({})
+    property real currentPosition: 0
     property string lyricTrackKey: {
         const player = mpris.activePlayer
         return player ? `${player.trackArtist || ""}\u0000${player.trackTitle || ""}` : ""
@@ -40,7 +40,7 @@ RowLayout {
             return
         }
 
-        const position = Number(mpris.activePlayer.position || 0)
+        const position = Number(mpris.currentPosition || 0)
         
         let low = 0
         let high = lyricLines.length - 1
@@ -161,11 +161,16 @@ RowLayout {
     }
 
     Timer {
-        id: lyricsUpdateTimer
+        id: uiUpdateTimer
         interval: 250
-        running: Variables.enableLyrics && Variables.expandedState && mpris.lyricsSynced && mpris.lyricLines.length > 0 && mpris.activePlayer !== null
+        running: Variables.expandedState && mpris.activePlayer !== null
         repeat: true
-        onTriggered: mpris.updateCurrentLyric()
+        onTriggered: {
+            mpris.currentPosition = mpris.activePlayer.position || 0
+            if (Variables.enableLyrics && mpris.lyricsSynced && mpris.lyricLines.length > 0) {
+                mpris.updateCurrentLyric()
+            }
+        }
     }
 
     Timer {
@@ -185,8 +190,12 @@ RowLayout {
         target: mpris.activePlayer
         ignoreUnknownSignals: true
 
-        function onTrackTitleChanged() { lyricsFetchTimer.restart() }
+        function onTrackTitleChanged() { 
+            lyricsFetchTimer.restart()
+            mpris.currentPosition = 0
+        }
         function onTrackArtistChanged() { lyricsFetchTimer.restart() }
+        function onPositionChanged() { mpris.currentPosition = mpris.activePlayer.position }
     }
 
     Connections {
@@ -195,6 +204,7 @@ RowLayout {
         function onExpandedStateChanged() {
             if (Variables.expandedState) {
                 lyricsFetchTimer.restart()
+                if (mpris.activePlayer) mpris.currentPosition = mpris.activePlayer.position || 0
                 mpris.updateCurrentLyric()
             }
         }
@@ -239,396 +249,399 @@ RowLayout {
                 implicitHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
 
 
-        Rectangle {
-            anchors.fill: parent
-            radius: Variables.radius
-            color: Variables.backgroundColorUI
-            border.color: Variables.borderColor
-            border.width: Variables.borderWidth
-
-            ClippingWrapperRectangle {
-                anchors.fill: parent
-                anchors.margins: Variables.borderWidth
-                radius: Math.max(0, Variables.radius - Variables.borderWidth)
-
-                Item {
+                Rectangle {
                     anchors.fill: parent
+                    radius: Variables.radius
+                    color: Variables.backgroundColorUI
+                    border.color: Variables.borderColor
+                    border.width: Variables.borderWidth
 
-                    Image {
-                        id: blurredBgSource
-                        source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
+                    ClippingWrapperRectangle {
                         anchors.fill: parent
-                        fillMode: Image.PreserveAspectCrop
-                        visible: false 
-                    }
+                        anchors.margins: Variables.borderWidth
+                        radius: Math.max(0, Variables.radius - Variables.borderWidth)
 
-                    MultiEffect {
-                        source: blurredBgSource
-                        anchors.fill: parent
-                        blurEnabled: true
-                        blurMax: Variables.musicBlurMax
-                        blur: 0.69 //heh nice
-                    }
+                        Item {
+                            anchors.fill: parent
 
-                    Rectangle {
-                        anchors.fill: parent
-                        color: Variables.borderColor
-                        opacity: 0.5
-                    }
-                }
-            }
-        }
-
-        RowLayout {
-            id: expandedContent
-
-            anchors.fill: parent
-            anchors.margins: Variables.spacing * 2
-            spacing: Variables.spacing * 2
-
-            ClippingWrapperRectangle {
-                Layout.preferredWidth: Variables.musicArtSize
-                Layout.preferredHeight: Variables.musicArtSize
-                Layout.alignment: Qt.AlignVCenter
-                radius: Variables.imgRadius
-
-                Image {
-                    source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                }
-            }
-
-            ColumnLayout {
-                id: controlsColumn
-
-                Layout.preferredWidth: Variables.width * 5
-                Layout.alignment: Qt.AlignVCenter
-                spacing: Variables.spacing
-
-                Item {
-                    id: textContainer
-
-                    clip: true
-                    Layout.fillWidth: true
-                    implicitHeight: trackText.implicitHeight
-
-                    onWidthChanged: {
-                        if (marqueeAnim.running) marqueeAnim.restart()
-                    }
-
-                    Text {
-                        id: trackText
-                        
-                        x: (textContainer.width > implicitWidth) ? (textContainer.width - implicitWidth) / 2 : 0
-
-                        text: {
-                            const player = mpris.activePlayer
-                            if (!player) return ""
-                            return `${player.trackTitle || "Unknown"} - ${player.trackArtist || "Unknown"}`
-                        }
-                        color: Variables.uiColor
-                        font.bold: true
-
-                        onImplicitWidthChanged: {
-                            if (marqueeAnim.running) marqueeAnim.restart()
-                        }
-
-                        SequentialAnimation on x {
-                            id: marqueeAnim
-
-                            running: textContainer.width > 0 && trackText.implicitWidth > textContainer.width && Variables.expandedState === true
-                                     
-                            loops: Animation.Infinite
-
-                            PauseAnimation { duration: 1500 }
-                            NumberAnimation {
-                                to: -(trackText.implicitWidth - textContainer.width)
-                                duration: 3000
-                            }
-                            PauseAnimation { duration: 1500 }
-                            NumberAnimation {
-                                to: 0
-                                duration: 600
+                            Image {
+                                id: blurredBgSource
+                                source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
+                                anchors.fill: parent
+                                fillMode: Image.PreserveAspectCrop
+                                visible: false 
                             }
 
-                            onRunningChanged: {
-                                if (!running) {
-                                    trackText.x = Qt.binding(function() {
-                                        return (textContainer.width > trackText.implicitWidth) ? (textContainer.width - trackText.implicitWidth) / 2 : 0
-                                    })
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Item {
-                    id: visualizerProgressContainer
-
-                    Layout.topMargin: Variables.height / 4
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Variables.height * 3
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-
-                    property real barScale: 0.3
-                    property int minBarHeight: Variables.mprisVisualizerMinHeight
-                    property int barCount: 30
-                    readonly property var audioData: AudioVisualizerService.audioData
-
-                    Column {
-                        id: bgVisualizer
-                        anchors.fill: parent
-                        spacing: -visualizerProgressContainer.minBarHeight / 1.5
-
-                        Row {
-                            width: parent.width
-                            height: parent.height / 2
-                            spacing: Variables.visualizerGap
-
-                            Repeater {
-                                model: visualizerProgressContainer.barCount
-                                Rectangle {
-                                    width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
-                                    height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
-                                    color: Variables.uiColor
-                                    radius: Variables.barRadius
-                                    anchors.bottom: parent.bottom
-                                    
-                                    Behavior on height {
-                                        NumberAnimation { 
-                                            duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
-                                            easing.type: Easing.InOutCubic
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Row {
-                            width: parent.width
-                            height: parent.height / 2
-                            spacing: Variables.visualizerGap
-
-                            Repeater {
-                                model: visualizerProgressContainer.barCount
-                                Rectangle {
-                                    width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
-                                    height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
-                                    color: Variables.uiColor
-                                    radius: Variables.barRadius
-                                    anchors.top: parent.top
-                                    
-                                    Behavior on height {
-                                        NumberAnimation { 
-                                            duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
-                                            easing.type: Easing.InOutCubic
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Item {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        
-                        width: {
-                            if (mpris.activePlayer && mpris.activePlayer.length > 0) {
-                                return parent.width * (mpris.activePlayer.position / mpris.activePlayer.length)
-                            }
-                            return 0
-                        }
-                        
-                        clip: true 
-
-                        Behavior on width { 
-                            NumberAnimation { 
-                                duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.fadeAnimation 
-                                easing.type: Easing.InOutCubic
-                            } 
-                        }
-
-                        Column {
-                            width: visualizerProgressContainer.width
-                            height: visualizerProgressContainer.height
-                            spacing: -visualizerProgressContainer.minBarHeight / 1.5
-
-                            Row {
-                                width: parent.width
-                                height: parent.height / 2
-                                spacing: Variables.visualizerGap
-
-                                Repeater {
-                                    model: visualizerProgressContainer.barCount
-                                    Rectangle {
-                                        width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
-                                        height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
-                                        color: Variables.iconColor
-                                        radius: Variables.barRadius
-                                        anchors.bottom: parent.bottom
-                                        
-                                        Behavior on height {
-                                            NumberAnimation { 
-                                                duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
-                                                easing.type: Easing.InOutCubic
-                                            }
-                                        }
-                                    }
-                                }
+                            MultiEffect {
+                                source: blurredBgSource
+                                anchors.fill: parent
+                                blurEnabled: true
+                                blurMax: Variables.musicBlurMax
+                                blur: 0.69 //heh nice
                             }
 
-                            Row {
-                                width: parent.width
-                                height: parent.height / 2
-                                spacing: Variables.visualizerGap
-
-                                Repeater {
-                                    model: visualizerProgressContainer.barCount
-                                    Rectangle {
-                                        width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
-                                        height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
-                                        color: Variables.buttonColor
-                                        radius: Variables.barRadius
-                                        anchors.top: parent.top
-                                        
-                                        Behavior on height {
-                                            NumberAnimation { 
-                                                duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
-                                                easing.type: Easing.InOutCubic
-                                            }
-                                        }
-                                    }
-                                }
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Variables.borderColor
+                                opacity: 0.5
                             }
                         }
                     }
                 }
 
                 RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.topMargin: Variables.topMargin
-                    spacing: Variables.spacing * 4
+                    id: expandedContent
 
-                    Rectangle {
-                        Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+                    anchors.fill: parent
+                    anchors.margins: Variables.spacing * 2
+                    spacing: Variables.spacing * 2
 
-                        Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor}
+                    ClippingWrapperRectangle {
+                        Layout.preferredWidth: Variables.musicArtSize
+                        Layout.preferredHeight: Variables.musicArtSize
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: Variables.imgRadius
 
-                        MouseArea {
+                        Image {
+                            source: mpris.activePlayer ? (mpris.activePlayer.trackArtUrl || "") : ""
                             anchors.fill: parent
-                            onClicked: mpris.activePlayer && mpris.activePlayer.previous()
-                            cursorShape: Qt.PointingHandCursor
+                            fillMode: Image.PreserveAspectCrop
                         }
                     }
 
-                    Rectangle {
-                        Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.iconColor
+                    ColumnLayout {
+                        id: controlsColumn
 
-                        Text { 
-                            anchors.fill: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            text: mpris.activePlayer && mpris.activePlayer.isPlaying ? "" : "" 
-                            color: Variables.textColor
-                        }
+                        Layout.preferredWidth: Variables.width * 5
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Variables.spacing
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
-                            cursorShape: Qt.PointingHandCursor
-                        }
-                    }
+                        Item {
+                            id: textContainer
 
-                    Rectangle {
-                        Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+                            clip: true
+                            Layout.fillWidth: true
+                            implicitHeight: trackText.implicitHeight
 
-                        Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor }
+                            onWidthChanged: {
+                                if (marqueeAnim.running) marqueeAnim.restart()
+                            }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: mpris.activePlayer && mpris.activePlayer.next()
-                            cursorShape: Qt.PointingHandCursor
-                        }
-                    }
-                }
-            }
+                            Text {
+                                id: trackText
+                                
+                                x: (textContainer.width > implicitWidth) ? (textContainer.width - implicitWidth) / 2 : 0
 
-            ColumnLayout {
-                id: lyricsColumn
+                                text: {
+                                    const player = mpris.activePlayer
+                                    if (!player) return ""
+                                    return `${player.trackTitle || "Unknown"}\n${player.trackArtist || "Unknown"}`
+                                }
+                                color: Variables.uiColor
+                                font.bold: true
+                                font.pixelSize: Variables.fontSize 
 
-                Layout.preferredWidth: visible ? Variables.musicArtSize : 0
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignVCenter
-                spacing: Variables.spacing
-                visible: Variables.enableLyrics
+                                onImplicitWidthChanged: {
+                                    if (marqueeAnim.running) marqueeAnim.restart()
+                                }
 
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Variables.musicArtSize
-                    Layout.minimumHeight: 0
-                    clip: true
+                                SequentialAnimation on x {
+                                    id: marqueeAnim
 
-                    Text {
-                        anchors.fill: parent
-                        visible: mpris.lyricLines.length === 0
-                        text: mpris.lyricsStatus
-                        color: Variables.textColor
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        wrapMode: Text.Wrap
-                    }
+                                    running: textContainer.width > 0 && trackText.implicitWidth > textContainer.width && Variables.expandedState === true
+                                            
+                                    loops: Animation.Infinite
 
-                    ListView {
-                        id: lyricsList
+                                    PauseAnimation { duration: 1500 }
+                                    NumberAnimation {
+                                        to: -(trackText.implicitWidth - textContainer.width)
+                                        duration: 3000
+                                    }
+                                    PauseAnimation { duration: 1500 }
+                                    NumberAnimation {
+                                        to: 0
+                                        duration: 600
+                                    }
 
-                        anchors.fill: parent
-                        visible: mpris.lyricLines.length > 0
-                        clip: true
-                        model: mpris.lyricLines
-                        currentIndex: mpris.currentLyricIndex
-                        preferredHighlightBegin: height / 2 - (currentItem ? currentItem.height / 2 : 0)
-                        preferredHighlightEnd: height / 2 + (currentItem ? currentItem.height / 2 : 0)
-                        highlightRangeMode: ListView.StrictlyEnforceRange
-                        spacing: Variables.spacing / 2
-
-                        header: Item { width: lyricsList.width; height: lyricsList.height / 2 }
-                        footer: Item { width: lyricsList.width; height: lyricsList.height / 2 }
-
-                        onVisibleChanged: {
-                            if (visible && mpris.currentLyricIndex >= 0) {
-                                positionViewAtIndex(mpris.currentLyricIndex, ListView.Center)
+                                    onRunningChanged: {
+                                        if (!running) {
+                                            trackText.x = Qt.binding(function() {
+                                                return (textContainer.width > trackText.implicitWidth) ? (textContainer.width - trackText.implicitWidth) / 2 : 0
+                                            })
+                                        }
+                                    }
+                                }
                             }
                         }
 
-                        delegate: Text {
-                            required property var modelData
-                            required property int index
+                        Item {
+                            id: visualizerProgressContainer
 
-                            width: lyricsList.width
-                            text: modelData.text
-                            color: Variables.uiColor
-                            font.pixelSize: Variables.fontSize
-                            font.bold: index === mpris.currentLyricIndex
-                            scale: index === mpris.currentLyricIndex ? 0.9 : 0.8
-                            opacity: index === mpris.currentLyricIndex ? 1.0 : 0.4
+                            Layout.topMargin: Variables.height / 4
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Variables.height * 3
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
 
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.Wrap
-                            transformOrigin: Item.Center
+                            property real barScale: 0.3
+                            property int minBarHeight: Variables.mprisVisualizerMinHeight
+                            property int barCount: 30
+                            readonly property var audioData: AudioVisualizerService.audioData
 
-                            Behavior on opacity {
-                                NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.InOutCubic }
+                            Column {
+                                id: bgVisualizer
+                                anchors.fill: parent
+                                spacing: -visualizerProgressContainer.minBarHeight / 1.5
+
+                                Row {
+                                    width: parent.width
+                                    height: parent.height / 2
+                                    spacing: Variables.visualizerGap
+
+                                    Repeater {
+                                        model: visualizerProgressContainer.barCount
+                                        Rectangle {
+                                            width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                            height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                            color: Variables.uiColor
+                                            radius: Variables.barRadius
+                                            anchors.bottom: parent.bottom
+                                            
+                                            Behavior on height {
+                                                NumberAnimation { 
+                                                    duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                                    easing.type: Easing.InOutCubic
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Row {
+                                    width: parent.width
+                                    height: parent.height / 2
+                                    spacing: Variables.visualizerGap
+
+                                    Repeater {
+                                        model: visualizerProgressContainer.barCount
+                                        Rectangle {
+                                            width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                            height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                            color: Variables.uiColor
+                                            radius: Variables.barRadius
+                                            anchors.top: parent.top
+                                            
+                                            Behavior on height {
+                                                NumberAnimation { 
+                                                    duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                                    easing.type: Easing.InOutCubic
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            Behavior on scale {
-                                NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.InOutCubic }
+
+                            Item {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                
+                                width: {
+                                    if (mpris.activePlayer && mpris.activePlayer.length > 0) {
+                                        return parent.width * (mpris.currentPosition / mpris.activePlayer.length)
+                                    }
+                                    return 0
+                                }
+                                
+                                clip: true 
+
+                                Behavior on width { 
+                                    NumberAnimation { 
+                                        duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.fadeAnimation 
+                                        easing.type: Easing.InOutCubic
+                                    } 
+                                }
+
+                                Column {
+                                    width: visualizerProgressContainer.width
+                                    height: visualizerProgressContainer.height
+                                    spacing: -visualizerProgressContainer.minBarHeight / 1.5
+
+                                    Row {
+                                        width: parent.width
+                                        height: parent.height / 2
+                                        spacing: Variables.visualizerGap
+
+                                        Repeater {
+                                            model: visualizerProgressContainer.barCount
+                                            Rectangle {
+                                                width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                                height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                                color: Variables.iconColor
+                                                radius: Variables.barRadius
+                                                anchors.bottom: parent.bottom
+                                                
+                                                Behavior on height {
+                                                    NumberAnimation { 
+                                                        duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                                        easing.type: Easing.InOutCubic
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Row {
+                                        width: parent.width
+                                        height: parent.height / 2
+                                        spacing: Variables.visualizerGap
+
+                                        Repeater {
+                                            model: visualizerProgressContainer.barCount
+                                            Rectangle {
+                                                width: (parent.width - (parent.spacing * (visualizerProgressContainer.barCount - 1))) / visualizerProgressContainer.barCount
+                                                height: Math.min(parent.height, Math.max(visualizerProgressContainer.minBarHeight, (visualizerProgressContainer.audioData[index] || 0) * parent.height * visualizerProgressContainer.barScale))
+                                                color: Variables.buttonColor
+                                                radius: Variables.barRadius
+                                                anchors.top: parent.top
+                                                
+                                                Behavior on height {
+                                                    NumberAnimation { 
+                                                        duration: (mpris.activePlayer && mpris.activePlayer.isPlaying) ? 0 : Variables.animationDurationUI
+                                                        easing.type: Easing.InOutCubic
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: Variables.topMargin
+                            spacing: Variables.spacing * 4
+
+                            Rectangle {
+                                Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+
+                                Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor; font.pixelSize: Variables.fontSize}
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: mpris.activePlayer && mpris.activePlayer.previous()
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.iconColor
+
+                                Text { 
+                                    anchors.fill: parent
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: mpris.activePlayer && mpris.activePlayer.isPlaying ? "" : "" 
+                                    color: Variables.textColor
+                                    font.pixelSize: Variables.fontSize
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+
+                                Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor; font.pixelSize: Variables.fontSize}
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: mpris.activePlayer && mpris.activePlayer.next()
+                                    cursorShape: Qt.PointingHandCursor
+                                }
                             }
                         }
                     }
-                }
-            }
+
+                    ColumnLayout {
+                        id: lyricsColumn
+
+                        Layout.preferredWidth: visible ? Variables.musicArtSize : 0
+                        Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Variables.spacing
+                        visible: Variables.enableLyrics
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Variables.musicArtSize
+                            Layout.minimumHeight: 0
+                            clip: true
+
+                            Text {
+                                anchors.fill: parent
+                                visible: mpris.lyricLines.length === 0
+                                text: mpris.lyricsStatus
+                                font.pixelSize: Variables.fontSize
+                                color: Variables.textColor
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.Wrap
+                            }
+
+                            ListView {
+                                id: lyricsList
+
+                                anchors.fill: parent
+                                visible: mpris.lyricLines.length > 0
+                                clip: true
+                                model: mpris.lyricLines
+                                currentIndex: mpris.currentLyricIndex
+                                preferredHighlightBegin: height / 2 - (currentItem ? currentItem.height / 2 : 0)
+                                preferredHighlightEnd: height / 2 + (currentItem ? currentItem.height / 2 : 0)
+                                highlightRangeMode: ListView.StrictlyEnforceRange
+                                spacing: Variables.spacing / 2
+
+                                header: Item { width: lyricsList.width; height: lyricsList.height / 2 }
+                                footer: Item { width: lyricsList.width; height: lyricsList.height / 2 }
+
+                                onVisibleChanged: {
+                                    if (visible && mpris.currentLyricIndex >= 0) {
+                                        positionViewAtIndex(mpris.currentLyricIndex, ListView.Center)
+                                    }
+                                }
+
+                                delegate: Text {
+                                    required property var modelData
+                                    required property int index
+
+                                    width: lyricsList.width
+                                    text: modelData.text
+                                    color: Variables.uiColor
+                                    font.pixelSize: Variables.fontSize
+                                    font.bold: index === mpris.currentLyricIndex
+                                    scale: index === mpris.currentLyricIndex ? 0.9 : 0.8
+                                    opacity: index === mpris.currentLyricIndex ? 1.0 : 0.4
+
+                                    horizontalAlignment: Text.AlignHCenter
+                                    wrapMode: Text.Wrap
+                                    transformOrigin: Item.Center
+
+                                    Behavior on opacity {
+                                        NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.InOutCubic }
+                                    }
+                                    Behavior on scale {
+                                        NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.InOutCubic }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

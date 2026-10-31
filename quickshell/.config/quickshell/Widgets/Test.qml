@@ -3,7 +3,7 @@ import QtQuick.Controls
 import "../"
 
 Button {
-    id: focusModeToggle
+    id: wifiToggle
 
     padding: 0
 

@@ -16,7 +16,9 @@ Rectangle {
 
     readonly property real itemHeight: Variables.fontSize * 2.5
     readonly property real gridItemSize: Variables.fontSize * 3
-    readonly property real baseHeight: Variables.launcherSearchHeight + Variables.borderWidth * 4 + Variables.spacing * 2
+    readonly property real baseHeight: searchMode === "wallpaper" 
+        ? Variables.borderWidth * 4 + Variables.spacing * 2 
+        : Variables.launcherSearchHeight + Variables.borderWidth * 4 + Variables.spacing * 2
     readonly property bool isGridMode: searchMode === "emoji" || searchMode === "nerdfont"
     readonly property int gridColumns: Math.max(1, Math.floor((root.width - Variables.spacing * 2) / gridItemSize))
     readonly property real calculatedListHeight: isGridMode 
@@ -24,8 +26,11 @@ Rectangle {
         : resultsModel.count * itemHeight
     readonly property real maxListHeight: Variables.launcherExpandedHeight - baseHeight
 
-    implicitWidth: Variables.launcherWidth
-    implicitHeight: Variables.launcherOpen ? (searchInput.text.length > 0 || searchMode !== "apps" ? baseHeight + Math.min(calculatedListHeight, maxListHeight) : baseHeight) : 0
+    implicitWidth: (Variables.wallpaperPicker || searchMode === "wallpaper") ? Variables.wallpaperPickerWidth : Variables.launcherWidth
+    implicitHeight: Variables.launcherOpen ? (
+        searchMode === "wallpaper" ? baseHeight + Variables.wallpaperPickerHeight : 
+        (searchInput.text.length > 0 || searchMode !== "apps" ? baseHeight + Math.min(calculatedListHeight, maxListHeight) : baseHeight)
+    ) : 0 
     
     color: Variables.uiColor
     topLeftRadius: Variables.radius
@@ -35,11 +40,30 @@ Rectangle {
         NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
     }
 
+    Behavior on implicitWidth {
+        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
+    }
+
     property var allApps: []
     property var allClipboard: []
     property var allEmojis: []
     property var allNerdIcons: []
-    property string searchMode: "apps"
+
+    property string searchMode: Variables.launcherMode
+
+    onSearchModeChanged: {
+        if (searchMode === "wallpaper") {
+            Variables.wallpaperPicker = true;
+            if (wallpaperLoader.item) {
+                wallpaperLoader.item.forceActiveFocus();
+            }
+        } else {
+            Variables.wallpaperPicker = false;
+            searchInput.forceActiveFocus();
+            if (searchMode === "emoji") loadEmojis();
+            if (searchMode === "nerdfont") loadNerdIcons();
+        }
+    }
 
     function loadEmojis() {
         if (allEmojis.length > 0) return;
@@ -247,6 +271,7 @@ Rectangle {
             TextField {
                 id: searchInput
                 Layout.fillWidth: true
+                visible: root.searchMode !== "wallpaper"
                 Layout.preferredHeight: Variables.launcherSearchHeight
                 Layout.alignment: Qt.AlignTop
                 
@@ -255,6 +280,7 @@ Rectangle {
                     if (root.searchMode === "files") return "Search files...";
                     if (root.searchMode === "emoji") return "Search emojis...";
                     if (root.searchMode === "nerdfont") return "Search NerdFont icons...";
+                    if (root.searchMode === "wallpaper") return "Select a wallpaper...";
                     return "Search apps (type / for commands)...";
                 }
                 color: Variables.uiColor
@@ -269,7 +295,7 @@ Rectangle {
 
                 Timer {
                     interval: 50
-                    running: Variables.launcherOpen && !searchInput.activeFocus
+                    running: Variables.launcherOpen && root.searchMode !== "wallpaper" && !searchInput.activeFocus
                     repeat: true
                     onTriggered: searchInput.forceActiveFocus()
                 }
@@ -285,21 +311,19 @@ Rectangle {
                     }
                 }
 
-                Keys.onEscapePressed: Variables.launcherOpen = false
+                Keys.onEscapePressed: {
+                    Variables.launcherOpen = false;
+                    Variables.wallpaperPicker = false;
+                }
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Backspace) {
                         if (text.length === 0 && root.searchMode !== "apps") {
-                            root.searchMode = "apps";
+                            Variables.launcherMode = "apps";
                             filterResults("");
                         }
                     } else if (root.isGridMode) {
-                        if (event.key === Qt.Key_Left) {
-                            resultsGrid.moveCurrentIndexLeft();
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Right) {
-                            resultsGrid.moveCurrentIndexRight();
-                            event.accepted = true;
-                        }
+                        if (event.key === Qt.Key_Left) { resultsGrid.moveCurrentIndexLeft(); event.accepted = true; }
+                        else if (event.key === Qt.Key_Right) { resultsGrid.moveCurrentIndexRight(); event.accepted = true; }
                     }
                 }
                 Keys.onDownPressed: {
@@ -324,7 +348,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
-                visible: (searchInput.text.length > 0 || root.searchMode !== "apps") && !root.isGridMode
+                visible: (searchInput.text.length > 0 || root.searchMode !== "apps") && !root.isGridMode && root.searchMode !== "wallpaper"
                 model: resultsModel
 
                 delegate: Item {
@@ -386,7 +410,7 @@ Rectangle {
                 clip: true
                 cellWidth: root.gridItemSize
                 cellHeight: root.gridItemSize
-                visible: (searchInput.text.length > 0 || root.searchMode !== "apps") && root.isGridMode
+                visible: (searchInput.text.length > 0 || root.searchMode !== "apps") && root.isGridMode && root.searchMode !== "wallpaper"
                 model: resultsModel
 
                 delegate: Item {
@@ -425,6 +449,16 @@ Rectangle {
                     }
                 }
             }
+
+            Loader {
+                id: wallpaperLoader
+                Layout.fillWidth: true
+                Layout.preferredHeight: Variables.wallpaperPickerHeight
+                visible: root.searchMode === "wallpaper"
+                active: true
+                onLoaded: if (visible) item.forceActiveFocus()
+                source: "WallpaperPicker.qml"
+            }
         }
     }
 
@@ -439,7 +473,8 @@ Rectangle {
             { name: "Clipboard History", command: "clipboard", trigger: "clipboard", icon: "edit-paste", type: "mode" },
             { name: "File Search", command: "files", trigger: "files", icon: "system-file-manager", type: "mode" },
             { name: "Emoji Picker", command: "emoji", trigger: "emoji", icon: "face-smile", type: "mode" },
-            { name: "NerdFont Icons", command: "nerdfont", trigger: "nerdfont", icon: "utilities-terminal", type: "mode" }
+            { name: "NerdFont Icons", command: "nerdfont", trigger: "nerdfont", icon: "utilities-terminal", type: "mode" },
+            { name: "Wallpaper Picker", command: "wallpaper", trigger: "wallpaper", icon: "preferences-desktop-wallpaper", type: "mode" }
         ];
 
         if (root.searchMode === "apps") {
@@ -582,7 +617,7 @@ Rectangle {
             scoredItems.sort((a, b) => b.score - a.score);
         }
 
-        let max = Math.min(scoredItems.length, root.isGridMode ? 120 : 20);
+        let max = Math.min(scoredItems.length, root.isGridMode ? 999 : 20);
         for (let i = 0; i < max; i++) {
             resultsModel.append({
                 displayTitle: scoredItems[i].title,
@@ -597,12 +632,16 @@ Rectangle {
 
     function executeResult(type, data) {
         if (type === "mode") {
-            root.searchMode = data;
+            Variables.launcherMode = data;
             searchInput.text = "";
             if (data === "clipboard") clipboardFetcher.running = true;
             if (data === "emoji") loadEmojis();
             if (data === "nerdfont") loadNerdIcons();
             if (data === "emoji" || data === "nerdfont") filterResults("");
+            if (data === "wallpaper") {
+                Variables.wallpaperPicker = true;
+                Variables.wallpaperPreview = true;
+            }
             return; 
         } else if (type === "app") {
             actionProcess.command = ["/bin/bash", "-c", data + " &"];
@@ -618,6 +657,7 @@ Rectangle {
         
         actionProcess.running = true;
         Variables.launcherOpen = false;
+        Variables.wallpaperPicker = false;
     }
 
     Process { id: actionProcess }
@@ -626,10 +666,13 @@ Rectangle {
         target: Variables
         function onLauncherOpenChanged() {
             if (Variables.launcherOpen) {
-                if (root.searchMode === "clipboard") clipboardFetcher.running = true;
+                if (Variables.launcherMode === "clipboard") clipboardFetcher.running = true;
+                if (Variables.launcherMode === "emoji") loadEmojis();
+                if (Variables.launcherMode === "nerdfont") loadNerdIcons();
             } else {
                 searchInput.text = "";
-                root.searchMode = "apps";
+                Variables.launcherMode = "apps";
+                Variables.wallpaperPicker = false;
                 root.allEmojis = [];
                 root.allNerdIcons = [];
             }
