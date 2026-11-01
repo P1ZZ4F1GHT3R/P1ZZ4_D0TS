@@ -92,7 +92,7 @@ RowLayout {
 
             lyricLines = plainLines
             lyricsSynced = false
-            lyricsStatus = plainLines.length > 0 ? "Unsynced lyrics" : "(╯°□°)╯︵ ┻━┻"
+            lyricsStatus = plainLines.length > 0 ? "Unsynced lyrics" : "No lyrics found"
         }
         updateCurrentLyric()
     }
@@ -122,30 +122,60 @@ RowLayout {
         resetLyrics("Loading lyrics…")
 
         const params = `artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
-        const request = new XMLHttpRequest()
-        request.onreadystatechange = function() {
-            if (request.readyState !== 4 || requestId !== lyricsRequestId) return
 
-            lyricsLoading = false
-            if (request.status < 200 || request.status >= 300) {
-                resetLyrics("(╯°□°)╯︵ ┻━┻")
-                return
-            }
+        function requestLyrics(url, isSearchFallback) {
+            const request = new XMLHttpRequest()
+            request.timeout = 10000
+            request.onreadystatechange = function() {
+                if (request.readyState !== 4 || requestId !== lyricsRequestId) return
 
-            try {
-                const response = JSON.parse(request.responseText)
-                mpris.lyricsCache[cacheKey] = {
-                    syncedLyrics: response.syncedLyrics || "",
-                    plainLyrics: response.plainLyrics || ""
+                // /get only matches exact metadata. A number of players append
+                // album/version details, so retry against LRCLIB's search API.
+                if (request.status === 404 && !isSearchFallback) {
+                    requestLyrics(`https://lrclib.net/api/search?${params}`, true)
+                    return
                 }
-                parseLyrics(response.syncedLyrics, response.plainLyrics)
-            } catch (error) {
-                resetLyrics("(╯°□°)╯︵ ┻━┻")
+
+                lyricsLoading = false
+                if (request.status < 200 || request.status >= 300) {
+                    resetLyrics("Could not load lyrics")
+                    return
+                }
+
+                try {
+                    const response = JSON.parse(request.responseText)
+                    const lyrics = isSearchFallback && Array.isArray(response) ? response[0] : response
+                    if (!lyrics) {
+                        resetLyrics("No lyrics found")
+                        return
+                    }
+                    mpris.lyricsCache[cacheKey] = {
+                        syncedLyrics: lyrics.syncedLyrics || "",
+                        plainLyrics: lyrics.plainLyrics || ""
+                    }
+                    parseLyrics(lyrics.syncedLyrics, lyrics.plainLyrics)
+                } catch (error) {
+                    resetLyrics("Could not read lyrics")
+                }
             }
+            request.onerror = function() {
+                if (requestId === lyricsRequestId) {
+                    lyricsLoading = false
+                    resetLyrics("Lyrics network error")
+                }
+            }
+            request.ontimeout = function() {
+                if (requestId === lyricsRequestId) {
+                    lyricsLoading = false
+                    resetLyrics("Lyrics request timed out")
+                }
+            }
+            request.open("GET", url)
+            request.setRequestHeader("Accept", "application/json")
+            request.send()
         }
-        request.open("GET", `https://lrclib.net/api/get?${params}`)
-        request.setRequestHeader("Accept", "application/json")
-        request.send()
+
+        requestLyrics(`https://lrclib.net/api/get?${params}`, false)
     }
 
     onLyricTrackKeyChanged: lyricsFetchTimer.restart()
@@ -180,7 +210,9 @@ RowLayout {
         repeat: true
         
         onTriggered: {
-            if (mpris.lyricsStatus === "(╯°□°)╯︵ ┻━┻") {
+            if (mpris.lyricsStatus === "Could not load lyrics"
+                    || mpris.lyricsStatus === "Lyrics network error"
+                    || mpris.lyricsStatus === "Lyrics request timed out") {
                 mpris.fetchLyrics()
             }
         }
@@ -206,6 +238,18 @@ RowLayout {
                 lyricsFetchTimer.restart()
                 if (mpris.activePlayer) mpris.currentPosition = mpris.activePlayer.position || 0
                 mpris.updateCurrentLyric()
+            }
+        }
+
+        function onEnableLyricsChanged() {
+            // Toggling this while the notch is already open previously left
+            // the widget with no request queued, so the lyrics column stayed
+            // empty until the track or expanded state changed again.
+            if (Variables.enableLyrics && Variables.expandedState) {
+                lyricsFetchTimer.restart()
+                mpris.updateCurrentLyric()
+            } else if (!Variables.enableLyrics) {
+                lyricsFetchTimer.stop()
             }
         }
     }
@@ -245,7 +289,10 @@ RowLayout {
             Item {
                 id: expandedContainer
 
-                implicitWidth: expandedContent.implicitWidth + (Variables.spacing * 4)
+                // Keep the expanded card stable; when lyrics are off the
+                // controls column receives the reserved lyrics width instead.
+                implicitWidth: Variables.musicArtSize + (Variables.width * 5)
+                    + Variables.musicArtSize + (Variables.spacing * 8)
                 implicitHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
 
 
@@ -313,64 +360,85 @@ RowLayout {
                         id: controlsColumn
 
                         Layout.preferredWidth: Variables.width * 5
+                        Layout.minimumWidth: Variables.width * 5
+                        Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
                         spacing: Variables.spacing
 
                         Item {
                             id: textContainer
 
-                            clip: true
                             Layout.fillWidth: true
-                            implicitHeight: trackText.implicitHeight
+                            implicitHeight: metadataHeader.implicitHeight
 
-                            onWidthChanged: {
-                                if (marqueeAnim.running) marqueeAnim.restart()
-                            }
+                            Column {
+                                id: metadataHeader
+                                width: textContainer.width
+                                spacing: Variables.topMargin / 2
 
-                            Text {
-                                id: trackText
-                                
-                                x: (textContainer.width > implicitWidth) ? (textContainer.width - implicitWidth) / 2 : 0
+                                Item {
+                                    id: titleClip
+                                    width: metadataHeader.width
+                                    height: trackTitle.implicitHeight
+                                    clip: true
 
-                                text: {
-                                    const player = mpris.activePlayer
-                                    if (!player) return ""
-                                    return `${player.trackTitle || "Unknown"}\n${player.trackArtist || "Unknown"}`
-                                }
-                                color: Variables.uiColor
-                                font.bold: true
-                                font.pixelSize: Variables.fontSize 
-
-                                onImplicitWidthChanged: {
-                                    if (marqueeAnim.running) marqueeAnim.restart()
-                                }
-
-                                SequentialAnimation on x {
-                                    id: marqueeAnim
-
-                                    running: textContainer.width > 0 && trackText.implicitWidth > textContainer.width && Variables.expandedState === true
-                                            
-                                    loops: Animation.Infinite
-
-                                    PauseAnimation { duration: 1500 }
-                                    NumberAnimation {
-                                        to: -(trackText.implicitWidth - textContainer.width)
-                                        duration: 3000
-                                    }
-                                    PauseAnimation { duration: 1500 }
-                                    NumberAnimation {
-                                        to: 0
-                                        duration: 600
+                                    onWidthChanged: {
+                                        if (marqueeAnim.running) marqueeAnim.restart()
                                     }
 
-                                    onRunningChanged: {
-                                        if (!running) {
-                                            trackText.x = Qt.binding(function() {
-                                                return (textContainer.width > trackText.implicitWidth) ? (textContainer.width - trackText.implicitWidth) / 2 : 0
-                                            })
+                                    Text {
+                                        id: trackTitle
+                                        x: (titleClip.width > implicitWidth) ? (titleClip.width - implicitWidth) / 2 : 0
+                                        text: mpris.activePlayer ? (mpris.activePlayer.trackTitle || "Unknown title") : ""
+                                        color: Variables.uiColor
+                                        font.weight: Font.DemiBold
+                                        font.pixelSize: Variables.fontSize * 1.05
+                                        elide: Text.ElideNone
+
+                                        onImplicitWidthChanged: {
+                                            if (marqueeAnim.running) marqueeAnim.restart()
+                                        }
+
+                                        SequentialAnimation on x {
+                                            id: marqueeAnim
+                                            running: titleClip.width > 0 && trackTitle.implicitWidth > titleClip.width
+                                                && Variables.expandedState === true
+                                            loops: Animation.Infinite
+
+                                            PauseAnimation { duration: 1500 }
+                                            NumberAnimation {
+                                                to: -(trackTitle.implicitWidth - titleClip.width)
+                                                duration: 3000
+                                            }
+                                            PauseAnimation { duration: 1500 }
+                                            NumberAnimation { to: 0; duration: 600 }
+
+                                            onRunningChanged: {
+                                                if (!running) {
+                                                    trackTitle.x = Qt.binding(function() {
+                                                        return (titleClip.width > trackTitle.implicitWidth)
+                                                            ? (titleClip.width - trackTitle.implicitWidth) / 2 : 0
+                                                    })
+                                                }
+                                            }
                                         }
                                     }
                                 }
+
+                                Text {
+                                    width: metadataHeader.width
+                                    text: mpris.activePlayer ? (mpris.activePlayer.trackArtist || "Unknown artist") : ""
+                                    color: Variables.uiColor
+                                    opacity: 0.78
+                                    font.pixelSize: Variables.fontSize * 0.68
+                                    font.weight: Font.Medium
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            onWidthChanged: {
+                                if (marqueeAnim.running) marqueeAnim.restart()
                             }
                         }
 
@@ -571,7 +639,7 @@ RowLayout {
                     ColumnLayout {
                         id: lyricsColumn
 
-                        Layout.preferredWidth: visible ? Variables.musicArtSize : 0
+                        Layout.preferredWidth: Variables.enableLyrics ? Variables.musicArtSize : 0
                         Layout.fillHeight: true
                         Layout.alignment: Qt.AlignVCenter
                         spacing: Variables.spacing

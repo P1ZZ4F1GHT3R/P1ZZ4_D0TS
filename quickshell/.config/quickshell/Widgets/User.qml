@@ -6,7 +6,6 @@ import Quickshell.Io
 import QtQuick.Shapes
 import Quickshell.Services.Pipewire
 import QtQuick.Dialogs
-import QtCore
 import Quickshell.Widgets
 import "../"
 
@@ -79,11 +78,6 @@ Rectangle {
             centerIn: parent
         }
 
-        Settings {
-            id: pfpSave
-            property url savedPfp: "" 
-        }
-
         FileDialog {
             id: imageDialog
             title: "Choose an Icon Image"
@@ -110,7 +104,7 @@ Rectangle {
             running: false 
             
             onExited: {
-                pfpSave.savedPfp = "file://" + destFile + "?t=" + Date.now()
+                Variables.profilePicture = "file://" + destFile + "?t=" + Date.now()
             }
         }
 
@@ -122,12 +116,12 @@ Rectangle {
             Layout.preferredWidth: Variables.imgWidth
             Layout.alignment: Qt.AlignVCenter
             radius: Variables.imgRadius
-            visible: pfpSave.savedPfp !== ""
+            visible: Variables.profilePicture !== ""
 
             Image{
                 anchors.fill: parent
-                source: pfpSave.savedPfp
-                visible: pfpSave.savedPfp !== ""
+                source: Variables.profilePicture
+                visible: Variables.profilePicture !== ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: false
@@ -144,9 +138,9 @@ Rectangle {
             Layout.preferredWidth: Variables.imgWidth
             color: Variables.buttonColor
             radius: Variables.imgRadius
-            visible: pfpSave.savedPfp === ""
+            visible: Variables.profilePicture === ""
 
-            Text{ text: "󰀄"; color: Variables.textColor; font.pixelSize: Variables.fontSize; visible: pfpSave.savedPfp === ""; anchors.centerIn: parent }
+            Text{ text: "󰀄"; color: Variables.textColor; font.pixelSize: Variables.fontSize; visible: Variables.profilePicture === ""; anchors.centerIn: parent }
 
             MouseArea {
                 anchors.fill: parent

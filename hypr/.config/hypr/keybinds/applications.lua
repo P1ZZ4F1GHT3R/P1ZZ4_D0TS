@@ -14,3 +14,4 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs ipc call launcher toggleMode wall
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs ipc call PC lock"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("qs ipc call launcher toggleMode emoji"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("qs ipc call focusmode toggle"))
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc call settings toggle"))

@@ -37,16 +37,15 @@ hl.config({
 
         blur = {
             enabled = true,
-            size = 1,
-            noise = 0.03,
-            passes = 2,
+            size = 4,
+            noise = 0,
+            passes = 3,
             vibrancy = 0,
             xray = false,
             special = true,
             popups = true,
             input_methods = true,
             input_methods_ignorealpha = 0.8,
-            variant = "drops",
         },
     },
 

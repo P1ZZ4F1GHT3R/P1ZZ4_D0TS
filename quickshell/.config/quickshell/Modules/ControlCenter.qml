@@ -210,9 +210,9 @@ Rectangle {
 
                     ActivateLinuxToggle{}
                     
-                    Test{}
+                    WifiToggle{}
 
-                    Test{}
+                    BluetoothToggle{}
                 }
             }
 

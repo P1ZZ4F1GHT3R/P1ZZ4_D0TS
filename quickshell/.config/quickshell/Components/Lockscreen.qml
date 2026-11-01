@@ -345,7 +345,18 @@ Scope {
                                 }
 
                                 property string realPassword: ""
-                                property var symbolPool: Variables.oneZero
+                                property var symbolPool: {
+                                    switch (Variables.activePasswordPreset) {
+                                    case "oneZero": return Variables.oneZero;
+                                    case "fullRandom": return Variables.fullRandom;
+                                    case "blocks": return Variables.blocks;
+                                    case "mineCraft": return Variables.mineCraft;
+                                    case "matrix": return Variables.matrix;
+                                    default:
+                                        const glyphs = Variables.customPresetGlyphs(Variables.activePasswordPreset);
+                                        return glyphs.length > 0 ? glyphs.split("") : Variables.standard;
+                                    }
+                                }
 
                                 onTextEdited: {
                                     if (text.length < realPassword.length) {
