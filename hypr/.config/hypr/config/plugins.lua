@@ -179,7 +179,7 @@ if hl.plugin.hyprglass then
         lens_distortion = 0.9,
         brightness = 1.0,
         contrast = 1.7,
-        saturataon = 1,
+        saturation = 1,
         vibrancy = 0.8,
         vibrancy_darkness = 1,
         adaptive_boost = 0.5,
@@ -195,7 +195,7 @@ if hl.plugin.hyprglass then
         edge_thickness = 0.05,
         lens_distortion = 0.3,
         dark = { brightness = 0.82, contrast = 0.90, saturation = 0.80, vibrancy = 0.15, adaptive_dim = 0.4 },
-        light = { brightness = 1.12, contrast = 0.92, saturataon = 0.85, vibrancy = 0.12, adaptive_boost = 0.4 },
+        light = { brightness = 1.12, contrast = 0.92, saturation = 0.85, vibrancy = 0.12, adaptive_boost = 0.4 },
     })
 
     hg.config({

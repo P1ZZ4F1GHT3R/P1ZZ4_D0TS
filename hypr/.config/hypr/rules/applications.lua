@@ -33,8 +33,13 @@ hl.window_rule({
 
 hl.workspace_rule({
    workspace = "special:Discord",
-   ["on_created_empty"] = "discord",
 })
+
+hl.on("workspace.created", function(ws)
+    if ws.name == "special:Discord" then
+        hl.exec_cmd("discord", { workspace = "special:Discord silent" })
+    end
+end)
 
 local topGap = math.floor(gapsOut + (gapsOut / 3))
 
