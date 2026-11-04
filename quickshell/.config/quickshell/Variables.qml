@@ -82,8 +82,6 @@ QtObject {
     readonly property var shadowBlur: 1.0
     readonly property int settingsWidth: scaled(1500)
     readonly property int settingsHeight: scaled(1000)
-    // Settings panel geometry. Keep every settings-panel dimension here so it
-    // follows the global UI scale rather than scattering scale calls in views.
     readonly property int settingsSidebarWidth: scaled(192)
     readonly property int settingsSidebarItemSpacing: 0
     readonly property int settingsSidebarHeaderMargin: scaled(6)
@@ -146,8 +144,7 @@ QtObject {
     readonly property int settingsColorPreviewRadius: scaled(9)
     readonly property int settingsColorPreviewInset: scaled(10)
 
-    // The reset controls in SettingsPanel use this as their single source of
-    // truth. Keep it in sync with the initial values below.
+    // The defaults for the settingspanel
     readonly property var settingDefaults: ({
         hoverEnabled: false,
         lockScreenMpris: true,
@@ -182,7 +179,7 @@ QtObject {
     })
 
     property bool hoverEnabled: settingDefaults.hoverEnabled
-    property bool clickEnabled: !hoverEnabled // Automatically updates when hoverEnabled changes
+    property bool clickEnabled: !hoverEnabled
     property bool lockScreenMpris: settingDefaults.lockScreenMpris
     property bool enableLyrics: settingDefaults.enableLyrics
     property bool wallpaperPreviewEnabled: settingDefaults.wallpaperPreviewEnabled
@@ -197,9 +194,7 @@ QtObject {
     property int hoverTimer: settingDefaults.hoverTimer
     property int workspaceCount: settingDefaults.workspaceCount
 
-    // --- Colors ---
-    // Store palette *sources*, not literal colours. This keeps customisation
-    // compatible with live Wallust/Colors.qml changes.
+    // Colors
     readonly property var colorSources: [
         { value: "background", label: "Background" },
         { value: "foreground", label: "Foreground" },
@@ -237,7 +232,7 @@ QtObject {
     readonly property color backgroundColorUI: colorFromSource(backgroundColorUISource)
     readonly property color shadowColor: shadowColorValue
 
-    // --- Password presets ---
+    // Password presets
     readonly property var oneZero: ["1", "0"]
     readonly property var fullRandom: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
     readonly property var blocks: ["■", "◼", "◾", "▪", "⬝", "▢", "▅", "█", "▮", "▯"]
@@ -247,8 +242,6 @@ QtObject {
     property string activePasswordPreset: settingDefaults.activePasswordPreset
     property string customPresetName: settingDefaults.customPresetName
     property string customPasswordPreset: settingDefaults.customPasswordPreset
-    // JSON is used instead of a variant list so the collection persists
-    // reliably through Qt Settings on every backend.
     property string customPasswordPresets: settingDefaults.customPasswordPresets
 
     function savedCustomPasswordPresets() {
@@ -334,8 +327,6 @@ QtObject {
     }
 
     Component.onCompleted: {
-        // Preserve an older single custom mask as a named preset, then retire
-        // the former transient "Custom · draft" entry.
         if (activePasswordPreset === "custom" && customPasswordPreset.length > 0) {
             customPresetName = "Imported custom"
             saveCustomPasswordPreset()
@@ -347,7 +338,7 @@ QtObject {
         clearCustomPresetDraft()
     }
 
-    // --- State Variables ---
+    // State Variables
     property string currentProfile: "balanced"
     property bool expandedState: false
     property bool powerMenu: false
@@ -385,14 +376,10 @@ QtObject {
     property bool launcherOpen: false
     property string launcherMode: "apps"
 
-    // Older configurations stored this directly in User.qml. Keep reading it
-    // once so existing avatars seamlessly move to the shared setting below.
     property Settings legacyProfilePictureSettings: Settings {
         property url savedPfp: ""
     }
 
-    // Keep an idle timer in sync with its configured phase. A running timer
-    // deliberately keeps its current countdown and adopts changes next cycle.
     onPomodoroTimeChanged: {
         if (!pomodoroIsRunning && !pomodoroIsBreak)
             pomodoroTimeLeft = pomodoroTime
@@ -403,7 +390,7 @@ QtObject {
             pomodoroTimeLeft = breakTime
     }
 
-    // --- Persistence ---
+    // Persistence
     property Settings settings: Settings {
         category: "QuickshellSettings"
         

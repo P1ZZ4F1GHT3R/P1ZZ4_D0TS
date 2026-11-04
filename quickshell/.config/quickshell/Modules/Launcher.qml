@@ -2,12 +2,19 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Shapes
+import QtCore
 import Quickshell
 import Quickshell.Io
 import "../"
 
 Rectangle {
     id: root
+
+    Settings {
+        id: appUsageSettings
+        category: "Launcher"
+        property string usageJson: "{}"
+    }
 
     ListModel { 
         id: resultsModel 
@@ -44,7 +51,6 @@ Rectangle {
         NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
     }
 
-    property var allApps: []
     property var allClipboard: []
     property var allEmojis: []
     property var allNerdIcons: []
@@ -130,34 +136,6 @@ Rectangle {
             return null;
         }
         return null;
-    }
-
-    Process {
-        id: appFetcher
-        running: true
-        command: [
-            "bash", 
-            "-c", 
-            "for f in /usr/share/applications/*.desktop " + Quickshell.env("HOME") + "/.local/share/applications/*.desktop; do [ -f \"$f\" ] || continue; grep -qi '^\\(NoDisplay\\|Hidden\\)=true' \"$f\" && continue; tryexec=$(grep -m 1 '^TryExec=' \"$f\" | cut -d '=' -f 2-); if [ -n \"$tryexec\" ] && ! command -v \"$tryexec\" >/dev/null 2>&1; then continue; fi; name=$(grep -m 1 '^Name=' \"$f\" | cut -d '=' -f 2-); cmd=$(grep -m 1 '^Exec=' \"$f\" | cut -d '=' -f 2- | sed 's/ %[a-zA-Z]//g'); icon=$(grep -m 1 '^Icon=' \"$f\" | cut -d '=' -f 2-); if [ -n \"$name\" ] && [ -n \"$cmd\" ]; then echo \"$name|$cmd|$icon\"; fi; done | sort -u"
-        ]
-        
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let lines = this.text.trim().split("\n");
-                let parsedApps = [];
-                for (let i = 0; i < lines.length; i++) {
-                    let parts = lines[i].split("|");
-                    if (parts.length >= 2) {
-                        parsedApps.push({ 
-                            name: parts[0].trim(), 
-                            command: parts[1].trim(), 
-                            icon: parts.length > 2 ? parts[2].trim() : "" 
-                        });
-                    }
-                }
-                root.allApps = parsedApps;
-            }
-        }
     }
 
     Process {
@@ -338,7 +316,7 @@ Rectangle {
                     if (resultsModel.count > 0) {
                         let activeIdx = root.isGridMode ? resultsGrid.currentIndex : resultsList.currentIndex;
                         let item = resultsModel.get(activeIdx);
-                        executeResult(item.resultType, item.actionData);
+                        executeResult(item.resultType, item.actionData, item.extraData || "");
                     }
                 }
             }
@@ -370,7 +348,7 @@ Rectangle {
                                 Layout.preferredHeight: Variables.fontSize * 1.5
                                 Layout.alignment: Qt.AlignVCenter
                                 visible: model.displayIcon !== ""
-                                source: model.displayIcon.startsWith("/") ? "file://" + model.displayIcon : (model.displayIcon ? "image://icon/" + model.displayIcon : "")
+                                source: model.displayIcon.startsWith("/") ? "file://" + model.displayIcon : (model.displayIcon ? Quickshell.iconPath(model.displayIcon, "help-contents") : "")
                                 fillMode: Image.PreserveAspectFit
                             }
 
@@ -396,7 +374,7 @@ Rectangle {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            executeResult(model.resultType, model.actionData)
+                            executeResult(model.resultType, model.actionData, model.extraData || "")
                         }
                     }
                 }
@@ -444,7 +422,7 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            executeResult(model.resultType, model.actionData)
+                            executeResult(model.resultType, model.actionData, model.extraData || "")
                         }
                     }
                 }
@@ -485,9 +463,10 @@ Rectangle {
                 scoredItems.push({
                     title: "= " + calcVal,
                     data: String(calcVal),
+                    extra: "",
                     icon: "accessories-calculator",
                     type: "calc",
-                    score: 1000
+                    score: 9999
                 });
             }
 
@@ -501,6 +480,7 @@ Rectangle {
                         scoredItems.push({
                             title: virtualModes[j].name,
                             data: virtualModes[j].command,
+                            extra: "",
                             icon: virtualModes[j].icon,
                             type: virtualModes[j].type,
                             score: slashQuery === "" ? (virtualModes.length - j) : score
@@ -508,21 +488,50 @@ Rectangle {
                     }
                 }
             } else {
+                let allApps = [...DesktopEntries.applications.values];
+                let usageCache = {};
+                try { usageCache = JSON.parse(appUsageSettings.usageJson || "{}"); } catch (e) {}
+
                 for (let i = 0; i < allApps.length; i++) {
-                    let name = allApps[i].name;
-                    let lowerName = name.toLowerCase();
+                    let entry = allApps[i];
+                    if (!entry || entry.noDisplay) continue;
                     
-                    if (lowerName.includes(lowerQuery)) {
-                        let score = 0;
-                        if (lowerName === lowerQuery) score = 100;
-                        else if (lowerName.startsWith(lowerQuery)) score = 50;
-                        else if (lowerName.includes(" " + lowerQuery)) score = 25;
-                        else score = 10;
+                    let lowerName = (entry.name || "").toLowerCase();
+                    let lowerGeneric = (entry.genericName || "").toLowerCase();
+                    let score = 0;
+
+                    if (lowerName === lowerQuery) score = 1000;
+                    else if (lowerName.startsWith(lowerQuery)) score = 800;
+                    else if (lowerName.includes(" " + lowerQuery)) score = 700;
+                    else if (lowerName.includes(lowerQuery)) score = 600;
+                    else if (lowerGeneric === lowerQuery) score = 550;
+                    else if (lowerGeneric.startsWith(lowerQuery)) score = 450;
+                    else if (lowerGeneric.includes(" " + lowerQuery)) score = 400;
+                    else if (lowerGeneric.includes(lowerQuery)) score = 350;
+                    else {
+                        let queryIdx = 0;
+                        let fuzzyScore = 0;
+                        for (let c = 0; c < lowerName.length; c++) {
+                            if (lowerName[c] === lowerQuery[queryIdx]) {
+                                fuzzyScore += 10;
+                                queryIdx++;
+                                if (queryIdx === lowerQuery.length) break;
+                            }
+                        }
+                        if (queryIdx === lowerQuery.length) {
+                            score = 200 + fuzzyScore;
+                        }
+                    }
+
+                    if (score > 0) {
+                        let usageCount = usageCache[entry.id] || 0;
+                        score += Math.min(usageCount * 15, 200); 
 
                         scoredItems.push({
-                            title: name,
-                            data: allApps[i].command,
-                            icon: allApps[i].icon,
+                            title: entry.name || "",
+                            data: entry.id, 
+                            extra: entry.id,
+                            icon: entry.icon || "dialog-question",
                             type: "app",
                             score: score
                         });
@@ -547,6 +556,7 @@ Rectangle {
                     scoredItems.push({
                         title: text.replace(/\n/g, " "),
                         data: allClipboard[i].rawLine,
+                        extra: "",
                         icon: "edit-paste",
                         type: "clipboard",
                         score: score
@@ -577,6 +587,7 @@ Rectangle {
                     scoredItems.push({
                         title: e.desc,
                         data: e.char,
+                        extra: "",
                         icon: "", 
                         type: "emoji",
                         score: score
@@ -605,6 +616,7 @@ Rectangle {
                     scoredItems.push({
                         title: icon.name,
                         data: icon.char,
+                        extra: "",
                         icon: "",
                         type: "nerdfont",
                         score: score
@@ -622,6 +634,7 @@ Rectangle {
             resultsModel.append({
                 displayTitle: scoredItems[i].title,
                 actionData: scoredItems[i].data,
+                extraData: scoredItems[i].extra,
                 displayIcon: scoredItems[i].icon,
                 resultType: scoredItems[i].type
             });
@@ -630,7 +643,7 @@ Rectangle {
         resultsGrid.currentIndex = 0;
     }
 
-    function executeResult(type, data) {
+    function executeResult(type, data, extra) {
         if (type === "mode") {
             Variables.launcherMode = data;
             searchInput.text = "";
@@ -644,7 +657,19 @@ Rectangle {
             }
             return; 
         } else if (type === "app") {
-            actionProcess.command = ["/bin/bash", "-c", data + " &"];
+            let usageCache = {};
+            try { usageCache = JSON.parse(appUsageSettings.usageJson || "{}"); } catch (e) {}
+            usageCache[extra] = (usageCache[extra] || 0) + 1;
+            appUsageSettings.usageJson = JSON.stringify(usageCache);
+
+            let entry = DesktopEntries.byId(extra);
+            if (entry) {
+                entry.execute();
+            }
+
+            Variables.launcherOpen = false;
+            Variables.wallpaperPicker = false;
+            return;
         } else if (type === "clipboard") {
             let safeData = "'" + data.replace(/'/g, "'\\''") + "'";
             actionProcess.command = ["/bin/bash", "-c", "printf \"%s\\n\" " + safeData + " | cliphist decode | wl-copy"];

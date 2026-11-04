@@ -104,7 +104,6 @@ Scope {
         IpcHandler {
             target: "launcher"
 
-            // Triggered by 'qsipc call launcher toggle'
             function toggle(): void {
                 if (Variables.launcherOpen && Variables.launcherMode === "apps") {
                     Variables.launcherOpen = false;
@@ -114,7 +113,6 @@ Scope {
                 }
             }
 
-            // Triggered by 'qsipc call launcher toggleMode <mode>'
             function toggleMode(mode: string): void {
                 if (Variables.launcherOpen && Variables.launcherMode === mode) {
                     Variables.launcherOpen = false;
