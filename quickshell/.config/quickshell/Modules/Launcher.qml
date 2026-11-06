@@ -662,6 +662,8 @@ Rectangle {
             usageCache[extra] = (usageCache[extra] || 0) + 1;
             appUsageSettings.usageJson = JSON.stringify(usageCache);
 
+            appUsageSettings.sync();
+
             let entry = DesktopEntries.byId(extra);
             if (entry) {
                 entry.execute();

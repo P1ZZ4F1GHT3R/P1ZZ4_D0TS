@@ -162,6 +162,11 @@ Scope {
                     id: uiShadowContainer
                     anchors.fill: parent
 
+                    visible: {
+                        let preferred = Quickshell.screens[parseInt(Variables.preferredMonitorIndex)] || Quickshell.screens[0];
+                        return screen === preferred;
+                    }
+
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         shadowEnabled: true

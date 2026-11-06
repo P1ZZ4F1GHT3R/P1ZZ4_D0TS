@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import QtCore
+import Quickshell
 import "./"
 
 QtObject {
@@ -175,7 +176,8 @@ QtObject {
         activePasswordPreset: "oneZero",
         customPresetName: "",
         customPasswordPreset: "",
-        customPasswordPresets: "[]"
+        customPasswordPresets: "[]",
+        preferredMonitorIndex: preferredMonitorIndex,
     })
 
     property bool hoverEnabled: settingDefaults.hoverEnabled
@@ -184,7 +186,7 @@ QtObject {
     property bool enableLyrics: settingDefaults.enableLyrics
     property bool wallpaperPreviewEnabled: settingDefaults.wallpaperPreviewEnabled
     property bool lockOnStart: settingDefaults.lockOnStart
-    
+
     property int idleLockTime: settingDefaults.idleLockTime
     property int idleSleepTime: settingDefaults.idleSleepTime
     property int updateTreshold: settingDefaults.updateTreshold
@@ -193,6 +195,18 @@ QtObject {
     property int notifTimer: settingDefaults.notifTimer
     property int hoverTimer: settingDefaults.hoverTimer
     property int workspaceCount: settingDefaults.workspaceCount
+    property int preferredMonitorIndex: settingDefaults.preferredMonitorIndex
+
+    property var monitorOptions: {
+    let options = [];
+    for (let i = 0; i < Quickshell.screens.length; i++) {
+        let s = Quickshell.screens[i];
+        // Use the hardware name if available, otherwise fallback to "Display 1", etc.
+        let displayName = s.name ? s.name : ("Display " + (i + 1));
+        options.push({ value: i.toString(), label: displayName });
+    }
+    return options;
+}
 
     // Colors
     readonly property var colorSources: [
@@ -407,6 +421,7 @@ QtObject {
         property alias enableLyrics: root.enableLyrics
         property alias wallpaperPreviewEnabled: root.wallpaperPreviewEnabled
         property alias lockOnStart: root.lockOnStart
+        property alias preferredMonitorIndex: root.preferredMonitorIndex
         
         // Integers
         property alias idleLockTime: root.idleLockTime

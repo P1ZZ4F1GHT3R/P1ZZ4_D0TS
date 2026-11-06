@@ -59,6 +59,13 @@ PanelWindow {
     }
 
     property var shellSettings: [
+        { 
+            key: "preferredMonitorIndex", 
+            label: "Primary Monitor", 
+            description: "Select the display to render the shell on.", 
+            type: "choice", 
+            options: Variables.monitorOptions 
+        },
         { key: "hoverEnabled", label: "Hover to open panels", description: "Open the notch and control center when you hover.", type: "toggle" },
         { key: "hoverTimer", label: "Hover delay", description: "How long the pointer must rest before opening.", type: "slider", min: 10, max: 1000, suffix: " ms" },
         { key: "workspaceCount", label: "Workspace count", description: "Number of workspaces shown in the bar.", type: "slider", min: 1, max: 10 },
@@ -174,6 +181,7 @@ PanelWindow {
                 Rectangle {
                     Layout.fillHeight: true
                     Layout.preferredWidth: Variables.settingsSidebarWidth
+                    Layout.maximumWidth: Variables.settingsSidebarWidth
                     color: Variables.backgroundColorUI
                     topLeftRadius: Variables.radius
                     bottomLeftRadius: Variables.radius
@@ -188,7 +196,7 @@ PanelWindow {
                         spacing: Variables.settingsSidebarItemSpacing
 
                         Rectangle {
-                            Layout.preferredWidth: logoRow.implicitWidth + Variables.spacing
+                            Layout.fillWidth: true
                             Layout.preferredHeight: Variables.settingsBrandIconSize + Variables.spacing * 2
                             Layout.bottomMargin: Variables.settingsSidebarHeaderMargin
                             radius: Variables.settingsCategoryRadius
@@ -222,13 +230,13 @@ PanelWindow {
                                         text: "SETTINGS"
                                         font.pixelSize: Variables.fontSize * 1.1
                                         font.weight: Font.Bold
-                                        font.letterSpacing: 2.5
+                                        font.letterSpacing: 2.5 * Variables.uiScale
                                         color: Variables.textColor
                                     }
                                     Text {
                                         text: "P1ZZ4_D0TS"
-                                        font.pixelSize: Variables.fontSize * 0.69
-                                        font.letterSpacing: 2.1
+                                        font.pixelSize: Variables.fontSize * 0.69 
+                                        font.letterSpacing: 2.1 * Variables.uiScale
                                         color: Variables.borderColor
                                     }
                                 }

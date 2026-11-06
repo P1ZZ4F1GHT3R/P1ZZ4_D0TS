@@ -41,11 +41,15 @@ Scope {
     
     PanelWindow {
         id: exclusiveZoneReserve
+
+        screen: Quickshell.screens[parseInt(Variables.preferredMonitorIndex)] || Quickshell.screens[0]
+
         anchors {
             top: true
             left: true
             right: true
         }
+
         color: "transparent"
         implicitHeight: 0
         exclusiveZone: Variables.focused ? 0 : Variables.exclusiveZoneTop + Variables.borderWidth * 4
@@ -54,6 +58,8 @@ Scope {
 
     PanelWindow {
         id: unifiedPanel 
+
+        screen: Quickshell.screens[parseInt(Variables.preferredMonitorIndex)] || Quickshell.screens[0]
 
         Component.onCompleted: Variables.monitor = screen
         onScreenChanged: Variables.monitor = screen
