@@ -116,6 +116,7 @@ Rectangle {
                 Variables.notchHidden = true;
                 Variables.workspacesHidden = true;
                 Variables.systemHidden = true;
+                Variables.launcherOpen = false;
                 hovertimer.stop();
 
                 lockTransitionTimer.isLocking = true;
@@ -203,11 +204,17 @@ Rectangle {
     }
 
     Behavior on implicitWidth {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
+        NumberAnimation { 
+            duration: Variables.expandedState ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
+            easing.type: !Variables.expandedState ? Variables.activeAnimationUI : Easing.InOutSine 
+        }
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
+        NumberAnimation { 
+            duration: !Variables.expandedState ? Variables.activeDurationUI : Variables.activeDurationUI * 1.2
+            easing.type: Variables.activeAnimationUI 
+        }
     }
 
     MouseArea {
@@ -307,6 +314,7 @@ Rectangle {
 
             anchors.fill: parent
             anchors.margins: Variables.rightMargin
+            spacing: Variables.spacing * 1.5
 
             Loader {
                 id: mprisWidgetLoader
@@ -373,7 +381,7 @@ Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 
                 visible: active
-                active: !Variables.powerMenu && !Variables.expandedState && !Variables.lockScreen && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD  && !Variables.notchHidden && !Variables.toolBar
+                active: Variables.enableVisualizer && !Variables.powerMenu && !Variables.expandedState && !Variables.lockScreen && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD  && !Variables.notchHidden && !Variables.toolBar
                 sourceComponent: Component {
                     VisualizerWidget {
                         activePlayer: notchRoot.activePlayer

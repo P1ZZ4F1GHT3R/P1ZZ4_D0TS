@@ -7,7 +7,7 @@ Item {
     id: visualizer
     
     property var activePlayer: null
-    readonly property var audioDataDefault: [0, 0, 0, 0]
+    readonly property var audioDataDefault: [0, 0, 0, 0, 0, 0, 0, 0, 0]
     readonly property var audioData: AudioVisualizerService.compactAudioData
 
     implicitWidth: Variables.width / 16 * 7
@@ -29,9 +29,9 @@ Item {
             height: visualizer.height
             
             Repeater {
-                model: 4
+                model: Variables.compactVisualizerSize
                 Rectangle {
-                    width: Variables.width / 16
+                    width: Variables.width / (3 * Variables.compactVisualizerSize)
                     height: Math.max(Variables.visualizerMinHeight, (visualizer.audioData[index] || 0) * parent.height)
                     color: Variables.iconColor
                     radius: Variables.barRadius
@@ -53,9 +53,9 @@ Item {
             height: visualizer.height 
             
             Repeater {
-                model: 4
+                model: Variables.compactVisualizerSize
                 Rectangle {
-                    width: Variables.width / 16
+                    width: Variables.width / (3 * Variables.compactVisualizerSize)
                     height: Math.max(Variables.visualizerMinHeight, (visualizer.audioData[index] || 0) * parent.height)
                     color: Variables.buttonColor
                     radius: Variables.barRadius

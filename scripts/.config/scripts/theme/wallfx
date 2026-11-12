@@ -1,0 +1,451 @@
+#!/usr/bin/env python3
+"""wallfx — the maps behind the wallpaper transitions that WallpaperFx.qml draws.
+
+A transition is a shader that, pixel by pixel, decides WHEN the new wallpaper
+arrives. That "when" is a map, and this script makes the maps; the shader only
+reads them. Two kinds:
+
+  CONTAGION (any wallpaper). A handful of colonies land at random places and
+  moments and eat through the old wallpaper along a noise field, with ragged,
+  crisp 4 px edges. It is Dijkstra over that noise, and it does not depend on
+  the image, so a small pool is made once and each map is renewed after use.
+
+  OUTLINE (wallpapers with a character). The character is cut out of the NEW
+  wallpaper (BiRefNet, through rembg), and the map says three things: how far
+  each pixel is from its silhouette (to draw the outline and fill it inwards),
+  where along the outline each point is (so the line is drawn like a pen
+  stroke), and in what order the rest arrives (outwards from the character).
+  It is per image, so it is cached by path, size and date.
+
+    wallfx spread                          a contagion map and its smooth twin (from the pool)
+    wallfx profile IMG                     path to IMG's outline map; exit 1 if
+                                           IMG has no clear character
+    wallfx warm [DIR]                      precomputes the outline maps of a folder
+    wallfx choose NEW                      "profile <map> <line>" or "contagion <map> <smooth>"
+    wallfx install                         sets up the cut-out (venv + model, ~1 GB)
+
+The cut-out needs ~/.local/share/wallfx/venv (rembg + onnxruntime + opencv) and
+the birefnet-general-lite model; without them, every wallpaper gets contagion.
+"""
+import hashlib
+import heapq
+import json
+import os
+import random
+import sys
+
+HOME = os.path.expanduser("~")
+CACHE = os.path.join(HOME, ".cache", "wallfx")
+VENV = os.path.join(HOME, ".local", "share", "wallfx")
+VENV_PY = os.path.join(VENV, "venv", "bin", "python")
+WALLS = os.path.join(HOME, "Pictures", "wallpapers")
+
+GW, GH = 240, 135
+POOL = 12           
+FIELD_MAX = 1280    
+SD_RANGE = 16.0     
+WIDE = 48.0         
+
+def tr(es, en):
+    """The rice's language layer, as in poke-theme."""
+    try:
+        with open(os.path.join(HOME, ".config", "quickshell-rice.json"), encoding="utf-8") as f:
+            return en if json.load(f).get("language") == "en" else es
+    except (OSError, ValueError, AttributeError):
+        return es
+
+def _reexec_in_venv():
+    if sys.executable != VENV_PY and os.path.exists(VENV_PY):
+        os.execv(VENV_PY, [VENV_PY, os.path.abspath(__file__), *sys.argv[1:]])
+
+# ───────────────────────────── contagion ─────────────────────────────
+
+def _value_noise(rng, w, h, scale):
+    import numpy as np
+    nx, ny = int(w / scale) + 3, int(h / scale) + 3
+    lat = rng.random((ny, nx))
+    xs = np.arange(w) / scale
+    ys = np.arange(h) / scale
+    ix, iy = xs.astype(int), ys.astype(int)
+    fx, fy = xs - ix, ys - iy
+    fx, fy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    top = lat[iy][:, ix] * (1 - fx) + lat[iy][:, ix + 1] * fx
+    bot = lat[iy + 1][:, ix] * (1 - fx) + lat[iy + 1][:, ix + 1] * fx
+    return top * (1 - fy)[:, None] + bot * fy[:, None]
+
+def _blur(a, sigma):
+    import numpy as np
+    r = int(3 * sigma) + 1
+    x = np.arange(-r, r + 1)
+    k = np.exp(-x * x / (2.0 * sigma * sigma))
+    k /= k.sum()
+    a = np.pad(a, r, mode="edge")
+    a = sum(k[i] * a[:, i:i + a.shape[1] - 2 * r] for i in range(2 * r + 1))
+    a = sum(k[i] * a[i:i + a.shape[0] - 2 * r, :] for i in range(2 * r + 1))
+    return a
+
+def _rgb16(v, extra=None):
+    import numpy as np
+    q = np.clip(v * 65535.0 + 0.5, 0, 65535).astype(np.uint16)
+    rgb = np.zeros(v.shape + (3,), np.uint8)
+    if extra is not None:
+        rgb[..., 0] = extra
+    rgb[..., 1] = q >> 8
+    rgb[..., 2] = q & 255
+    return rgb
+
+_STEPS = [(-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
+          (-1, -1, 1.4142), (1, -1, 1.4142), (-1, 1, 1.4142), (1, 1, 1.4142)]
+
+def _arrival(cost, seeds, GW=GW, GH=GH):
+    INF = float("inf")
+    arrival = [INF] * (GW * GH)
+    heap = []
+    for i, t0 in seeds:
+        arrival[i] = t0
+        heap.append((t0, i))
+    heapq.heapify(heap)
+    while heap:
+        t, i = heapq.heappop(heap)
+        if t != arrival[i]:
+            continue
+        x, y = i % GW, i // GW
+        ci = cost[i]
+        for dx, dy, d in _STEPS:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < GW and 0 <= ny < GH:
+                j = ny * GW + nx
+                cand = t + (ci + cost[j]) * 0.5 * d
+                if cand < arrival[j]:
+                    arrival[j] = cand
+                    heapq.heappush(heap, (cand, j))
+    return arrival
+
+def _ranked(arrival, shape=(GH, GW)):
+    import numpy as np
+    a = np.array(arrival)
+    rank = np.empty(a.size)
+    rank[np.argsort(a, kind="stable")] = np.arange(a.size)
+    return (rank / (a.size - 1) * 65535).astype(np.uint16).reshape(shape)
+
+def _noise3(rng):
+    k = GW / 160.0                       
+    return (0.52 * _value_noise(rng, GW, GH, rng.uniform(18, 65) * k)
+            + 0.30 * _value_noise(rng, GW, GH, rng.uniform(7, 20) * k)
+            + 0.18 * _value_noise(rng, GW, GH, rng.uniform(2, 6) * k))
+
+def contagion_map(seed):
+    import numpy as np
+    w, h = GW * 2, GH * 2
+    rng = np.random.default_rng(seed)
+    n = (0.52 * _value_noise(rng, w, h, rng.uniform(18, 65))
+         + 0.30 * _value_noise(rng, w, h, rng.uniform(7, 20))
+         + 0.18 * _value_noise(rng, w, h, rng.uniform(2, 6)))
+    cost = 0.12 + np.exp(rng.uniform(5, 9) * (n - 0.5)) + rng.uniform(0.15, 0.65) * rng.random((h, w))
+    cost = cost.ravel().tolist()
+    seeds = []
+    for _ in range(int(rng.integers(6, 13))):
+        x, y = int(rng.uniform(0.06, 0.94) * w), int(rng.uniform(0.08, 0.92) * h)
+        seeds.append((y * w + x, float(rng.uniform(0, (w * h) ** 0.5 * 0.12))))
+    return _ranked(_arrival(cost, seeds, w, h), (h, w))
+
+def _write_pair(path, smooth, a):
+    import numpy as np
+    from PIL import Image
+    h, w = a.shape
+    rgb = np.zeros((h, w, 3), np.uint8)
+    rgb[..., 0] = a >> 8
+    rgb[..., 1] = a & 255
+    smooth_arr = _blur(a.astype(np.float64) / 65535.0, 2.5)
+    for dest, arr in ((path, rgb), (smooth, _rgb16(smooth_arr))):
+        tmp = f"{dest}.{os.getpid()}.tmp.png"
+        Image.fromarray(arr, "RGB").save(tmp)
+        os.replace(tmp, dest)
+
+def spread():
+    d = os.path.join(CACHE, "spread")
+    os.makedirs(d, exist_ok=True)
+    k = random.randrange(POOL)
+    path = os.path.join(d, f"spread-{k}.png")
+    smooth = os.path.join(d, f"spread-{k}-smooth.png")
+    if not (os.path.exists(path) and os.path.exists(smooth)):
+        _write_pair(path, smooth, contagion_map(random.randrange(1 << 30)))
+    return path, smooth
+
+def renew(path):
+    import time
+    time.sleep(4)
+    k = os.path.basename(path).split("-")[1].split(".")[0]
+    d = os.path.dirname(path)
+    _write_pair(os.path.join(d, f"spread-{k}.png"), os.path.join(d, f"spread-{k}-smooth.png"),
+                contagion_map(random.randrange(1 << 30)))
+
+# ───────────────────────────── outline ─────────────────────────────
+
+def _key(img):
+    st = os.stat(img)
+    return hashlib.sha1(f"{os.path.realpath(img)}|{st.st_size}|{int(st.st_mtime)}".encode()).hexdigest()[:16]
+
+_session = None
+
+def _cutout(im):
+    global _session
+    os.environ.setdefault("U2NET_HOME", os.path.join(VENV, "models"))
+    from rembg import new_session, remove
+    if _session is None:
+        try:
+            _session = new_session("birefnet-general-lite", providers=[
+                ("ROCMExecutionProvider", {"device_id": 0}),
+                "CPUExecutionProvider"])
+        except Exception:
+            _session = new_session("birefnet-general-lite", providers=["CPUExecutionProvider"])
+    return remove(im, session=_session, only_mask=True)
+
+def profile_gen(img, force=False):
+    d = os.path.join(CACHE, "profile")
+    os.makedirs(d, exist_ok=True)
+    base = os.path.join(d, _key(img))
+    meta_path = base + ".json"
+    if not force and os.path.exists(meta_path):
+        meta = json.load(open(meta_path))
+        if not meta.get("ok"):
+            return None
+        if os.path.exists(base + "-field.png") and os.path.exists(base + "-line.png"):
+            return base + "-field.png", base + "-line.png"
+    try:
+        import cv2
+        import numpy as np
+        from PIL import Image
+    except ImportError:
+        return None
+
+    import fcntl
+    lock = open(base + ".lock", "w")
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    if not force and os.path.exists(meta_path):
+        meta = json.load(open(meta_path))
+        if not meta.get("ok"):
+            return None
+        if os.path.exists(base + "-field.png") and os.path.exists(base + "-line.png"):
+            return base + "-field.png", base + "-line.png"
+
+    im = Image.open(img).convert("RGB")
+    im.thumbnail((FIELD_MAX, FIELD_MAX))
+    mask_path = base + "-mask.png"
+    if os.path.exists(mask_path):
+        mask = Image.open(mask_path).convert("L")
+    else:
+        mask = _cutout(im).convert("L")
+        mask.save(mask_path)
+    m = np.asarray(mask.resize(im.size), np.float32) / 255.0
+    h, w = m.shape
+    b = (m > 0.5).astype(np.uint8)
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(b, connectivity=8)
+    keep = np.zeros(n, bool)
+    keep[1:] = stats[1:, cv2.CC_STAT_AREA] >= 0.002 * w * h
+    b = keep[lab].astype(np.uint8)
+    cover = float(b.mean())
+    unsure = float(((m > 0.1) & (m < 0.9)).mean())
+    ok = 0.008 <= cover <= 0.72 and unsure <= 0.06
+    meta = {"img": img, "ok": ok, "cover": round(cover, 3), "unsure": round(unsure, 3), "w": w, "h": h}
+    if not ok:
+        json.dump(meta, open(meta_path, "w"))
+        return None
+
+    din = cv2.distanceTransform(b, cv2.DIST_L2, 5)
+    dout = cv2.distanceTransform(1 - b, cv2.DIST_L2, 5)
+    sd = dout - din                                   
+
+    inner = np.clip(din / max(np.percentile(din[b > 0], 99), 1.0), 0, 1)
+
+    rng = np.random.default_rng(int(_key(img)[:8], 16))
+    noise = (0.6 * _value_noise(rng, w, h, w / 9.0) + 0.4 * _value_noise(rng, w, h, w / 28.0))
+    warped = dout * (0.75 + 0.5 * noise) + noise * 0.08 * max(w, h)
+    outside = b == 0
+    order = np.zeros((h, w), np.float32)
+    vals = warped[outside]
+    r = np.empty(vals.size)
+    r[np.argsort(vals, kind="stable")] = np.arange(vals.size)
+    order[outside] = r / max(vals.size - 1, 1)
+
+    edge = np.zeros((h, w), np.uint8)
+    param_at = np.zeros((h, w), np.float32)
+    contours, _ = cv2.findContours(b, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    for c in contours:
+        if len(c) < 40 or abs(cv2.contourArea(c)) < 0.0008 * w * h:
+            continue
+        c = c[:, 0, :]
+        seg = np.sqrt((np.diff(c, axis=0, append=c[:1]) ** 2).sum(1))
+        s = np.concatenate([[0], np.cumsum(seg)[:-1]])
+        L = s[-1] + seg[-1]
+        s = (s - s[np.argmin(c[:, 1])]) % L
+        p = np.minimum(s, L - s) / (L / 2)
+        p[(c[:, 0] <= 1) | (c[:, 0] >= w - 2) | (c[:, 1] <= 1) | (c[:, 1] >= h - 2)] = -1
+        edge[c[:, 1], c[:, 0]] = 1
+        param_at[c[:, 1], c[:, 0]] = p
+    line = np.zeros((h, w), np.uint8)
+    if edge.any():
+        _, labels = cv2.distanceTransformWithLabels(1 - edge, cv2.DIST_L2, 5,
+                                                    labelType=cv2.DIST_LABEL_PIXEL)
+        ys, xs = np.nonzero(edge)
+        table = np.concatenate([[0], param_at[ys, xs]])
+        near = np.abs(sd) < SD_RANGE
+        v = table[labels[near]]
+        line[near] = np.where(v < 0, 0, np.clip(v * 255, 1, 255)).astype(np.uint8)
+
+    rgb = np.zeros((h, w, 3), np.uint8)
+    rgb[..., 0] = np.clip(dout / WIDE * 255, 0, 255)
+    rgb[..., 1] = np.clip(inner * 255, 0, 255)
+    rgb[..., 2] = np.clip((sd + SD_RANGE) / (2 * SD_RANGE) * 255, 0, 255)
+    smooth_line = cv2.GaussianBlur(order.astype(np.float32), (0, 0), 4.0)
+    linea = _rgb16(smooth_line, extra=line)
+    for suffix, arr, mode in (("-field.png", rgb, "RGB"), ("-line.png", linea, "RGB")):
+        tmp = f"{base}{suffix}.{os.getpid()}.tmp.png"
+        Image.fromarray(arr, mode).save(tmp)
+        os.replace(tmp, base + suffix)
+    json.dump(meta, open(meta_path, "w"))
+    return base + "-field.png", base + "-line.png"
+
+
+def contagion(img):
+    path, smooth = spread()
+    if os.fork() == 0:                        
+        try:
+            null = os.open(os.devnull, os.O_RDWR)
+            for fd in (0, 1, 2):
+                os.dup2(null, fd)
+            os.setsid()
+            renew(path)
+        finally:
+            os._exit(0)
+    return path, smooth
+
+
+def without_profile():
+    try:
+        with open(os.path.join(HOME, ".config", "wallfx", "without-profile")) as f:
+            return {l.strip() for l in f if l.strip() and not l.startswith("#")}
+    except OSError:
+        return set()
+
+
+def warm(folder):
+    import fcntl
+    os.makedirs(CACHE, exist_ok=True)
+    lock = open(os.path.join(CACHE, ".warm.lock"), "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return
+    d = os.path.join(CACHE, "spread")
+    os.makedirs(d, exist_ok=True)
+    for k in range(POOL):
+        path, smooth = os.path.join(d, f"spread-{k}.png"), os.path.join(d, f"spread-{k}-smooth.png")
+        if not (os.path.exists(path) and os.path.exists(smooth)):
+            _write_pair(path, smooth, contagion_map(random.randrange(1 << 30)))
+    exts = (".jpg", ".jpeg", ".png", ".webp")
+
+    def listing():
+        out = []
+        for name in sorted(os.listdir(folder)):
+            path = os.path.join(folder, name)
+            if name.lower().endswith(exts) and os.path.isfile(path):
+                st = os.stat(path)
+                out.append((name, st.st_size, int(st.st_mtime)))
+        return out
+
+    seen = None
+    for _ in range(6):
+        now = listing()
+        if now == seen:
+            break
+        for name, _, _ in now:
+            try:
+                r = profile_gen(os.path.join(folder, name))
+                print(("profile  " if r else "contagion") + "  " + name, flush=True)
+            except Exception as e:                       
+                print(f"error     {name}: {e}", file=sys.stderr, flush=True)
+        seen = now
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    cmd, rest = argv[0], argv[1:]
+    if cmd == "spread":
+        print(*contagion(None))
+        return 0
+    if cmd in ("profile", "warm"):
+        _reexec_in_venv()
+    if cmd == "profile":
+        r = profile_gen(rest[0], force="--force" in rest)
+        if not r:
+            return 1
+        print(*r)
+        return 0
+    if cmd == "warm":
+        warm(rest[0] if rest else WALLS)
+        return 0
+    if cmd == "choose":
+        img = rest[0]
+        if os.path.basename(img) in without_profile():
+            print("contagion", *contagion(img))
+            return 0
+        base = os.path.join(CACHE, "profile", _key(img))
+        try:
+            meta = json.load(open(base + ".json"))
+        except (OSError, ValueError):
+            meta = None
+        r = None
+        if meta is not None:
+            if meta.get("ok") and os.path.exists(base + "-field.png") and os.path.exists(base + "-line.png"):
+                r = (base + "-field.png", base + "-line.png")
+        elif os.path.exists(VENV_PY) and "--no-wait" not in rest:
+            _reexec_in_venv()
+            import signal
+            import subprocess
+            import threading
+            notice = threading.Timer(1.5, lambda: subprocess.run(
+                ["notify-send", "-t", "4000", "-a", tr("Wallpaper", "Wallpaper"),
+                 tr("Preparing the new wallpaper", "Preparing the new wallpaper"),
+                 tr("Cutting out its character for the transition…", "Cutting out its character for the transition…")],
+                capture_output=True))
+            notice.start()
+
+            def late(*_):
+                raise TimeoutError
+            signal.signal(signal.SIGALRM, late)
+            signal.alarm(25)                      
+            try:
+                r = profile_gen(img)
+            except Exception:
+                r = None
+            finally:
+                signal.alarm(0)
+                notice.cancel()
+        if r:
+            print("profile", *r)
+        else:
+            print("contagion", *contagion(img))
+        return 0
+    if cmd == "install":
+        import shutil
+        import subprocess
+        uv = shutil.which("uv")
+        if not uv:
+            print(tr("wallfx: uv is needed (sudo pacman -S uv)", "wallfx: uv is needed (sudo pacman -S uv)"), file=sys.stderr)
+            return 1
+        os.makedirs(VENV, exist_ok=True)
+        subprocess.run([uv, "venv", "-q", os.path.join(VENV, "venv")], check=True)
+        subprocess.run([uv, "pip", "install", "-q", "--python", VENV_PY, "rembg", "onnxruntime-rocm",
+                        "opencv-python-headless", "numpy", "pillow"], check=True)
+        print(tr("done. `wallfx warm` cuts out your wallpapers (the first run downloads the model, ~210 MB)",
+                 "done. `wallfx warm` cuts out your wallpapers (the first run downloads the model, ~210 MB)"))
+        return 0
+    print(tr(f"wallfx: unknown command '{cmd}'", f"wallfx: unknown command '{cmd}'"), file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

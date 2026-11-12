@@ -99,8 +99,8 @@ Rectangle {
 
         readonly property int activeId: Hyprland.focusedWorkspace?.id ?? 1
         readonly property int targetIndex: activeId - 1
-        readonly property bool isOutOfRange: activeId > rowLayout.children.length - 2
-        readonly property Item targetItem: (!isOutOfRange && targetIndex >= 0) ? rowLayout.children[targetIndex] : null
+        readonly property bool isOutOfRange: activeId > wsRepeater.count
+        readonly property Item targetItem: (!isOutOfRange && targetIndex >= 0) ? wsRepeater.itemAt(targetIndex) : null
 
         anchors.verticalCenter: parent.verticalCenter 
         x: targetItem ? (rowLayout.x + targetItem.x) - ((width - targetItem.width) / 2) : x
@@ -129,27 +129,28 @@ Rectangle {
         spacing: Variables.spacing
         
         Repeater {
-        model: Variables.workspaceCount
+            id: wsRepeater
+            model: Variables.workspaceCount
 
-        Text {
-            readonly property int wsId: index + 1
-            
-            readonly property bool isOccupied: {
-                let occupied = false;
-                let workspaces = Hyprland.workspaces.values; 
-                for (let i = 0; i < workspaces.length; i++) {
-                    if (workspaces[i].id === wsId) {
-                        occupied = true; 
-                        break;
+            Text {
+                readonly property int wsId: index + 1
+                
+                readonly property bool isOccupied: {
+                    let occupied = false;
+                    let workspaces = Hyprland.workspaces.values; 
+                    for (let i = 0; i < workspaces.length; i++) {
+                        if (workspaces[i].id === wsId) {
+                            occupied = true; 
+                            break;
+                        }
                     }
+                    return occupied;
                 }
-                return occupied;
-            }
 
-            text: wsId
-            color: isOccupied ? Variables.textColor : Variables.backgroundColorUI
-            font.pixelSize: Variables.fontSize
-        }
+                text: wsId
+                color: isOccupied ? Variables.textColor : Variables.backgroundColorUI
+                font.pixelSize: Variables.fontSize
+            }
         }
 
         Item {

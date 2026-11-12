@@ -6,18 +6,8 @@ import Quickshell.Bluetooth
 Item {
     id: root
 
-    // Emitted when a connect attempt failed because we need (or have the wrong) PSK.
     signal wifiNeedsPassword(var network)
 
-    // ------------------------------------------------------------------
-    // Devices
-    //
-    // Networking.devices is a Quickshell ObjectModel. It has NO count, get()
-    // or length. The only way to read it as a list is .values, which is also
-    // what makes these bindings re-evaluate when devices come and go.
-    // (The old code probed .count/.get/.length, got undefined, looped zero
-    // times, and silently returned null for every device.)
-    // ------------------------------------------------------------------
     function firstDevice(type) {
         const devs = Networking.devices.values
         for (let i = 0; i < devs.length; i++) {
@@ -29,7 +19,6 @@ Item {
 
     readonly property var wifiDevice: firstDevice(DeviceType.Wifi)
 
-    // True if ANY wired device is connected
     readonly property bool hasEthernet: {
         const devs = Networking.devices.values
         for (let i = 0; i < devs.length; i++) {
@@ -39,16 +28,10 @@ Item {
         return false
     }
 
-    // Remove these two once you trust it. They exist so the log tells you something.
     onWifiDeviceChanged: console.log("[Connectivity] wifi device:", wifiDevice ? wifiDevice.name : "none")
     onHasEthernetChanged: console.log("[Connectivity] ethernet connected:", hasEthernet)
 
-    // ------------------------------------------------------------------
-    // Wi-Fi
-    // ------------------------------------------------------------------
     readonly property bool wifiEnabled: Networking.wifiEnabled
-
-    // Set by the settings page while it is visible, so we don't scan forever.
     property bool wifiScanActive: false
 
     Binding {
@@ -72,9 +55,6 @@ Item {
     property var pendingNetwork: null
     readonly property bool wifiBusy: pendingNetwork !== null && pendingNetwork.stateChanging
 
-    // Temporary message ("Connection failed" etc). Cleared by statusResetTimer.
-    // wifiMessage is a pure binding on purpose: never assign to it directly,
-    // that permanently destroys the binding.
     property string wifiStatusOverride: ""
     readonly property string wifiMessage: {
         if (wifiStatusOverride !== "") return wifiStatusOverride
@@ -149,9 +129,6 @@ Item {
             network.connect()
     }
 
-    // ------------------------------------------------------------------
-    // Bluetooth
-    // ------------------------------------------------------------------
     property var btAdapter: Bluetooth.defaultAdapter
     property bool bluetoothEnabled: btAdapter ? btAdapter.enabled : false
     property bool bluetoothBusy: false
@@ -206,7 +183,6 @@ Item {
             btAdapter.discovering = false
     }
 
-    // BluetoothDevice has connect()/disconnect(), not connectDevice()/disconnectDevice().
     function toggleBluetoothDevice(device, isConnected) {
         if (!device) return
         if (isConnected) device.disconnect()

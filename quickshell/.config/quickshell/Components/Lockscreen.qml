@@ -11,6 +11,7 @@ import QtQuick.Shapes
 import "../"
 import "../Components"
 import "../Modules"
+import "../Common"
 
 Scope {
     id: lockScreen
@@ -151,10 +152,11 @@ Scope {
                 }
 
                 MultiEffect {
-                    anchors.fill: rectangle
+                    anchors.fill: parent
                     source: lockscreenBackground
                     blurEnabled: true
                     blurMax: Variables.lockscreenBlurMax
+                    autoPaddingEnabled: false
                     blur: 1.0
                 }
                 
@@ -212,13 +214,14 @@ Scope {
                             Text {
                                 id: timeDisplay
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: Qt.formatTime(new Date(), "hh:mm") 
+                                text: Variables.lockScreenClockSec ? Qt.formatTime(new Date(), "hh:mm:ss") : Qt.formatTime(new Date(), "hh:mm") 
                                 color: Variables.lockscreenColor
                                 font.pixelSize: Variables.fontSize * 6
                                 font.weight: Font.Bold
                             }
 
                             Text {
+                                visible: Variables.lockscreenDate
                                 id: dateDisplay
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: Qt.formatDate(new Date(), "dddd, d MMMM") 
@@ -247,7 +250,7 @@ Scope {
                                 running: true
                                 repeat: true
                                 onTriggered: {
-                                    timeDisplay.text = Qt.formatTime(new Date(), "hh:mm");
+                                    timeDisplay.text = Variables.lockScreenClockSec ? Qt.formatTime(new Date(), "hh:mm:ss") : Qt.formatTime(new Date(), "hh:mm");
                                     dateDisplay.text = Qt.formatDate(new Date(), "dddd, d MMMM");
                                 }
                             }
@@ -263,7 +266,7 @@ Scope {
                         }
 
                         implicitHeight: Variables.lockScreen && !wait ? rectangle.height / 18 : 0
-                        implicitWidth: rectangle.width / 7
+                        implicitWidth: Variables.lockScreen && !wait ? rectangle.width / 7 : rectangle.width / 21
                         color: Variables.uiColor
                         topLeftRadius: Variables.radius
                         topRightRadius: Variables.radius
@@ -316,95 +319,73 @@ Scope {
                             }
                         }
 
-                        Behavior on implicitHeight {
-                            NumberAnimation { duration: Variables.bouncingDurationUI; easing.type: Variables.bouncingAnimationUI}
+                        Behavior on implicitWidth {
+                            NumberAnimation { 
+                                duration: (Variables.lockScreen && !wait) ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
+                                easing.type: !(Variables.lockScreen && !wait) ? Variables.activeAnimationUI : Easing.InOutSine 
+                            }
                         }
 
-                        ColumnLayout {
+                        Behavior on implicitHeight {
+                            NumberAnimation { 
+                                duration: !(Variables.lockScreen && !wait) ? Variables.activeDurationUI : Variables.activeDurationUI * 1.2
+                                easing.type: Variables.activeAnimationUI 
+                            }
+                        }
+
+                        AnimatedInput {
+                            id: passwordInput
+                            enabled: !wait
                             anchors.centerIn: parent
-                            spacing: Variables.spacing
+                            width: parent.width / 1.05
+                            height: Math.max(0, parent.height - Variables.spacing * 2)
+                            horizontalAlignment: TextInput.AlignHCenter
+                            placeholderText: "Arch, btw"
+                            bgColor: wait ? Variables.uiColor : Variables.lockscreenColor
+                            focus: true
 
-                            TextField {
-                                id: passwordInput
-                                enabled: !wait
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: inputHolder.implicitHeight - Variables.spacing * 2
-                                echoMode: TextInput.Normal
-                                focus: true
-                                color: Variables.uiColor
-                                horizontalAlignment: TextInput.AlignHCenter
-                                verticalAlignment: TextInput.AlignVCenter
-                                font.pixelSize: Variables.fontSize
+                            property string realPassword: ""
+                            property var symbolPool: {
+                                switch (Variables.activePasswordPreset) {
+                                case "oneZero": return Variables.oneZero;
+                                case "fullRandom": return Variables.fullRandom;
+                                case "blocks": return Variables.blocks;
+                                case "mineCraft": return Variables.mineCraft;
+                                case "matrix": return Variables.matrix;
+                                default:
+                                    const glyphs = Variables.customPresetGlyphs(Variables.activePasswordPreset);
+                                    return glyphs.length > 0 ? glyphs.split("") : Variables.standard;
+                                }
+                            }
 
-                                onActiveFocusChanged: {
-                                    if (!activeFocus && !wait && Variables.lockScreen) {
-                                        forceActiveFocus();
+                            Timer {
+                                interval: 50
+                                running: Variables.lockScreen && !wait && !passwordInput.activeFocus
+                                repeat: true
+                                onTriggered: passwordInput.forceActiveFocus()
+                            }
+
+                            onTextEdited: (newText) => {
+                                if (newText.length < realPassword.length) {
+                                    realPassword = realPassword.substring(0, newText.length);
+                                } else if (newText.length > realPassword.length) {
+                                    let added = newText.substring(realPassword.length);
+                                    realPassword += added;
+                                    let updatedMask = newText.substring(0, newText.length - added.length);
+                                    for (let i = 0; i < added.length; i++) {
+                                        updatedMask += symbolPool[Math.floor(Math.random() * symbolPool.length)];
                                     }
+                                    passwordInput.text = updatedMask;
+                                    passwordInput.inputItem.cursorPosition = updatedMask.length;
                                 }
+                            }
 
-                                Timer {
-                                    interval: 50
-                                    running: Variables.lockScreen && !wait && !passwordInput.activeFocus
-                                    repeat: true
-                                    onTriggered: passwordInput.forceActiveFocus()
-                                }
-
-                                property string realPassword: ""
-                                property var symbolPool: {
-                                    switch (Variables.activePasswordPreset) {
-                                    case "oneZero": return Variables.oneZero;
-                                    case "fullRandom": return Variables.fullRandom;
-                                    case "blocks": return Variables.blocks;
-                                    case "mineCraft": return Variables.mineCraft;
-                                    case "matrix": return Variables.matrix;
-                                    default:
-                                        const glyphs = Variables.customPresetGlyphs(Variables.activePasswordPreset);
-                                        return glyphs.length > 0 ? glyphs.split("") : Variables.standard;
-                                    }
-                                }
-
-                                onTextEdited: {
-                                    if (text.length < realPassword.length) {
-                                        realPassword = realPassword.substring(0, text.length);
-                                    } else if (text.length > realPassword.length) {
-                                        let newChars = text.substring(realPassword.length);
-                                        realPassword += newChars;
-                                        let updatedMask = text.substring(0, text.length - newChars.length);
-                                        for (let i = 0; i < newChars.length; i++) {
-                                            let randomIndex = Math.floor(Math.random() * symbolPool.length);
-                                            updatedMask += symbolPool[randomIndex];
-                                        }
-                                        text = updatedMask;
-                                    }
-                                    cursorPosition = text.length; 
-                                }
-
-                                background: Rectangle {
-                                    implicitHeight: inputHolder.implicitHeight / 2
-                                    implicitWidth: inputHolder.implicitWidth / 1.05
-                                    color: wait ? Variables.uiColor : Variables.lockscreenColor
-                                    radius: Variables.radius
-                                    Behavior on color { ColorAnimation {duration: Variables.animationDurationUI} }
-                                }
-                                
-                                onAccepted: {
-                                    if (pam.responseRequired) {
-                                        wait = true;
-                                        pam.respond(passwordInput.realPassword);
-                                        passwordInput.realPassword = "";
-                                        passwordInput.text = ""; 
-                                    }
-                                }
-
-                                Text { 
-                                    anchors {
-                                        verticalCenter: parent.verticalCenter
-                                        left: parent.left
-                                        leftMargin: Variables.leftMargin
-                                    }
-                                    text: "Arch, btw"
-                                    color: Variables.uiColor
-                                    visible: passwordInput.realPassword.length === 0
+                            onAccepted: {
+                                if (pam.responseRequired) {
+                                    wait = true;
+                                    pam.respond(passwordInput.realPassword);
+                                    passwordInput.realPassword = "";
+                                    passwordInput.text = "";
                                 }
                             }
                         }

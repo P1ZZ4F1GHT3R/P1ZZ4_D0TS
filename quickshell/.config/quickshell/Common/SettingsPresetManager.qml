@@ -175,19 +175,48 @@ RowLayout {
             delegate: Rectangle {
                 id: presetRow
                 required property var modelData
+
+                readonly property string presetId: "custom:" + presetRow.modelData.name
+                readonly property bool isActive: Variables.activePasswordPreset === presetId
+                readonly property bool isRowHovered: editMouse.containsMouse || rowDeleteMouse.containsMouse
+                readonly property int deleteButtonSize: Math.max(
+                    14,
+                    Math.min(
+                        Variables.settingsPresetDeleteSize > 0
+                            ? Variables.settingsPresetDeleteSize - Variables.settingsControlTextSpacing * 2
+                            : Math.round(height * 0.64),
+                        Math.round(height * 0.64)
+                    )
+                )
+
+                function deletePreset() {
+                    const wasActive = presetRow.isActive
+                    const previousActive = Variables.activePasswordPreset
+                    const draftMatchesDeleted = Variables.customPresetName === presetRow.modelData.name
+
+                    Variables.selectPasswordPreset(presetRow.presetId)
+                    Variables.removeActiveCustomPasswordPreset()
+
+                    if (wasActive || draftMatchesDeleted)
+                        Variables.clearCustomPresetDraft()
+
+                    if (!wasActive && previousActive && previousActive !== presetRow.presetId)
+                        Variables.selectPasswordPreset(previousActive)
+                }
+
                 width: ListView.view.width
                 height: Variables.settingsPresetListRowHeight
                 radius: Variables.barRadius
-                color: editMouse.containsMouse || Variables.activePasswordPreset === "custom:" + presetRow.modelData.name
+                color: presetRow.isRowHovered || presetRow.isActive
                     ? Variables.iconColor : Variables.uiColor
-                border.color: editMouse.containsMouse || Variables.activePasswordPreset === "custom:" + presetRow.modelData.name
+                border.color: presetRow.isRowHovered || presetRow.isActive
                     ? Variables.buttonColor : Variables.borderColor
                 border.width: 1
                 activeFocusOnTab: true
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                        Variables.selectPasswordPreset("custom:" + presetRow.modelData.name)
+                        Variables.selectPasswordPreset(presetRow.presetId)
                         event.accepted = true
                     }
                 }
@@ -196,13 +225,16 @@ RowLayout {
                     id: editMouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: Variables.selectPasswordPreset("custom:" + presetRow.modelData.name)
+                    onClicked: Variables.selectPasswordPreset(presetRow.presetId)
                 }
 
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: Variables.settingsFieldHorizontalPadding
-                    anchors.rightMargin: Variables.settingsControlTextSpacing
+                    anchors.rightMargin: Math.max(
+                        Variables.settingsControlTextSpacing,
+                        Math.round((presetRow.height - presetRow.deleteButtonSize) / 2)
+                    )
                     spacing: Variables.settingsControlGap
 
                     Text {
@@ -210,7 +242,7 @@ RowLayout {
                         text: presetRow.modelData.name
                         font.pixelSize: Variables.fontSize * 0.68
                         font.weight: Font.DemiBold
-                        color: editMouse.containsMouse ? Variables.uiColor : Variables.textColor
+                        color: presetRow.isRowHovered || presetRow.isActive ? Variables.uiColor : Variables.textColor
                         elide: Text.ElideRight
                     }
 
@@ -218,25 +250,29 @@ RowLayout {
                         Layout.fillWidth: true
                         text: presetRow.modelData.glyphs
                         font.pixelSize: Variables.fontSize * 0.72
-                        color: editMouse.containsMouse ? Variables.uiColor : Variables.textColor
+                        color: presetRow.isRowHovered || presetRow.isActive ? Variables.uiColor : Variables.textColor
                         opacity: 0.82
                         elide: Text.ElideRight
                     }
 
                     Rectangle {
                         id: rowDelete
-                        Layout.preferredWidth: Variables.settingsPresetDeleteSize - Variables.settingsControlTextSpacing
-                        Layout.preferredHeight: width
-                        radius: Variables.barRadius
-                        color: rowDeleteMouse.containsMouse ? Variables.buttonColor : "transparent"
-                        z: 1
+                        Layout.preferredWidth: presetRow.deleteButtonSize
+                        Layout.preferredHeight: presetRow.deleteButtonSize
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: Math.max(3, Variables.barRadius - 2)
+                        color: rowDeleteMouse.containsMouse
+                            ? Variables.buttonColor
+                            : (presetRow.isRowHovered || presetRow.isActive ? "transparent" : Variables.backgroundColorUI)
+                        border.color: rowDeleteMouse.containsMouse
+                            ? Variables.buttonColor
+                            : (presetRow.isRowHovered || presetRow.isActive ? Variables.uiColor : Variables.borderColor)
+                        border.width: 1
                         activeFocusOnTab: true
 
                         Keys.onPressed: event => {
                             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                                Variables.selectPasswordPreset("custom:" + presetRow.modelData.name)
-                                Variables.removeActiveCustomPasswordPreset()
-                                Variables.clearCustomPresetDraft()
+                                presetRow.deletePreset()
                                 event.accepted = true
                             }
                         }
@@ -244,18 +280,20 @@ RowLayout {
                         Text {
                             anchors.centerIn: parent
                             text: "×"
-                            font.pixelSize: Variables.fontSize * 0.85
-                            color: rowDeleteMouse.containsMouse ? Variables.uiColor : Variables.iconColor
+                            font.pixelSize: Variables.fontSize * 0.72
+                            font.weight: Font.Bold
+                            color: rowDeleteMouse.containsMouse || presetRow.isRowHovered || presetRow.isActive
+                                ? Variables.uiColor
+                                : Variables.textColor
                         }
 
                         MouseArea {
                             id: rowDeleteMouse
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                Variables.selectPasswordPreset("custom:" + presetRow.modelData.name)
-                                Variables.removeActiveCustomPasswordPreset()
-                                Variables.clearCustomPresetDraft()
+                                presetRow.deletePreset()
                                 rowDelete.forceActiveFocus()
                             }
                         }

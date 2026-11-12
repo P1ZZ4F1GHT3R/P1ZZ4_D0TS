@@ -4,7 +4,7 @@ import "../"
 Text {
     id: clockItem
 
-    property bool showSeconds: true
+    property bool showSeconds: Variables.notchClockSec
     property string format: "HH:mm"
     property var activePlayer: null
 

@@ -69,7 +69,10 @@ PanelWindow {
         { key: "hoverEnabled", label: "Hover to open panels", description: "Open the notch and control center when you hover.", type: "toggle" },
         { key: "hoverTimer", label: "Hover delay", description: "How long the pointer must rest before opening.", type: "slider", min: 10, max: 1000, suffix: " ms" },
         { key: "workspaceCount", label: "Workspace count", description: "Number of workspaces shown in the bar.", type: "slider", min: 1, max: 10 },
-        { key: "lockOnStart", label: "Lock on startup", description: "Start a locked session whenever Quickshell launches.", type: "toggle" }
+        { key: "lockOnStart", label: "Lock on startup", description: "Start a locked session whenever Quickshell launches.", type: "toggle" },
+        { key: "lockScreenClockSec", label: "Enable seconds on the lockscreen", description: "Wether the lockscreen clock shows seconds or not", type: "toggle" },
+        { key: "lockscreenDate", label: "Enable date display on the lockscreen", description: "Wether the lockscreen displays the date or not", type: "toggle" },
+        { key: "notchClockSec", label: "Enable seconds in the notch", description: "Wether the notch clock shows seconds or not", type: "toggle" },
     ]
 
     property var mediaSettings: [
@@ -77,7 +80,10 @@ PanelWindow {
         { key: "enableLyrics", label: "Synced lyrics", description: "Show lyrics in the expanded media widget.", type: "toggle" },
         { key: "wallpaperPreviewEnabled", label: "Live wallpaper preview", description: "Preview a selected wallpaper before applying it.", type: "toggle" },
         { key: "disablePopups", label: "Quiet notifications", description: "Suppress desktop toast popups without disabling notifications.", type: "toggle" },
-        { key: "notifTimer", label: "Toast duration", description: "How long a notification stays on screen.", type: "slider", min: 1000, max: 10000, suffix: " ms" }
+        { key: "notifTimer", label: "Toast duration", description: "How long a notification stays on screen.", type: "slider", min: 1000, max: 10000, suffix: " ms" },
+        { key: "compactVisualizerSize", label: "Visualizer bar count", description: "Number of visualizer bars in the closed notch", type: "slider", min: 3, max: 12},
+        { key: "enableVisualizer", label: "Enable the visualizer", description: "Enable the visualizer in the notch", type: "toggle"},
+        { key: "enableMusicIcon", label: "Enable the musicicon", description: "Enable the musicicon in the notch", type: "toggle"},
     ]
 
     property var systemSettings: [
@@ -88,7 +94,7 @@ PanelWindow {
         { key: "updateNotifStart", label: "First update reminder", description: "Delay before an available-update reminder appears.", type: "slider", min: 1, max: 60, factor: 60000, suffix: " min" },
         { key: "updateNotifRunning", label: "Update reminder interval", description: "How often to repeat the available-update reminder.", type: "slider", min: 1, max: 120, factor: 60000, suffix: " min" },
         { key: "pomodoroTime", label: "Pomodoro duration", description: "Focus time before the timer starts a break.", type: "slider", min: 1, max: 120, factor: 60, suffix: " min" },
-        { key: "breakTime", label: "Pomodoro break", description: "Break time before the next focus session begins.", type: "slider", min: 1, max: 60, factor: 60, suffix: " min" }
+        { key: "breakTime", label: "Pomodoro break", description: "Break time before the next focus session begins.", type: "slider", min: 1, max: 60, factor: 60, suffix: " min" },
     ]
 
     property var connectivitySettings: [
@@ -104,16 +110,16 @@ PanelWindow {
         { key: "borderColorSource", label: "Borders", description: "Choose a role from the current Colors.qml palette.", type: "choice", palette: true, options: Variables.colorSources },
         { key: "buttonColorSource", label: "Button surface", description: "Choose a role from the current Colors.qml palette.", type: "choice", palette: true, options: Variables.colorSources },
         { key: "lockscreenColorSource", label: "Lockscreen accent", description: "Choose a role from the current Colors.qml palette.", type: "choice", palette: true, options: Variables.colorSources },
-        { key: "shadowColorValue", label: "Shadow", description: "Enter a hex shadow colour. The default is #000000.", type: "input", hexColor: true }
+        { key: "shadowColorValue", label: "Shadow", description: "Enter a hex shadow colour. The default is #000000.", type: "input", hexColor: true },
     ]
 
     property var lockscreenSettings: [
         { key: "activePasswordPreset", label: "Password animation", description: "Glyph set used by the lockscreen password mask.", type: "choice", options: Variables.passwordPresetOptions },
-        { label: "Custom mask presets", description: "Save several named glyph sets. Select one above to edit or use it.", type: "presetManager", height: Variables.settingsPresetManagerHeight + Variables.settingsCardPadding * 2 }
+        { label: "Custom mask presets", description: "Save several named glyph sets. Select one above to edit or use it.", type: "presetManager", height: Variables.settingsPresetManagerHeight + Variables.settingsCardPadding * 2 },
     ]
 
     property var activationSettings: [
-        { type: "activation", height: Variables.settingsActivationHeight + Variables.settingsCardPadding * 2 }
+        { type: "activation", height: Variables.settingsActivationHeight + Variables.settingsCardPadding * 2 },
     ]
 
     property var categories: [
@@ -123,7 +129,7 @@ PanelWindow {
         { name: "System", icon: "󰍹", subtitle: "Idle & updates", settings: systemSettings },
         { name: "Appearance", icon: "", subtitle: "Palette & surfaces", settings: appearanceSettings },
         { name: "Lockscreen", icon: "󰌾", subtitle: "Animation details", settings: lockscreenSettings },
-        { name: "Activation", icon: "", subtitle: "Activate your copy of Linux here", settings: activationSettings }
+        { name: "Activation", icon: "", subtitle: "Activate your copy of Linux here", settings: activationSettings },
     ]
 
     function settingValue(key) {

@@ -21,12 +21,11 @@ Rectangle {
     }
 
     width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : Variables.controlCenterClosedWidth
-    height: controlLayout.implicitHeight
+    height: Variables.controlCenter ? controlLayout.implicitHeight : Variables.controlCenterClosedHeight
     color: Variables.uiColor
     topLeftRadius: Variables.radius
     bottomLeftRadius: Variables.radius
     
-
     property var notifServer
 
     Shape {
@@ -34,19 +33,16 @@ Rectangle {
         
         anchors.top: parent.bottom
         anchors.right: parent.right
-        anchors.rightMargin: Variables.borderWidth * 4
+        anchors.rightMargin: Variables.controlCenter ? Variables.borderWidth * 4 : 0
 
-        property real closedWidth: Variables.controlCenterClosedWidth
-        property real openWidth: controlLayout.implicitWidth + Variables.borderWidth * 4
-        property real progress: Math.max(0, Math.min(1, (parent.width - closedWidth) / Math.max(1, openWidth - closedWidth)))
-
-        readonly property real cornerSize: Variables.radius * progress
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        visible: cornerSize > 0
 
         width: cornerSize
         height: cornerSize
 
         ShapePath {
-            fillColor: Variables.uiColor
+            fillColor: controlCenter.color
             strokeWidth: 0
 
             PathMove { x: bottomRightConcave.cornerSize; y: 0 }
@@ -60,25 +56,22 @@ Rectangle {
             PathLine { x: bottomRightConcave.cornerSize; y: 0 }
         }
     }
-
+    
     Shape {
         id: topRightConcave
 
         anchors.bottom: parent.top
         anchors.right: parent.right
-        anchors.rightMargin: Variables.borderWidth * 4
+        anchors.rightMargin: Variables.controlCenter ? Variables.borderWidth * 4 : 0
 
-        property real closedWidth: Variables.controlCenterClosedWidth
-        property real openWidth: controlLayout.implicitWidth + Variables.borderWidth * 4
-        property real progress: Math.max(0, Math.min(1, (parent.width - closedWidth) / Math.max(1, openWidth - closedWidth)))
-
-        readonly property real cornerSize: Variables.radius * progress
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        visible: cornerSize > 0
 
         width: cornerSize
         height: cornerSize
 
         ShapePath {
-            fillColor: Variables.uiColor
+            fillColor: controlCenter.color
             strokeWidth: 0
 
             PathMove { x: topRightConcave.cornerSize; y: topRightConcave.cornerSize }
@@ -94,11 +87,15 @@ Rectangle {
     }
 
     Behavior on width {
-        NumberAnimation {duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
-    }
+            NumberAnimation { duration: Variables.controlCenter ? Variables.animationDurationUI : Variables.animationDurationUI * 1.8; easing.type: !Variables.controlCenter ? Variables.animationTypeUI : Easing.InOutSine }
+        }
 
     Behavior on height {
-        NumberAnimation {duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI}
+        NumberAnimation { duration: !Variables.controlCenter ? Variables.animationDurationUI : Variables.animationDurationUI * 1.2; easing.type: Variables.animationTypeUI }
+    }
+
+    Behavior on color {
+        ColorAnimation { duration: Variables.fadeAnimation}
     }
 
     MouseArea {

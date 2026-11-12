@@ -41,14 +41,14 @@ hl.on("workspace.created", function(ws)
     end
 end)
 
-local topGap = math.floor(gapsOut + (gapsOut / 3))
+local topGap = math.floor(gapsOut + (gapsOut / 1.5))
 
 hl.workspace_rule({ 
    workspace = "w[tv1-10]", 
    gaps_out = {
        top = topGap,
        right = gapsOut,
-       bottom = gapsOut,
+       bottom = gapsOut * 1.4,
        left = gapsOut,
    },
    gaps_in = gapsIn 

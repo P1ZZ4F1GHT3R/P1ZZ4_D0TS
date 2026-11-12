@@ -22,6 +22,7 @@ RowLayout {
     property int lyricsRequestId: 0
     property var lyricsCache: ({})
     property real currentPosition: 0
+
     property string lyricTrackKey: {
         const player = mpris.activePlayer
         return player ? `${player.trackArtist || ""}\u0000${player.trackTitle || ""}` : ""
@@ -128,9 +129,6 @@ RowLayout {
             request.timeout = 10000
             request.onreadystatechange = function() {
                 if (request.readyState !== 4 || requestId !== lyricsRequestId) return
-
-                // /get only matches exact metadata. A number of players append
-                // album/version details, so retry against LRCLIB's search API.
                 if (request.status === 404 && !isSearchFallback) {
                     requestLyrics(`https://lrclib.net/api/search?${params}`, true)
                     return
@@ -242,9 +240,6 @@ RowLayout {
         }
 
         function onEnableLyricsChanged() {
-            // Toggling this while the notch is already open previously left
-            // the widget with no request queued, so the lyrics column stayed
-            // empty until the track or expanded state changed again.
             if (Variables.enableLyrics && Variables.expandedState) {
                 lyricsFetchTimer.restart()
                 mpris.updateCurrentLyric()
@@ -263,7 +258,7 @@ RowLayout {
         radius: Variables.imgRadius
 
         opacity: Variables.expandedState || Variables.powerMenu || Variables.notifWidget ? 0.0 : 1.0
-        visible: !Variables.expandedState
+        visible: !Variables.expandedState && Variables.enableMusicIcon
     
         Behavior on opacity {
             NumberAnimation { duration: Variables.fadeAnimation }
@@ -281,20 +276,24 @@ RowLayout {
     Loader {
         id: expandedContainerLoader
 
-        active: mpris.activePlayer !== null && Variables.expandedState
-        Layout.preferredWidth: active && item ? item.implicitWidth: 0
-        Layout.preferredHeight: active && item ? item.implicitHeight : 0
+        active: mpris.activePlayer !== null
+        Layout.preferredWidth: Variables.expandedState && active && item ? item.implicitWidth : 0
+        Layout.preferredHeight: Variables.expandedState && active && item ? item.implicitHeight : 0
+
+        opacity: Variables.expandedState ? 1.0 : 0.0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Variables.fadeAnimation }
+        }
 
         sourceComponent: Component {
             Item {
                 id: expandedContainer
 
-                // Keep the expanded card stable; when lyrics are off the
-                // controls column receives the reserved lyrics width instead.
                 implicitWidth: Variables.musicArtSize + (Variables.width * 5)
                     + Variables.musicArtSize + (Variables.spacing * 8)
                 implicitHeight: expandedContent.implicitHeight + (Variables.spacing * 4)
-
 
                 Rectangle {
                     anchors.fill: parent
@@ -302,6 +301,7 @@ RowLayout {
                     color: Variables.backgroundColorUI
                     border.color: Variables.borderColor
                     border.width: Variables.borderWidth
+
 
                     ClippingWrapperRectangle {
                         anchors.fill: parent
@@ -653,7 +653,7 @@ RowLayout {
 
                             Text {
                                 anchors.fill: parent
-                                visible: mpris.lyricLines.length === 0
+                                visible: mpris.lyricLines.length === 0 || !mpris.lyricsSynced
                                 text: mpris.lyricsStatus
                                 font.pixelSize: Variables.fontSize
                                 color: Variables.textColor
@@ -662,49 +662,101 @@ RowLayout {
                                 wrapMode: Text.Wrap
                             }
 
-                            ListView {
-                                id: lyricsList
+                            Text {
+                                id: currentLyricText
+
+                                readonly property string targetText: (mpris.lyricsSynced
+                                    && mpris.currentLyricIndex >= 0
+                                    && mpris.currentLyricIndex < mpris.lyricLines.length)
+                                    ? mpris.lyricLines[mpris.currentLyricIndex].text : ""
 
                                 anchors.fill: parent
-                                visible: mpris.lyricLines.length > 0
-                                clip: true
-                                model: mpris.lyricLines
-                                currentIndex: mpris.currentLyricIndex
-                                preferredHighlightBegin: height / 2 - (currentItem ? currentItem.height / 2 : 0)
-                                preferredHighlightEnd: height / 2 + (currentItem ? currentItem.height / 2 : 0)
-                                highlightRangeMode: ListView.StrictlyEnforceRange
-                                spacing: Variables.spacing / 2
+                                visible: mpris.lyricsSynced && (text !== "" || targetText !== "")
+                                color: Variables.uiColor
+                                font.pixelSize: Variables.fontSize
+                                font.bold: true
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.Wrap
+                                transformOrigin: Item.Center
 
-                                header: Item { width: lyricsList.width; height: lyricsList.height / 2 }
-                                footer: Item { width: lyricsList.width; height: lyricsList.height / 2 }
+                                Component.onCompleted: {
+                                    text = targetText
+                                    opacity = targetText !== "" ? 1.0 : 0.0
+                                    scale = 1.0
+                                }
 
-                                onVisibleChanged: {
-                                    if (visible && mpris.currentLyricIndex >= 0) {
-                                        positionViewAtIndex(mpris.currentLyricIndex, ListView.Center)
+                                onTargetTextChanged: {
+                                    if (text === "" && targetText !== "") {
+                                        lyricTransition.stop()
+                                        text = targetText
+                                        scale = 0.85
+                                        opacity = 0.0
+                                        lyricInAnimation.restart()
+                                    } else {
+                                        lyricInAnimation.stop()
+                                        lyricTransition.restart()
                                     }
                                 }
 
-                                delegate: Text {
-                                    required property var modelData
-                                    required property int index
+                                ParallelAnimation {
+                                    id: lyricInAnimation
 
-                                    width: lyricsList.width
-                                    text: modelData.text
-                                    color: Variables.uiColor
-                                    font.pixelSize: Variables.fontSize
-                                    font.bold: index === mpris.currentLyricIndex
-                                    scale: index === mpris.currentLyricIndex ? 0.9 : 0.8
-                                    opacity: index === mpris.currentLyricIndex ? 1.0 : 0.4
-
-                                    horizontalAlignment: Text.AlignHCenter
-                                    wrapMode: Text.Wrap
-                                    transformOrigin: Item.Center
-
-                                    Behavior on opacity {
-                                        NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.InOutCubic }
+                                    NumberAnimation {
+                                        target: currentLyricText
+                                        property: "opacity"
+                                        to: 1.0
+                                        duration: Variables.fadeAnimation * 0.5
+                                        easing.type: Easing.InOutCubic
                                     }
-                                    Behavior on scale {
-                                        NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.InOutCubic }
+                                    NumberAnimation {
+                                        target: currentLyricText
+                                        property: "scale"
+                                        to: 1.0
+                                        duration: Variables.fadeAnimation * 0.5
+                                        easing.type: Easing.InOutCubic
+                                    }
+                                }
+
+                                SequentialAnimation {
+                                    id: lyricTransition
+
+                                    ParallelAnimation {
+                                        NumberAnimation {
+                                            target: currentLyricText
+                                            property: "opacity"
+                                            to: 0.0
+                                            duration: Variables.fadeAnimation * 0.5
+                                            easing.type: Easing.InOutCubic
+                                        }
+                                        NumberAnimation {
+                                            target: currentLyricText
+                                            property: "scale"
+                                            to: 0.85
+                                            duration: Variables.fadeAnimation * 0.5
+                                            easing.type: Easing.InOutCubic
+                                        }
+                                    }
+
+                                    ScriptAction {
+                                        script: currentLyricText.text = currentLyricText.targetText
+                                    }
+
+                                    ParallelAnimation {
+                                        NumberAnimation {
+                                            target: currentLyricText
+                                            property: "opacity"
+                                            to: currentLyricText.targetText !== "" ? 1.0 : 0.0
+                                            duration: Variables.fadeAnimation * 0.5
+                                            easing.type: Easing.InOutCubic
+                                        }
+                                        NumberAnimation {
+                                            target: currentLyricText
+                                            property: "scale"
+                                            to: 1.0
+                                            duration: Variables.fadeAnimation * 0.5
+                                            easing.type: Easing.InOutCubic
+                                        }
                                     }
                                 }
                             }

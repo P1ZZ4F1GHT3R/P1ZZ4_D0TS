@@ -8,7 +8,6 @@ Button {
     padding: 0
     enabled: !ConnectivityService.wifiBusy
 
-    // Display Ethernet icon if connected via cable, otherwise Wi-Fi icon
     property string currentIcon: ConnectivityService.hasEthernet ? "󰈀" : !networkToggle.isActive ? "󰖪" : "󰖩"
     property bool isActive: ConnectivityService.hasEthernet || ConnectivityService.wifiEnabled
 

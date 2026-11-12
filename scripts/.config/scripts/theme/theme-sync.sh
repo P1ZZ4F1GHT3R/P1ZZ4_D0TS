@@ -69,12 +69,33 @@ get_current_wallpaper() {
 }
 
 set_wallpaper() {
-    local -r wallpaper="$1"
+    local -r new_wallpaper="$1"
+    local old_wallpaper
 
-    log_info "Setting wallpaper with awww: $wallpaper"
-    if ! awww img -t grow --transition-duration 1 --transition-fps 180 --transition-pos bottom "$wallpaper" >/dev/null 2>&1; then
-        die "Failed to set wallpaper with awww: $wallpaper"
+    old_wallpaper=$(awww query 2>/dev/null | grep -oP '(?<=image: ).*' | head -n1 | tr -d '\n\r')
+    if [[ -z "$old_wallpaper" || ! -f "$old_wallpaper" ]]; then
+        old_wallpaper="$new_wallpaper"
     fi
+
+    log_info "Calculating transition maps for: $new_wallpaper"
+
+    # Explicit full path (aliases are not expanded in subshells)
+    local -r wallfx_bin="$CONFIG_DIR/scripts/theme/wallfx"
+
+    local wallfx_out
+    wallfx_out=$("$wallfx_bin" choose "$new_wallpaper" 2>/dev/null | tail -n1) || wallfx_out=""
+
+    local kind="contagion" map_path="" line_path=""
+    if [[ -n "$wallfx_out" ]]; then
+        read -r kind map_path line_path <<< "$wallfx_out"
+    fi
+
+    # Fall back safely if map generation failed
+    map_path="${map_path:-$new_wallpaper}"
+    line_path="${line_path:-$map_path}"
+
+    log_info "Triggering wallfx IPC transition: old='$old_wallpaper' new='$new_wallpaper' kind='$kind'"
+    qs ipc call wallfx play "$old_wallpaper" "$new_wallpaper" "$kind" "$map_path" "$line_path"
 }
 
 cache_wallpaper_path() {

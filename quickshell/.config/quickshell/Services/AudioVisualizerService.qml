@@ -36,9 +36,9 @@ Item {
 
     readonly property var compactAudioData: {
         const compact = []
-        const binSize = audioData.length / 4
+        const binSize = audioData.length / Variables.compactVisualizerSize
 
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < Variables.compactVisualizerSize; i++) {
             const start = Math.floor(i * binSize)
             const end = Math.min(audioData.length, Math.floor((i + 1) * binSize))
             let sum = 0
@@ -48,9 +48,6 @@ Item {
                 sum += audioData[j]
                 count++
             }
-
-            // audioData is normalized to /300; the compact visualizer
-            // historically normalized its averaged values to /600.
             compact.push(count > 0 ? (sum / count) / 2 : 0)
         }
 

@@ -5,6 +5,7 @@ import QtQuick.Shapes
 import QtCore
 import Quickshell
 import Quickshell.Io
+import "../Common"
 import "../"
 
 Rectangle {
@@ -33,7 +34,7 @@ Rectangle {
         : resultsModel.count * itemHeight
     readonly property real maxListHeight: Variables.launcherExpandedHeight - baseHeight
 
-    implicitWidth: (Variables.wallpaperPicker || searchMode === "wallpaper") ? Variables.wallpaperPickerWidth : Variables.launcherWidth
+    implicitWidth: Variables.launcherOpen ? ((Variables.wallpaperPicker || searchMode === "wallpaper") ? Variables.wallpaperPickerWidth : Variables.launcherWidth) : Variables.launcherWidth / 3
     implicitHeight: Variables.launcherOpen ? (
         searchMode === "wallpaper" ? baseHeight + Variables.wallpaperPickerHeight : 
         (searchInput.text.length > 0 || searchMode !== "apps" ? baseHeight + Math.min(calculatedListHeight, maxListHeight) : baseHeight)
@@ -43,12 +44,18 @@ Rectangle {
     topLeftRadius: Variables.radius
     topRightRadius: Variables.radius
 
-    Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
+    Behavior on implicitWidth {
+        NumberAnimation { 
+            duration: Variables.launcherOpen ? Variables.activeDurationUI * 0.9: Variables.activeDurationUI * 1.8
+            easing.type: !Variables.launcherOpen ? Variables.activeAnimationUI : Easing.InOutSine 
+        }
     }
 
-    Behavior on implicitWidth {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI }
+    Behavior on implicitHeight {
+        NumberAnimation { 
+            duration: !Variables.launcherOpen ? Variables.activeDurationUI : Variables.activeDurationUI * 2.2
+            easing.type: Variables.activeAnimationUI 
+        }
     }
 
     property var allClipboard: []
@@ -246,73 +253,65 @@ Rectangle {
             anchors.fill: parent
             spacing: Variables.spacing
 
-            TextField {
+            AnimatedInput {
                 id: searchInput
                 Layout.fillWidth: true
                 visible: root.searchMode !== "wallpaper"
                 Layout.preferredHeight: Variables.launcherSearchHeight
                 Layout.alignment: Qt.AlignTop
-                
+
                 placeholderText: {
                     if (root.searchMode === "clipboard") return "Search clipboard...";
                     if (root.searchMode === "files") return "Search files...";
                     if (root.searchMode === "emoji") return "Search emojis...";
                     if (root.searchMode === "nerdfont") return "Search NerdFont icons...";
-                    if (root.searchMode === "wallpaper") return "Select a wallpaper...";
                     return "Search apps (type / for commands)...";
-                }
-                color: Variables.uiColor
-                font.pixelSize: Variables.fontSize
-                horizontalAlignment: TextInput.AlignLeft
-                verticalAlignment: TextInput.AlignVCenter
-                
-                background: Rectangle {
-                    color: Variables.lockscreenColor
-                    radius: Variables.radius
                 }
 
                 Timer {
                     interval: 50
-                    running: Variables.launcherOpen && root.searchMode !== "wallpaper" && !searchInput.activeFocus
+                    running: Variables.launcherOpen && root.searchMode !== "wallpaper" && !searchInput.hasFocus
                     repeat: true
-                    onTriggered: searchInput.forceActiveFocus()
+                    onTriggered: searchInput.forceInputFocus()
                 }
 
-                onTextChanged: {
-                    if (text.startsWith("/") && root.searchMode !== "apps") {
+                onTextEdited: (newText) => {
+                    if (newText.startsWith("/") && root.searchMode !== "apps") {
                         root.searchMode = "apps";
                     }
                     if (root.searchMode === "files") {
                         fileSearchTimer.restart();
                     } else {
-                        filterResults(text);
+                        filterResults(newText);
                     }
                 }
 
-                Keys.onEscapePressed: {
+                inputItem.Keys.onEscapePressed: {
                     Variables.launcherOpen = false;
                     Variables.wallpaperPicker = false;
                 }
-                Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Backspace) {
-                        if (text.length === 0 && root.searchMode !== "apps") {
-                            Variables.launcherMode = "apps";
-                            filterResults("");
-                        }
+
+                inputItem.Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Backspace && searchInput.text.length === 0 && root.searchMode !== "apps") {
+                        Variables.launcherMode = "apps";
+                        filterResults("");
                     } else if (root.isGridMode) {
                         if (event.key === Qt.Key_Left) { resultsGrid.moveCurrentIndexLeft(); event.accepted = true; }
                         else if (event.key === Qt.Key_Right) { resultsGrid.moveCurrentIndexRight(); event.accepted = true; }
                     }
                 }
-                Keys.onDownPressed: {
+
+                inputItem.Keys.onDownPressed: {
                     if (root.isGridMode) resultsGrid.moveCurrentIndexDown();
                     else resultsList.incrementCurrentIndex();
                 }
-                Keys.onUpPressed: {
+
+                inputItem.Keys.onUpPressed: {
                     if (root.isGridMode) resultsGrid.moveCurrentIndexUp();
                     else resultsList.decrementCurrentIndex();
                 }
-                Keys.onReturnPressed: {
+                
+                inputItem.Keys.onReturnPressed: {
                     if (resultsModel.count > 0) {
                         let activeIdx = root.isGridMode ? resultsGrid.currentIndex : resultsList.currentIndex;
                         let item = resultsModel.get(activeIdx);

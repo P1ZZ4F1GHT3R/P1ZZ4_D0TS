@@ -16,7 +16,6 @@ ColumnLayout {
     property bool passwordRequired: false
     property bool wifiPasswordVisible: false
 
-    // Only scan for networks while this page is actually visible
     Binding {
         target: ConnectivityService
         property: "wifiScanActive"
@@ -37,7 +36,6 @@ ColumnLayout {
         }
     }
 
-    // Service says the PSK is missing or wrong: show the password field again
     Connections {
         target: ConnectivityService
         function onWifiNeedsPassword(network) {
@@ -48,7 +46,6 @@ ColumnLayout {
         }
     }
 
-    // Connected network first, then strongest signal
     ScriptModel {
         id: wifiModel
         values: {
@@ -69,7 +66,6 @@ ColumnLayout {
         wifiPassword.clear()
 
         if (network.security === WifiSecurityType.Open || network.known) {
-            // Open, or NetworkManager already has credentials saved
             ConnectivityService.connectWifi(network, "")
         } else if (ConnectivityService.supportsPsk(network)) {
             passwordRequired = true
@@ -87,7 +83,6 @@ ColumnLayout {
         }
     }
 
-    // Ethernet Status Indicator
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: Variables.settingsPresetListRowHeight
@@ -119,7 +114,6 @@ ColumnLayout {
         }
     }
 
-    // Dedicated Wi-Fi Toggle
     SettingsToggle {
         Layout.fillWidth: true
         label: "Wi-Fi"
@@ -130,7 +124,6 @@ ColumnLayout {
         }
     }
 
-    // Wi-Fi Header (Always visible when Wi-Fi is enabled)
     RowLayout {
         Layout.fillWidth: true
         visible: ConnectivityService.wifiEnabled
@@ -176,7 +169,6 @@ ColumnLayout {
         }
     }
 
-    // Wi-Fi ListView
     ListView {
         id: wifiList
         Layout.fillWidth: true

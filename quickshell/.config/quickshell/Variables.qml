@@ -62,14 +62,15 @@ QtObject {
     readonly property int visualizerMinHeight: scaled(2)
     readonly property int mprisVisualizerMinHeight: scaled(8)
     readonly property int controlCenterClosedWidth: scaled(12)
+    readonly property int controlCenterClosedHeight: scaled(300)
     readonly property int controlCenterButtonWidth: scaled(368)
     readonly property int controlCenterButtonHeight: scaled(64)
     readonly property int barControlCenterWidth: scaled(500)
-    readonly property int lockscreenBlurMax: scaled(64)
+    readonly property int lockscreenBlurMax: 64
     readonly property int lockscreenClockOffset: scaled(-100)
     readonly property int notificationActionMargin: scaled(8)
     readonly property int animationTypeUI: Easing.OutBack
-    readonly property int animationDurationUI: 450
+    readonly property int animationDurationUI: 400
     readonly property int barRadius: scaled(4)
     readonly property int fadeAnimation: 300
     readonly property int bouncingAnimationUI: Easing.OutElastic
@@ -162,7 +163,7 @@ QtObject {
         workspaceCount: 5,
         pomodoroTime: 25 * 60,
         breakTime: 5 * 60,
-        idleMonitor: true,
+        idleMonitor: false,
         disablePopups: false,
         activateLinux: false,
         uiColorSource: "background",
@@ -178,6 +179,12 @@ QtObject {
         customPasswordPreset: "",
         customPasswordPresets: "[]",
         preferredMonitorIndex: preferredMonitorIndex,
+        lockScreenClockSec: true,
+        lockscreenDate: true,
+        notchClockSec: true,
+        compactVisualizerSize: 5,
+        enableVisualizer: true,
+        enableMusicIcon: true,
     })
 
     property bool hoverEnabled: settingDefaults.hoverEnabled
@@ -186,6 +193,11 @@ QtObject {
     property bool enableLyrics: settingDefaults.enableLyrics
     property bool wallpaperPreviewEnabled: settingDefaults.wallpaperPreviewEnabled
     property bool lockOnStart: settingDefaults.lockOnStart
+    property bool lockScreenClockSec: settingDefaults.lockScreenClockSec
+    property bool lockscreenDate: settingDefaults.lockscreenDate
+    property bool notchClockSec: settingDefaults.notchClockSec
+    property bool enableVisualizer: settingDefaults.enableVisualizer
+    property bool enableMusicIcon: settingDefaults.enableMusicIcon
 
     property int idleLockTime: settingDefaults.idleLockTime
     property int idleSleepTime: settingDefaults.idleSleepTime
@@ -196,6 +208,7 @@ QtObject {
     property int hoverTimer: settingDefaults.hoverTimer
     property int workspaceCount: settingDefaults.workspaceCount
     property int preferredMonitorIndex: settingDefaults.preferredMonitorIndex
+    property int compactVisualizerSize: settingDefaults.compactVisualizerSize
 
     property var monitorOptions: {
     let options = [];
@@ -389,6 +402,7 @@ QtObject {
     property bool isRecording: false
     property bool launcherOpen: false
     property string launcherMode: "apps"
+    property string fontFamily: "Noto-Sans"
 
     property Settings legacyProfilePictureSettings: Settings {
         property url savedPfp: ""

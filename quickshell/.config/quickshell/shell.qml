@@ -14,6 +14,7 @@ Scope {
     Bar{}
     IdleMonitor{}
     SettingsPanel{}
+    WallPaperFx{}
 
     Loader {
         active: Variables.snippingMode
