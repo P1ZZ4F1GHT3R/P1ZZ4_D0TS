@@ -212,7 +212,7 @@ Rectangle {
 
     Behavior on implicitHeight {
         NumberAnimation { 
-            duration: !Variables.expandedState ? Variables.activeDurationUI : Variables.activeDurationUI * 1.2
+            duration: Variables.expandedState ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
             easing.type: Variables.activeAnimationUI 
         }
     }

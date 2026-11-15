@@ -592,45 +592,247 @@ RowLayout {
                             spacing: Variables.spacing * 4
 
                             Rectangle {
-                                Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+                                id: prevButton
+                                Layout.preferredWidth: Variables.circleWidth * 1.5
+                                Layout.preferredHeight: Variables.circleHeight * 1.5
+                                radius: Variables.circleRadius
+                                color: Variables.backgroundColorUI
+                                transformOrigin: Item.Center
 
-                                Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor; font.pixelSize: Variables.fontSize}
+                                scale: prevMouse.pressed ? 0.86 : 1.0
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: prevMouse.pressed ? 90 : 280
+                                        easing.type: prevMouse.pressed ? Easing.OutCubic : Easing.OutBack
+                                        easing.overshoot: 1.6
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    color: Variables.textColor
+                                    opacity: prevMouse.pressed ? 0.14 : 0.0
+                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                }
+
+                                Text {
+                                    id: prevIcon
+                                    anchors.centerIn: parent
+                                    anchors.horizontalCenterOffset: 0
+                                    text: ""
+                                    color: Variables.textColor
+                                    font.pixelSize: Variables.fontSize * 1.2
+                                    transformOrigin: Item.Center
+
+                                    SequentialAnimation {
+                                        id: prevBounceAnim
+                                        ParallelAnimation {
+                                            NumberAnimation {
+                                                target: prevIcon
+                                                property: "anchors.horizontalCenterOffset"
+                                                to: -8
+                                                duration: 90
+                                                easing.type: Easing.OutQuad
+                                            }
+                                            NumberAnimation {
+                                                target: prevIcon
+                                                property: "scale"
+                                                to: 1.15
+                                                duration: 90
+                                                easing.type: Easing.OutQuad
+                                            }
+                                        }
+                                        ParallelAnimation {
+                                            NumberAnimation {
+                                                target: prevIcon
+                                                property: "anchors.horizontalCenterOffset"
+                                                to: 0
+                                                duration: 260
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 1.8
+                                            }
+                                            NumberAnimation {
+                                                target: prevIcon
+                                                property: "scale"
+                                                to: 1.0
+                                                duration: 260
+                                                easing.type: Easing.OutBack
+                                            }
+                                        }
+                                    }
+                                }
 
                                 MouseArea {
+                                    id: prevMouse
                                     anchors.fill: parent
-                                    onClicked: mpris.activePlayer && mpris.activePlayer.previous()
                                     cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        prevBounceAnim.restart()
+                                        if (mpris.activePlayer) mpris.activePlayer.previous()
+                                    }
                                 }
                             }
 
                             Rectangle {
-                                Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.iconColor
+                                id: playPauseButton
+                                readonly property bool isPlaying: Boolean(mpris.activePlayer && mpris.activePlayer.isPlaying)
 
-                                Text { 
+                                Layout.preferredWidth: Variables.circleWidth * 1.5
+                                Layout.preferredHeight: Variables.circleHeight * 1.5
+                                radius: Variables.circleRadius
+                                color: Variables.borderColor
+                                transformOrigin: Item.Center
+
+                                scale: playMouse.pressed ? 0.86 : 1.0
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: playMouse.pressed ? 90 : 300
+                                        easing.type: playMouse.pressed ? Easing.OutCubic : Easing.OutBack
+                                        easing.overshoot: 1.7
+                                    }
+                                }
+
+                                Rectangle {
                                     anchors.fill: parent
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                    text: mpris.activePlayer && mpris.activePlayer.isPlaying ? "" : "" 
+                                    radius: parent.radius
+                                    color: Variables.textColor
+                                    opacity: playMouse.pressed ? 0.14 : 0.0
+                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ""
+                                    color: Variables.textColor
+                                    font.pixelSize: Variables.fontSize * 1.2
+                                    transformOrigin: Item.Center
+
+                                    opacity: playPauseButton.isPlaying ? 1.0 : 0.0
+                                    scale: playPauseButton.isPlaying ? 1.0 : 0.45
+
+                                    Behavior on opacity {
+                                        NumberAnimation { duration: 180; easing.type: Easing.InOutCubic }
+                                    }
+                                    Behavior on scale {
+                                        NumberAnimation {
+                                            duration: 280
+                                            easing.type: playPauseButton.isPlaying ? Easing.OutBack : Easing.InCubic
+                                            easing.overshoot: 1.5
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ""
                                     color: Variables.textColor
                                     font.pixelSize: Variables.fontSize
+                                    transformOrigin: Item.Center
+
+                                    opacity: playPauseButton.isPlaying ? 0.0 : 1.0
+                                    scale: playPauseButton.isPlaying ? 0.45 : 1.0
+
+                                    Behavior on opacity {
+                                        NumberAnimation { duration: 180; easing.type: Easing.InOutCubic }
+                                    }
+                                    Behavior on scale {
+                                        NumberAnimation {
+                                            duration: 280
+                                            easing.type: !playPauseButton.isPlaying ? Easing.OutBack : Easing.InCubic
+                                            easing.overshoot: 1.5
+                                        }
+                                    }
                                 }
 
                                 MouseArea {
+                                    id: playMouse
                                     anchors.fill: parent
-                                    onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
                                     cursorShape: Qt.PointingHandCursor
+                                    onClicked: mpris.activePlayer && mpris.activePlayer.togglePlaying()
                                 }
                             }
 
                             Rectangle {
-                                Layout.preferredWidth: Variables.circleWidth; Layout.preferredHeight: Variables.circleHeight; radius: Variables.circleRadius; color: Variables.uiColor
+                                id: nextButton
+                                Layout.preferredWidth: Variables.circleWidth * 1.5
+                                Layout.preferredHeight: Variables.circleHeight * 1.5
+                                radius: Variables.circleRadius
+                                color: Variables.backgroundColorUI
+                                transformOrigin: Item.Center
 
-                                Text { anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: ""; color: Variables.textColor; font.pixelSize: Variables.fontSize}
+                                scale: nextMouse.pressed ? 0.86 : 1.0
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: nextMouse.pressed ? 90 : 280
+                                        easing.type: nextMouse.pressed ? Easing.OutCubic : Easing.OutBack
+                                        easing.overshoot: 1.6
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    color: Variables.textColor
+                                    opacity: nextMouse.pressed ? 0.14 : 0.0
+                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                }
+
+                                Text {
+                                    id: nextIcon
+                                    anchors.centerIn: parent
+                                    anchors.horizontalCenterOffset: 0
+                                    text: ""
+                                    color: Variables.textColor
+                                    font.pixelSize: Variables.fontSize * 1.2
+                                    transformOrigin: Item.Center
+
+                                    SequentialAnimation {
+                                        id: nextBounceAnim
+                                        ParallelAnimation {
+                                            NumberAnimation {
+                                                target: nextIcon
+                                                property: "anchors.horizontalCenterOffset"
+                                                to: 8
+                                                duration: 90
+                                                easing.type: Easing.OutQuad
+                                            }
+                                            NumberAnimation {
+                                                target: nextIcon
+                                                property: "scale"
+                                                to: 1.15
+                                                duration: 90
+                                                easing.type: Easing.OutQuad
+                                            }
+                                        }
+                                        ParallelAnimation {
+                                            NumberAnimation {
+                                                target: nextIcon
+                                                property: "anchors.horizontalCenterOffset"
+                                                to: 0
+                                                duration: 260
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 1.8
+                                            }
+                                            NumberAnimation {
+                                                target: nextIcon
+                                                property: "scale"
+                                                to: 1.0
+                                                duration: 260
+                                                easing.type: Easing.OutBack
+                                            }
+                                        }
+                                    }
+                                }
 
                                 MouseArea {
+                                    id: nextMouse
                                     anchors.fill: parent
-                                    onClicked: mpris.activePlayer && mpris.activePlayer.next()
                                     cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        nextBounceAnim.restart()
+                                        if (mpris.activePlayer) mpris.activePlayer.next()
+                                    }
                                 }
                             }
                         }

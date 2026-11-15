@@ -46,14 +46,14 @@ Rectangle {
 
     Behavior on implicitWidth {
         NumberAnimation { 
-            duration: Variables.launcherOpen ? Variables.activeDurationUI * 0.9: Variables.activeDurationUI * 1.8
+            duration: Variables.launcherOpen ? Variables.activeDurationUI: Variables.activeDurationUI * 1.8
             easing.type: !Variables.launcherOpen ? Variables.activeAnimationUI : Easing.InOutSine 
         }
     }
 
     Behavior on implicitHeight {
         NumberAnimation { 
-            duration: !Variables.launcherOpen ? Variables.activeDurationUI : Variables.activeDurationUI * 2.2
+            duration: !Variables.launcherOpen ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
             easing.type: Variables.activeAnimationUI 
         }
     }
