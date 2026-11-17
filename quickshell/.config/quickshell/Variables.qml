@@ -69,15 +69,15 @@ QtObject {
     readonly property int lockscreenBlurMax: 64
     readonly property int lockscreenClockOffset: scaled(-100)
     readonly property int notificationActionMargin: scaled(8)
+    // Primary surface motion: the short axis uses 64% of the base duration.
     readonly property int animationTypeUI: Easing.OutBack
-    readonly property int animationDurationUI: 400
+    readonly property int animationDurationUI: 700
     readonly property int barRadius: scaled(4)
     readonly property int fadeAnimation: 300
     readonly property int bouncingAnimationUI: Easing.OutElastic
-    readonly property int bouncingDurationUI: 2400
+    readonly property int bouncingDurationUI: animationDurationUI * 4.8
     readonly property int pauseDuration: 150
     readonly property int exclusiveZoneSide: 0
-    readonly property int workspaceAnimationType: Easing.InOutBack
     readonly property int launcherWidth: scaled(666)
     readonly property int launcherSearchHeight: scaled(64)
     readonly property int launcherExpandedHeight: scaled(400)
@@ -436,6 +436,11 @@ QtObject {
         property alias wallpaperPreviewEnabled: root.wallpaperPreviewEnabled
         property alias lockOnStart: root.lockOnStart
         property alias preferredMonitorIndex: root.preferredMonitorIndex
+        property alias lockScreenClockSec: root.lockScreenClockSec
+        property alias lockscreenDate: root.lockscreenDate
+        property alias notchClockSec: root.notchClockSec
+        property alias enableVisualizer: root.enableVisualizer
+        property alias enableMusicIcon: root.enableMusicIcon
         
         // Integers
         property alias idleLockTime: root.idleLockTime
@@ -448,6 +453,7 @@ QtObject {
         property alias updateNotifRunning: root.updateNotifRunning
         property alias pomodoroTime: root.pomodoroTime
         property alias breakTime: root.breakTime
+        property alias compactVisualizerSize: root.compactVisualizerSize
         
         // Colour palette sources
         property alias uiColorSource: root.uiColorSource

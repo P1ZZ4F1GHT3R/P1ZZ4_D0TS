@@ -31,11 +31,11 @@ Rectangle {
     }
 
     Behavior on implicitWidth {
-        NumberAnimation { id: widthAnim; duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+        NumberAnimation { id: widthAnim; duration: Variables.workspacesHidden ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+        NumberAnimation { duration: Variables.workspacesHidden ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
     }
   
     Shape {
@@ -113,7 +113,7 @@ Rectangle {
         visible: !Variables.workspacesHidden
 
         Behavior on x {
-        NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.workspaceAnimationType }
+        NumberAnimation { duration: Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
         }
     }
 

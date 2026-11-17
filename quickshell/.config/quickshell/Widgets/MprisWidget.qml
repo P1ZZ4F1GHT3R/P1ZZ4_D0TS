@@ -10,8 +10,6 @@ import "../Modules"
 RowLayout {
     id: mpris
 
-    Layout.preferredWidth: item ? item.implicitWidth : 0
-
     property var activePlayer: null
 
     property var lyricLines: []
@@ -276,7 +274,7 @@ RowLayout {
     Loader {
         id: expandedContainerLoader
 
-        active: mpris.activePlayer !== null
+        active: mpris.activePlayer !== null && Variables.expandedState
         Layout.preferredWidth: Variables.expandedState && active && item ? item.implicitWidth : 0
         Layout.preferredHeight: Variables.expandedState && active && item ? item.implicitHeight : 0
 
@@ -613,7 +611,7 @@ RowLayout {
                                     radius: parent.radius
                                     color: Variables.textColor
                                     opacity: prevMouse.pressed ? 0.14 : 0.0
-                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                    Behavior on opacity { NumberAnimation { duration: Variables.fadeAnimation } }
                                 }
 
                                 Text {
@@ -862,6 +860,96 @@ RowLayout {
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 wrapMode: Text.Wrap
+                            }
+
+                            Row {
+                                id: ohFacePlaceholder
+
+                                readonly property bool shouldShow: mpris.lyricsSynced
+                                    && mpris.lyricLines.length > 0
+                                    && currentLyricText.targetText === ""
+
+                                anchors.centerIn: parent
+                                spacing: Variables.fontSize * 0.45
+                                transformOrigin: Item.Center
+
+                                opacity: shouldShow ? 1.0 : 0.0
+                                scale: shouldShow ? 1.0 : 0.85
+                                visible: opacity > 0
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: Variables.fadeAnimation * 0.5
+                                        easing.type: Easing.InOutCubic
+                                    }
+                                }
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: Variables.fadeAnimation * 0.5
+                                        easing.type: Easing.InOutCubic
+                                    }
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: -Variables.fontSize * 0.69 //heh nice
+                                    text: "("
+                                    color: Variables.uiColor
+                                    font.pixelSize: Variables.fontSize * 2.2
+                                    opacity: 0.85
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: -Variables.fontSize * 0.69 //heh nice
+                                    text: ""
+                                    color: Variables.uiColor
+                                    font.pixelSize: Variables.fontSize * 0.9
+                                    opacity: 0.85
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: Variables.fontSize * 0.18
+                                    text: ""
+                                    color: Variables.uiColor
+                                    font.pixelSize: Variables.fontSize * 1.15
+                                    transformOrigin: Item.Center
+
+                                    SequentialAnimation on scale {
+                                        running: ohFacePlaceholder.visible && Variables.expandedState
+                                        loops: Animation.Infinite
+
+                                        NumberAnimation {
+                                            to: 1.18
+                                            duration: 900
+                                            easing.type: Easing.InOutSine
+                                        }
+                                        NumberAnimation {
+                                            to: 0.95
+                                            duration: 900
+                                            easing.type: Easing.InOutSine
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: -Variables.fontSize * 0.69 //heh nice
+                                    text: ""
+                                    color: Variables.uiColor
+                                    font.pixelSize: Variables.fontSize * 0.9
+                                    opacity: 0.85
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: -Variables.fontSize * 0.69 //heh nice
+                                    text: ")"
+                                    color: Variables.uiColor
+                                    font.pixelSize: Variables.fontSize * 2.2
+                                    opacity: 0.85
+                                }
                             }
 
                             Text {

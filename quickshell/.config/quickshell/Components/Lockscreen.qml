@@ -320,16 +320,16 @@ Scope {
                         }
 
                         Behavior on implicitWidth {
-                            NumberAnimation { 
-                                duration: (Variables.lockScreen && !wait) ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
-                                easing.type: !(Variables.lockScreen && !wait) ? Variables.activeAnimationUI : Easing.InOutSine 
+                            NumberAnimation {
+                                duration: (Variables.lockScreen && !wait) ? Variables.activeDurationUI * 0.64: Variables.activeDurationUI
+                                easing.type: Variables.activeAnimationUI
                             }
                         }
 
                         Behavior on implicitHeight {
-                            NumberAnimation { 
-                                duration: !(Variables.lockScreen && !wait) ? Variables.activeDurationUI : Variables.activeDurationUI * 1.2
-                                easing.type: Variables.activeAnimationUI 
+                            NumberAnimation {
+                                duration: (Variables.lockScreen && !wait) ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64
+                                easing.type: Variables.activeAnimationUI
                             }
                         }
 

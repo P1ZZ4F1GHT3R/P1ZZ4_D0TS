@@ -18,6 +18,8 @@ Rectangle {
 
     property bool isApplying: false
 
+    property int scrollSpeed: 250
+
     implicitWidth: Variables.wallpaperPickerWidth
     implicitHeight: Variables.wallpaperPicker ? Variables.wallpaperPickerHeight : 0
     color: Variables.uiColor
@@ -185,7 +187,7 @@ Rectangle {
         
         preferredHighlightBegin: 0.5
         preferredHighlightEnd: 0.5
-        highlightMoveDuration: Variables.animationDurationUI / 1.5
+        highlightMoveDuration: root.scrollSpeed
 
         path: Path {
             startX: -wallpaperList.width / 2
@@ -296,13 +298,13 @@ Rectangle {
 
                 Behavior on anchors.horizontalCenterOffset {
                     NumberAnimation {
-                        duration: Variables.animationDurationUI / 2
+                        duration: root.scrollSpeed
                         easing.type: easing.InOutQuad
                     }
                 }
                 Behavior on scale {
                     NumberAnimation {
-                        duration: Variables.animationDurationUI / 2
+                        duration: root.scrollSpeed
                         easing.type: easing.InOutQuad
                     }
                 }

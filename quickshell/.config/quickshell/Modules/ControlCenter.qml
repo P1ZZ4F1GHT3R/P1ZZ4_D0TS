@@ -87,11 +87,17 @@ Rectangle {
     }
 
     Behavior on width {
-            NumberAnimation { duration: Variables.controlCenter ? Variables.animationDurationUI: Variables.animationDurationUI * 1.8; easing.type: !Variables.controlCenter ? Variables.animationTypeUI : Easing.InOutSine }
+        NumberAnimation {
+            duration: Variables.controlCenter ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64
+            easing.type: Variables.activeAnimationUI
         }
+    }
 
     Behavior on height {
-        NumberAnimation { duration: Variables.controlCenter ? Variables.animationDurationUI : Variables.animationDurationUI * 1.8; easing.type: Variables.animationTypeUI }
+        NumberAnimation {
+            duration: Variables.controlCenter ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI
+            easing.type: Variables.activeAnimationUI
+        }
     }
 
     Behavior on color {

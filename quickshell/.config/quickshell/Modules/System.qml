@@ -75,12 +75,12 @@ Rectangle {
 
     
     Behavior on implicitWidth {
-        NumberAnimation { id: widthAnim; duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+        NumberAnimation { id: widthAnim; duration: Variables.systemHidden ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
     }
 
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI}
+        NumberAnimation { duration: Variables.systemHidden ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
     }
 
     FileView {

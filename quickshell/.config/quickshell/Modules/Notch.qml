@@ -56,7 +56,7 @@ Rectangle {
     }
 
     Behavior on scale {
-        NumberAnimation { duration: Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
+        NumberAnimation { duration: Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
     }
 
     IpcHandler {
@@ -204,16 +204,18 @@ Rectangle {
     }
 
     Behavior on implicitWidth {
-        NumberAnimation { 
-            duration: Variables.expandedState ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
-            easing.type: !Variables.expandedState ? Variables.activeAnimationUI : Easing.InOutSine 
+        NumberAnimation {
+            duration: (Variables.expandedState || Variables.activeAnimationUI === Variables.bouncingAnimationUI)
+                ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64
+            easing.type: Variables.activeAnimationUI
         }
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { 
-            duration: Variables.expandedState ? Variables.activeDurationUI : Variables.activeDurationUI * 1.8
-            easing.type: Variables.activeAnimationUI 
+        NumberAnimation {
+            duration: (Variables.expandedState || Variables.activeAnimationUI === Variables.bouncingAnimationUI)
+                ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI
+            easing.type: Variables.activeAnimationUI
         }
     }
 
@@ -314,14 +316,16 @@ Rectangle {
 
             anchors.fill: parent
             anchors.margins: Variables.rightMargin
-            spacing: Variables.spacing * 1.5
+            spacing: (Variables.enableMusicIcon && Variables.enableVisualizer)
+                ? Variables.spacing * 1.5
+                : Variables.spacing * 0.5
 
             Loader {
                 id: mprisWidgetLoader
 
                 Layout.preferredWidth: item ? item.implicitWidth : 0
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                visible: active
+                visible: active && (Variables.enableMusicIcon || Variables.expandedState)
                 active: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
                 
                 sourceComponent: Component {
