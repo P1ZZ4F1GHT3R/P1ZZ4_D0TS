@@ -24,19 +24,20 @@ Button {
         border.width: Variables.borderWidth
 
         Behavior on color {
-            ColorAnimation{ duration: Variables.animationDurationUI}
+            ColorAnimation { duration: Variables.animationDurationUI }
         } 
     }
 
     onClicked: {
-        Variables.notchHidden = !Variables.notchHidden
-        Variables.workspacesHidden = !Variables.workspacesHidden
-        Variables.systemHidden = !Variables.systemHidden
         Variables.focusMode = !Variables.focusMode
-        if (!Variables.focused) {
-            focusTimer.start();
-        }
-        else {
+        Variables.notchHidden = Variables.focusMode
+        Variables.workspacesHidden = Variables.focusMode
+        Variables.systemHidden = Variables.focusMode
+
+        if (Variables.focusMode) {
+            focusTimer.restart()
+        } else {
+            focusTimer.stop()
             Variables.focused = false
         }
     }
@@ -47,7 +48,10 @@ Button {
         interval: Variables.animationDurationUI
         running: false
         repeat: false
-        triggeredOnStart: false
-        onTriggered: Variables.focused = true
+        onTriggered: {
+            if (Variables.focusMode) {
+                Variables.focused = true
+            }
+        }
     }   
 }

@@ -13,7 +13,6 @@ Scope {
 
     Bar{}
     IdleMonitor{}
-    SettingsPanel{}
     WallPaperFx{}
 
     Loader {

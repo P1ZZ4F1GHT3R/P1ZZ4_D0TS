@@ -73,11 +73,9 @@ Rectangle {
             system.ramUsage = Math.round((1 - available / total) * 100) + "%"
     }
 
-    
     Behavior on implicitWidth {
         NumberAnimation { id: widthAnim; duration: Variables.systemHidden ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI; easing.type: Variables.activeAnimationUI }
     }
-
 
     Behavior on implicitHeight {
         NumberAnimation { duration: Variables.systemHidden ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
@@ -120,17 +118,18 @@ Rectangle {
     Shape {
         id: leftConcave
         
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        anchors.top: parent.top
+        anchors.right: parent.left
+        anchors.topMargin: Variables.frameBorderWidth
+
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, Math.max(0, parent.height - anchors.topMargin))))
         visible: cornerSize > 0
 
         width: cornerSize
         height: cornerSize
-        anchors.top: parent.top
-        anchors.right: parent.left
-        anchors.topMargin: Variables.borderWidth * 4
 
         ShapePath {
-            fillColor: Variables.uiColor
+            fillColor: system.color
             strokeWidth: 0
 
             PathMove { x: leftConcave.cornerSize; y: 0 }
@@ -148,17 +147,18 @@ Rectangle {
     Shape {
         id: bottomRightConcave
         
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        anchors.top: parent.bottom
+        anchors.right: parent.right
+        anchors.rightMargin: Variables.frameBorderWidth
+
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(Math.max(0, parent.width - anchors.rightMargin), parent.height)))
         visible: cornerSize > 0
 
         width: cornerSize
         height: cornerSize
-        anchors.top: parent.bottom
-        anchors.right: parent.right
-        anchors.rightMargin: Variables.borderWidth * 4
 
         ShapePath {
-            fillColor: Variables.uiColor
+            fillColor: system.color
             strokeWidth: 0
 
             PathMove { x: bottomRightConcave.cornerSize; y: 0 }

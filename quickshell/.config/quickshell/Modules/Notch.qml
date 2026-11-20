@@ -7,13 +7,27 @@ import QtQuick.Shapes
 import QtQuick.Effects
 import Quickshell.Services.Mpris
 import "../"
+import "../Common"
 import "../Widgets"
 
 Rectangle {
     id: notchRoot
 
-    implicitHeight: Variables.notchHidden ? 0 : notch.implicitHeight + Variables.height + Variables.borderWidth * 4
-    implicitWidth: Variables.notchHidden ? 0 : notch.implicitWidth + Variables.width
+    readonly property bool effectivelyHidden: Variables.notchHidden && !Variables.settingsOpen
+    readonly property real availableHeaderWidth: (Variables.monitor && Variables.monitor.width > 0
+        ? Variables.monitor.width
+        : Variables.referenceScreenWidth) - (Variables.frameBorderWidth * 4)
+
+    implicitHeight: effectivelyHidden
+        ? 0
+        : (Variables.settingsOpen
+            ? Variables.settingsHeaderHeight + Variables.frameBorderWidth
+            : notch.implicitHeight + Variables.height + Variables.frameBorderWidth)
+    implicitWidth: effectivelyHidden
+        ? 0
+        : (Variables.settingsOpen
+            ? Math.min(Variables.settingsHeaderWidth, availableHeaderWidth)
+            : notch.implicitWidth + Variables.width)
     bottomLeftRadius: Variables.radius
     bottomRightRadius: Variables.radius
     color: Variables.uiColor
@@ -65,6 +79,7 @@ Rectangle {
 
         function toggle(): void {
             if (!Variables.powerMenu) {
+                Variables.closeSettings();
                 Variables.powerMenu = true;
                 Variables.toolBar = false;
                 Variables.expandedState = false;
@@ -82,6 +97,7 @@ Rectangle {
 
         function toggle(): void {
             if (!Variables.toolBar) {
+                Variables.closeSettings();
                 Variables.toolBar = true;
                 Variables.powerMenu = false;
                 Variables.expandedState = false;
@@ -111,6 +127,7 @@ Rectangle {
         function onLockScreenChanged() {
             lockTransitionTimer.stop();
             if (Variables.lockScreen) {
+                Variables.closeSettings();
                 Variables.powerMenu = false;
                 Variables.expandedState = false;
                 Variables.notchHidden = true;
@@ -156,7 +173,7 @@ Rectangle {
         height: cornerSize
         anchors.top: parent.top
         anchors.right: parent.left
-        anchors.topMargin: (Variables.borderWidth * 4) / notchRoot.scale
+        anchors.topMargin: Variables.frameBorderWidth / notchRoot.scale
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -185,7 +202,7 @@ Rectangle {
         height: cornerSize
         anchors.top: parent.top
         anchors.left: parent.right
-        anchors.topMargin: (Variables.borderWidth * 4) / notchRoot.scale
+        anchors.topMargin: Variables.frameBorderWidth / notchRoot.scale
 
         ShapePath {
             fillColor: Variables.uiColor
@@ -205,7 +222,7 @@ Rectangle {
 
     Behavior on implicitWidth {
         NumberAnimation {
-            duration: (Variables.expandedState || Variables.activeAnimationUI === Variables.bouncingAnimationUI)
+            duration: (Variables.expandedState || Variables.settingsOpen || Variables.activeAnimationUI === Variables.bouncingAnimationUI)
                 ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64
             easing.type: Variables.activeAnimationUI
         }
@@ -224,17 +241,18 @@ Rectangle {
 
         anchors.fill: parent
         hoverEnabled: true
+        enabled: !Variables.settingsOpen
 
         onClicked: {
-            if (Variables.lockScreen) return;
+            if (Variables.lockScreen || Variables.settingsOpen) return;
             Variables.clickEnabled && !Variables.expandedState && !Variables.powerMenu && !Variables.toolBar && !Variables.notifWidget ? Variables.expandedState = true : Variables.expandedState = false
         }
         onEntered: {
-            if (Variables.lockScreen) return;
+            if (Variables.lockScreen || Variables.settingsOpen) return;
             Variables.hoverEnabled && !Variables.powerMenu && !Variables.toolBar && !Variables.notifWidget ? hovertimer.start() : null
         }
         onExited: {
-            if (Variables.lockScreen) return;
+            if (Variables.lockScreen || Variables.settingsOpen) return;
             Variables.hoverEnabled ? (Variables.expandedState = false, hovertimer.stop()) : null
         }
     }
@@ -273,7 +291,7 @@ Rectangle {
         running: false
         repeat: false
         triggeredOnStart: false
-        onTriggered: Variables.expandedState = true
+        onTriggered: if (!Variables.settingsOpen && !Variables.lockScreen) Variables.expandedState = true
     }
 
     Timer {
@@ -319,6 +337,15 @@ Rectangle {
             spacing: (Variables.enableMusicIcon && Variables.enableVisualizer)
                 ? Variables.spacing * 1.5
                 : Variables.spacing * 0.5
+            opacity: Variables.settingsOpen ? 0.0 : 1.0
+            visible: opacity > 0.01
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Variables.fadeAnimation * 0.65
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             Loader {
                 id: mprisWidgetLoader
@@ -326,7 +353,7 @@ Rectangle {
                 Layout.preferredWidth: item ? item.implicitWidth : 0
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 visible: active && (Variables.enableMusicIcon || Variables.expandedState)
-                active: !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
+                active: !Variables.settingsOpen && !Variables.powerMenu && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
                 
                 sourceComponent: Component {
                     MprisWidget {
@@ -340,7 +367,7 @@ Rectangle {
 
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 visible: active
-                active: !(notchRoot.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
+                active: !Variables.settingsOpen && !(notchRoot.activePlayer !== null && Variables.expandedState) && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
                 sourceComponent: Component {
                     ClockWidget {
                         activePlayer: notchRoot.activePlayer
@@ -353,7 +380,7 @@ Rectangle {
 
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 visible: active
-                active: Variables.notifWidget && !Variables.powerMenu  && !Variables.notchHidden && !Variables.toolBar && !Variables.lockScreen
+                active: !Variables.settingsOpen && Variables.notifWidget && !Variables.powerMenu  && !Variables.notchHidden && !Variables.toolBar && !Variables.lockScreen
                 sourceComponent: Component {
                     NotificationWidget {
                         daemon: notchRoot.notifServer
@@ -363,7 +390,7 @@ Rectangle {
 
             Loader {
                 id: powerMenuLoader
-                active: Variables.powerMenu && !Variables.notchHidden
+                active: !Variables.settingsOpen && Variables.powerMenu && !Variables.notchHidden
                 visible: active
                 source: "../Widgets/PowerMenuWidget.qml"
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -372,7 +399,7 @@ Rectangle {
 
             Loader {
                 id: captureMenuLoader
-                active: Variables.toolBar && !Variables.notchHidden
+                active: !Variables.settingsOpen && Variables.toolBar && !Variables.notchHidden
                 visible: active
                 source: "ToolBar.qml" 
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -385,7 +412,7 @@ Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 
                 visible: active
-                active: Variables.enableVisualizer && !Variables.powerMenu && !Variables.expandedState && !Variables.lockScreen && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD  && !Variables.notchHidden && !Variables.toolBar
+                active: !Variables.settingsOpen && Variables.enableVisualizer && !Variables.powerMenu && !Variables.expandedState && !Variables.lockScreen && !Variables.notifWidget && !Variables.pomodoroClock && notchRoot.activePlayer !== null && !Variables.volumeOSD && !Variables.brightnessOSD  && !Variables.notchHidden && !Variables.toolBar
                 sourceComponent: Component {
                     VisualizerWidget {
                         activePlayer: notchRoot.activePlayer
@@ -400,7 +427,7 @@ Rectangle {
                 z: 10
 
                 opacity: Variables.volumeOSD ? 1.0 : 0.0
-                visible: Variables.volumeOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
+                visible: !Variables.settingsOpen && Variables.volumeOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.brightnessOSD && !Variables.notchHidden && !Variables.toolBar
 
                 Behavior on opacity {
                     NumberAnimation { duration: Variables.fadeAnimation }
@@ -414,7 +441,7 @@ Rectangle {
                 z: 10
 
                 opacity: Variables.brightnessOSD ? 1.0 : 0.0
-                visible: Variables.brightnessOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.notchHidden && !Variables.toolBar
+                visible: !Variables.settingsOpen && Variables.brightnessOSD && !Variables.powerMenu && !Variables.notifWidget && !Variables.volumeOSD && !Variables.notchHidden && !Variables.toolBar
 
                 Behavior on opacity {
                     NumberAnimation { duration: Variables.fadeAnimation }
@@ -426,10 +453,143 @@ Rectangle {
 
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 visible: active
-                active: Variables.isRecording && !Variables.powerMenu && !Variables.notifWidget && !Variables.expandedState && !Variables.toolBar
+                active: !Variables.settingsOpen && Variables.isRecording && !Variables.powerMenu && !Variables.notifWidget && !Variables.expandedState && !Variables.toolBar
 
                 sourceComponent: Component {
                     RecordingIndicator{}
+                }
+            }
+        }
+
+        Item {
+            id: settingsHeader
+
+            anchors {
+                fill: parent
+                topMargin: Variables.frameBorderWidth
+                leftMargin: Variables.spacing * 1.5
+                rightMargin: Variables.spacing * 1.5
+            }
+            opacity: Variables.settingsOpen ? 1.0 : 0.0
+            visible: opacity > 0.01
+            enabled: Variables.settingsOpen
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Variables.fadeAnimation
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            RowLayout {
+                id: categoryCenterRow
+
+                anchors.centerIn: parent
+                width: Math.min(implicitWidth, parent.width)
+                spacing: Variables.spacing * 0.75
+
+                property string displayedIcon: Variables.currentSettingsCategory.icon || ""
+                property string displayedLabel: formatCategoryLabel(Variables.currentSettingsCategory)
+
+                function formatCategoryLabel(cat) {
+                    if (!cat || !cat.name) return "";
+                    return cat.subtitle ? (cat.name + "  ·  " + cat.subtitle) : cat.name;
+                }
+
+                transform: Translate {
+                    id: categoryTextTranslate
+                    y: 0
+                }
+
+                SequentialAnimation {
+                    id: categorySwitchAnim
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: categoryCenterRow
+                            property: "opacity"
+                            to: 0.0
+                            duration: Variables.fadeAnimation * 0.35
+                            easing.type: Easing.InCubic
+                        }
+                        NumberAnimation {
+                            target: categoryTextTranslate
+                            property: "y"
+                            to: -Variables.spacing * 0.6
+                            duration: Variables.fadeAnimation * 0.35
+                            easing.type: Easing.InCubic
+                        }
+                    }
+
+                    ScriptAction {
+                        script: {
+                            categoryCenterRow.displayedIcon = Variables.currentSettingsCategory.icon || "";
+                            categoryCenterRow.displayedLabel = categoryCenterRow.formatCategoryLabel(Variables.currentSettingsCategory);
+                            categoryTextTranslate.y = Variables.spacing * 0.6;
+                        }
+                    }
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: categoryCenterRow
+                            property: "opacity"
+                            to: 1.0
+                            duration: Variables.fadeAnimation * 0.65
+                            easing.type: Easing.OutCubic
+                        }
+                        NumberAnimation {
+                            target: categoryTextTranslate
+                            property: "y"
+                            to: 0
+                            duration: Variables.fadeAnimation * 0.65
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+
+                Connections {
+                    target: Variables
+
+                    function onCurrentSettingsCategoryChanged() {
+                        const nextLabel = categoryCenterRow.formatCategoryLabel(Variables.currentSettingsCategory);
+                        if (!Variables.settingsOpen) {
+                            categorySwitchAnim.stop();
+                            categoryCenterRow.displayedIcon = Variables.currentSettingsCategory.icon || "";
+                            categoryCenterRow.displayedLabel = nextLabel;
+                            categoryTextTranslate.y = 0;
+                            categoryCenterRow.opacity = 1.0;
+                        } else if (categoryCenterRow.displayedLabel !== nextLabel) {
+                            categorySwitchAnim.restart();
+                        }
+                    }
+
+                    function onSettingsOpenChanged() {
+                        if (Variables.settingsOpen) {
+                            categorySwitchAnim.stop();
+                            categoryCenterRow.displayedIcon = Variables.currentSettingsCategory.icon || "";
+                            categoryCenterRow.displayedLabel = categoryCenterRow.formatCategoryLabel(Variables.currentSettingsCategory);
+                            categoryTextTranslate.y = 0;
+                            categoryCenterRow.opacity = 1.0;
+                        }
+                    }
+                }
+
+                Text {
+                    text: categoryCenterRow.displayedIcon
+                    font.pixelSize: Variables.fontSize * 0.95
+                    color: Variables.iconColor
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: categoryCenterRow.displayedLabel
+                    textFormat: Text.PlainText
+                    font.pixelSize: Variables.fontSize * 0.88
+                    font.weight: Font.DemiBold
+                    color: Variables.textColor
+                    elide: Text.ElideRight
                 }
             }
         }

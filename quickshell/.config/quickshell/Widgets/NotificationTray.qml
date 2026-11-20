@@ -1,8 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import Quickshell
-import "../" 
+import "../"
 
 Rectangle {
     id: root
@@ -14,9 +13,11 @@ Rectangle {
     border.color: Variables.borderColor
     border.width: Variables.borderWidth
 
-    property var daemon 
+    property var daemon
     property bool isClearingAll: false
     property var expandedGroups: []
+
+    readonly property int cardAnimDuration: Math.round(Variables.activeDurationUI * 0.45)
 
     function toggleGroup(groupKey) {
         var next = expandedGroups.slice()
@@ -34,16 +35,18 @@ Rectangle {
             left: parent.left
             margins: Variables.topMargin * 2
         }
-        spacing: Variables.spacing
+        spacing: Variables.spacing * 0.75
 
         Rectangle {
             id: titleRect
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: Variables.circleHeight * 1.5
             color: Variables.uiColor
             radius: Variables.radius
+            border.color: Variables.borderColor
+            border.width: Variables.borderWidth
 
-            Text { 
+            Text {
                 text: "Notifications"
                 color: Variables.textColor
                 anchors.centerIn: parent
@@ -51,56 +54,86 @@ Rectangle {
             }
         }
 
-        Button {
+        Rectangle {
             id: togglePopupsButton
             Layout.preferredHeight: Variables.circleHeight * 1.5
             Layout.preferredWidth: Variables.circleWidth * 1.5
-            text: Variables.disablePopups ? "" : ""
+            radius: width / 2
+            color: Variables.disablePopups
+                ? (togglePopupsMouse.containsMouse ? Variables.iconColor : Variables.buttonColor)
+                : (togglePopupsMouse.containsMouse ? Variables.iconColor : Variables.uiColor)
+            border.color: togglePopupsMouse.containsMouse ? Variables.buttonColor : Variables.borderColor
+            border.width: Variables.borderWidth
+            scale: togglePopupsMouse.pressed ? 0.92 : (togglePopupsMouse.containsMouse ? 1.06 : 1.0)
 
-            contentItem: Text {
-                text: parent.text
-                font.pixelSize: Variables.fontSize * 1.2
-                color: Variables.disablePopups ? Variables.uiColor : Variables.buttonColor
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            
-            background: Rectangle {
-                radius: Variables.circleRadius * 1.5
-                color: Variables.disablePopups ? Variables.buttonColor : Variables.uiColor
-                border.color: Variables.disablePopups ? Variables.uiColor : Variables.buttonColor
-                border.width: Variables.borderWidth
-                Behavior on color { ColorAnimation { duration: Variables.animationDurationUI } } 
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on border.color { ColorAnimation { duration: 140 } }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Variables.activeDurationUI * 0.5
+                    easing.type: Variables.activeAnimationUI
+                }
             }
 
-            onClicked: Variables.disablePopups = !Variables.disablePopups
+            Text {
+                anchors.centerIn: parent
+                text: Variables.disablePopups ? "" : ""
+                font.pixelSize: Variables.fontSize * 1.15
+                color: (Variables.disablePopups || togglePopupsMouse.containsMouse)
+                    ? Variables.uiColor
+                    : Variables.iconColor
+
+                Behavior on color { ColorAnimation { duration: 140 } }
+            }
+
+            MouseArea {
+                id: togglePopupsMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Variables.disablePopups = !Variables.disablePopups
+            }
         }
 
         Rectangle {
             id: closeAllRect
-            Layout.alignment: Qt.AlignRight
             Layout.preferredHeight: Variables.circleHeight * 1.5
             Layout.preferredWidth: Variables.circleWidth * 1.5
-            radius: Variables.circleRadius * 1.5
-            color: Variables.uiColor
-            border.color: Variables.iconColor
+            radius: width / 2
+            color: (closeAllMouse.containsMouse && notifList.count > 0) ? Variables.iconColor : Variables.uiColor
+            border.color: (closeAllMouse.containsMouse && notifList.count > 0) ? Variables.buttonColor : Variables.borderColor
             border.width: Variables.borderWidth
-            opacity: closeAllMouse.pressed ? 0.85 : 1
+            opacity: notifList.count > 0 ? 1.0 : 0.45
+            scale: (closeAllMouse.pressed && notifList.count > 0) ? 0.92
+                : ((closeAllMouse.containsMouse && notifList.count > 0) ? 1.06 : 1.0)
 
-            Text { 
-                text: ""
-                color: Variables.iconColor
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on border.color { ColorAnimation { duration: 140 } }
+            Behavior on opacity { NumberAnimation { duration: Variables.fadeAnimation; easing.type: Easing.OutCubic } }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Variables.activeDurationUI * 0.5
+                    easing.type: Variables.activeAnimationUI
+                }
+            }
+
+            Text {
                 anchors.centerIn: parent
-                font.pixelSize: Variables.fontSize * 1.2
+                text: ""
+                color: (closeAllMouse.containsMouse && notifList.count > 0) ? Variables.uiColor : Variables.iconColor
+                font.pixelSize: Variables.fontSize * 1.15
+
+                Behavior on color { ColorAnimation { duration: 140 } }
             }
 
             MouseArea {
                 id: closeAllMouse
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
+                enabled: notifList.count > 0 && !root.isClearingAll
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: {
-                    if (root.isClearingAll || notifList.count === 0) return; 
+                    if (root.isClearingAll || notifList.count === 0) return;
                     root.isClearingAll = true;
                     clearAllTimer.start();
                 }
@@ -108,10 +141,10 @@ Rectangle {
 
             Timer {
                 id: clearAllTimer
-                interval: Variables.animationDurationUI
+                interval: root.cardAnimDuration
                 onTriggered: {
-                    daemon.clearAll();
-                    root.isClearingAll = false; 
+                    if (root.daemon) root.daemon.clearAll();
+                    root.isClearingAll = false;
                     root.expandedGroups = [];
                 }
             }
@@ -125,105 +158,189 @@ Rectangle {
             bottom: parent.bottom
             left: parent.left
             right: parent.right
-            margins: Variables.topMargin
+            margins: Variables.topMargin * 2
+            topMargin: Variables.spacing * 0.75
         }
-        spacing: Variables.spacing
+        spacing: Variables.spacing * 0.75
         clip: true
         cacheBuffer: 0
 
         model: root.daemon ? root.daemon.groupedNotifications : []
 
+        add: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: Variables.fadeAnimation
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    property: "scale"
+                    from: 0.94
+                    to: 1.0
+                    duration: root.cardAnimDuration
+                    easing.type: Variables.activeAnimationUI
+                }
+            }
+        }
+
+        displaced: Transition {
+            NumberAnimation {
+                properties: "x,y"
+                duration: root.cardAnimDuration
+                easing.type: Easing.OutCubic
+            }
+        }
+
         delegate: Column {
             id: groupColumn
             width: ListView.view.width
-            spacing: Variables.spacing / 2
+            spacing: isExpanded ? Variables.spacing * 0.5 : 0
 
             property var group: modelData
             property bool isExpanded: root.expandedGroups.indexOf(group.key) !== -1
 
+            Behavior on spacing {
+                NumberAnimation {
+                    duration: root.cardAnimDuration
+                    easing.type: Easing.OutCubic
+                }
+            }
+
             Repeater {
-                model: groupColumn.isExpanded
-                    ? groupColumn.group.notifications
-                    : (groupColumn.group.notifications.length > 0
-                        ? [groupColumn.group.notifications[0]]
-                        : [])
+                model: groupColumn.group.notifications
 
                 delegate: Item {
                     id: delegateWrapper
                     width: groupColumn.width
-                    
+
                     property var notification: modelData
-                    property bool isStackTop: !groupColumn.isExpanded && index === 0 && groupColumn.group.notifications.length > 1
-                    property int stackCount: groupColumn.group.notifications.length
-                    property bool isVisibleInStack: groupColumn.isExpanded || index === 0
-                    
-                    property real stackOffset: isStackTop ? Math.min(2, stackCount - 1) * (Variables.spacing * 0.8) : 0
-                    Behavior on stackOffset { NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI } }
-                    
-                    height: contentCard.height + stackOffset
+                    property bool localRemoving: false
+                    readonly property bool isRemoving: localRemoving || root.isClearingAll
+                    readonly property int stackCount: groupColumn.group.notifications.length
+                    readonly property bool isStackTop: !groupColumn.isExpanded && index === 0 && stackCount > 1
+                    readonly property bool isVisibleInStack: (groupColumn.isExpanded || index === 0) && !isRemoving
+
+                    property real stackOffset: isStackTop ? Math.min(2, stackCount - 1) * (Variables.spacing * 0.65) : 0
+                    Behavior on stackOffset {
+                        NumberAnimation {
+                            duration: root.cardAnimDuration
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    readonly property real targetCardHeight: contentLayout.implicitHeight + (Variables.spacing * 2)
+                    height: isVisibleInStack ? (targetCardHeight + stackOffset) : 0
                     opacity: isVisibleInStack ? 1.0 : 0.0
                     scale: isVisibleInStack ? 1.0 : 0.95
-                    clip: true
+                    visible: height > 0.5 || isVisibleInStack
+                    clip: height < (targetCardHeight + stackOffset - 0.5)
 
-                    Behavior on opacity { NumberAnimation { duration: Variables.animationDurationUI } }
-                    Behavior on scale { NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI } }
-
-                    Rectangle {
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            topMargin: Variables.spacing * 1.6
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: root.cardAnimDuration
+                            easing.type: Easing.OutCubic
                         }
-                        height: contentCard.height
-                        color: Variables.uiColor
-                        radius: Variables.radius
-                        border.color: Variables.borderColor
-                        border.width: Variables.borderWidth
-                        visible: delegateWrapper.isStackTop && delegateWrapper.stackCount > 2
-                        opacity: 0.85
+                    }
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Variables.fadeAnimation * 0.85
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: root.cardAnimDuration
+                            easing.type: Easing.OutCubic
+                        }
                     }
 
                     Rectangle {
+                        id: backCardTwo
                         anchors {
                             left: parent.left
                             right: parent.right
-                            top: parent.top
-                            topMargin: Variables.spacing * 0.8
+                            leftMargin: Variables.spacing * 0.7
+                            rightMargin: Variables.spacing * 0.7
                         }
+                        y: delegateWrapper.isStackTop ? Variables.spacing * 1.3 : 0
                         height: contentCard.height
                         color: Variables.uiColor
                         radius: Variables.radius
                         border.color: Variables.borderColor
                         border.width: Variables.borderWidth
-                        visible: delegateWrapper.isStackTop && delegateWrapper.stackCount > 1
-                        opacity: 0.9
+                        opacity: (delegateWrapper.isStackTop && delegateWrapper.stackCount > 2) ? 0.75 : 0.0
+                        visible: opacity > 0.01
+
+                        Behavior on y { NumberAnimation { duration: root.cardAnimDuration; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: Variables.fadeAnimation * 0.8; easing.type: Easing.OutCubic } }
+                    }
+
+                    Rectangle {
+                        id: backCardOne
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: Variables.spacing * 0.35
+                            rightMargin: Variables.spacing * 0.35
+                        }
+                        y: delegateWrapper.isStackTop ? Variables.spacing * 0.65 : 0
+                        height: contentCard.height
+                        color: Variables.uiColor
+                        radius: Variables.radius
+                        border.color: Variables.borderColor
+                        border.width: Variables.borderWidth
+                        opacity: (delegateWrapper.isStackTop && delegateWrapper.stackCount > 1) ? 0.9 : 0.0
+                        visible: opacity > 0.01
+
+                        Behavior on y { NumberAnimation { duration: root.cardAnimDuration; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: Variables.fadeAnimation * 0.8; easing.type: Easing.OutCubic } }
                     }
 
                     Rectangle {
                         id: contentCard
                         width: parent.width
-                        
-                        property bool localRemoving: false
-                        property bool isRemoving: localRemoving || root.isClearingAll
+                        height: delegateWrapper.targetCardHeight
+
                         property bool itemExpanded: false
-                        
-                        height: (isRemoving || !delegateWrapper.isVisibleInStack) ? 0 : contentLayout.implicitHeight + (Variables.spacing * 2)
-                        
+
                         color: Variables.uiColor
                         radius: Variables.radius
-                        border.color: Variables.borderColor
+                        border.color: cardMouse.containsMouse ? Variables.iconColor : Variables.borderColor
                         border.width: Variables.borderWidth
+                        scale: cardMouse.pressed ? 0.985 : 1.0
                         clip: true
 
-                        Behavior on height { NumberAnimation { duration: Variables.animationDurationUI; easing.type: Variables.animationTypeUI } }
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: root.cardAnimDuration
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Behavior on border.color {
+                            ColorAnimation { duration: 140 }
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 140
+                                easing.type: Easing.OutCubic
+                            }
+                        }
 
                         MouseArea {
+                            id: cardMouse
                             anchors.fill: parent
+                            hoverEnabled: true
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: (mouse) => {
-                                if (mouse.button === Qt.RightButton && groupColumn.group.notifications.length > 1) {
+                            onClicked: mouse => {
+                                if (mouse.button === Qt.RightButton && delegateWrapper.stackCount > 1) {
                                     root.toggleGroup(groupColumn.group.key)
                                 } else if (mouse.button === Qt.LeftButton) {
                                     contentCard.itemExpanded = !contentCard.itemExpanded
@@ -239,7 +356,7 @@ Rectangle {
                                 top: parent.top
                                 margins: Variables.spacing
                             }
-                            spacing: Variables.spacing
+                            spacing: Variables.spacing * 0.75
 
                             Rectangle {
                                 Layout.preferredWidth: Variables.fontSize * 2
@@ -260,10 +377,12 @@ Rectangle {
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
+                                spacing: Variables.spacing * 0.35
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    
+                                    spacing: Variables.spacing * 0.5
+
                                     Text {
                                         Layout.fillWidth: true
                                         color: Variables.textColor
@@ -274,8 +393,59 @@ Rectangle {
                                             if (!daemon || !notification) return "";
                                             let title = daemon.notificationTitle(notification);
                                             let app = daemon.notificationApp(notification);
-                                            let stackCountStr = delegateWrapper.isStackTop ? " (" + delegateWrapper.stackCount + ")" : "";
-                                            return app + stackCountStr + " - " + title;
+                                            return app + " - " + title;
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: stackBadge
+                                        visible: index === 0 && delegateWrapper.stackCount > 1
+                                        Layout.preferredHeight: Variables.circleHeight * 0.9
+                                        implicitWidth: stackBadgeRow.implicitWidth + Variables.spacing
+                                        radius: height / 2
+                                        color: stackBadgeMouse.containsMouse ? Variables.iconColor : Variables.backgroundColorUI
+                                        border.color: stackBadgeMouse.containsMouse ? Variables.buttonColor : Variables.borderColor
+                                        border.width: 1
+                                        scale: stackBadgeMouse.pressed ? 0.92 : 1.0
+
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                                        Row {
+                                            id: stackBadgeRow
+                                            anchors.centerIn: parent
+                                            spacing: 3
+
+                                            Text {
+                                                text: delegateWrapper.stackCount
+                                                font.pixelSize: Variables.fontSize * 0.72
+                                                font.bold: true
+                                                color: stackBadgeMouse.containsMouse ? Variables.uiColor : Variables.textColor
+                                            }
+
+                                            Text {
+                                                text: "▾"
+                                                font.pixelSize: Variables.fontSize * 0.72
+                                                color: stackBadgeMouse.containsMouse ? Variables.uiColor : Variables.iconColor
+                                                rotation: groupColumn.isExpanded ? 180 : 0
+
+                                                Behavior on rotation {
+                                                    NumberAnimation {
+                                                        duration: root.cardAnimDuration
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: stackBadgeMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.toggleGroup(groupColumn.group.key)
                                         }
                                     }
 
@@ -293,39 +463,52 @@ Rectangle {
                                     elide: Text.ElideRight
                                     wrapMode: Text.Wrap
                                     maximumLineCount: contentCard.itemExpanded ? 999 : 2
-                                    font.pixelSize: Variables.fontSize
+                                    font.pixelSize: Variables.fontSize * 0.92
                                     text: daemon && notification ? daemon.notificationBody(notification) : ""
                                 }
 
                                 RowLayout {
                                     Layout.fillWidth: true
+                                    Layout.topMargin: Variables.spacing * 0.25
                                     visible: contentCard.itemExpanded && notification && notification.actions && notification.actions.length > 0
                                     spacing: Variables.spacing / 2
 
                                     Repeater {
                                         model: parent.visible && notification && notification.actions ? Math.min(notification.actions.length, 2) : 0
-                                        
+
                                         delegate: Rectangle {
+                                            id: actionPill
                                             required property int index
                                             readonly property var action: notification.actions[index]
 
                                             Layout.preferredHeight: Variables.circleHeight
                                             Layout.fillWidth: true
                                             radius: Variables.radius
-                                            color: Variables.buttonColor
-                                            
+                                            color: actionPillMouse.containsMouse ? Variables.iconColor : Variables.buttonColor
+                                            border.color: actionPillMouse.containsMouse ? Variables.buttonColor : Variables.borderColor
+                                            border.width: 1
+                                            scale: actionPillMouse.pressed ? 0.95 : 1.0
+
+                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                            Behavior on border.color { ColorAnimation { duration: 140 } }
+                                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
                                             Text {
                                                 anchors.centerIn: parent
-                                                color: Variables.textColor
-                                                font.pixelSize: Variables.fontSize * 0.9
+                                                color: actionPillMouse.containsMouse ? Variables.uiColor : Variables.textColor
+                                                font.pixelSize: Variables.fontSize * 0.85
                                                 text: action && action.text ? action.text : ""
+
+                                                Behavior on color { ColorAnimation { duration: 140 } }
                                             }
 
                                             MouseArea {
+                                                id: actionPillMouse
                                                 anchors.fill: parent
+                                                hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
-                                                    if (action) daemon.invokeAction(action, notification)
+                                                    if (action && root.daemon) root.daemon.invokeAction(action, notification)
                                                 }
                                             }
                                         }
@@ -334,35 +517,58 @@ Rectangle {
                             }
 
                             Rectangle {
+                                id: dismissBtn
                                 Layout.preferredWidth: Variables.circleWidth
-                                Layout.preferredHeight: Variables.circleHeight 
+                                Layout.preferredHeight: Variables.circleHeight
                                 Layout.alignment: Qt.AlignTop
-                                radius: Variables.circleRadius
-                                color: Variables.buttonColor
+                                radius: width / 2
+                                color: dismissMouse.containsMouse ? Variables.buttonColor : Variables.backgroundColorUI
+                                border.color: dismissMouse.containsMouse ? Variables.iconColor : Variables.borderColor
+                                border.width: 1
+                                scale: dismissMouse.pressed ? 0.9 : (dismissMouse.containsMouse ? 1.08 : 1.0)
+
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: Variables.activeDurationUI * 0.45
+                                        easing.type: Variables.activeAnimationUI
+                                    }
+                                }
 
                                 Text {
-                                    anchors.fill: parent
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                    color: Variables.textColor
-                                    text: "X"
+                                    anchors.centerIn: parent
+                                    color: dismissMouse.containsMouse ? Variables.uiColor : Variables.textColor
+                                    text: "✕"
+                                    font.pixelSize: Variables.fontSize * 0.78
                                     font.bold: true
+
+                                    Behavior on color { ColorAnimation { duration: 140 } }
                                 }
 
                                 MouseArea {
+                                    id: dismissMouse
                                     anchors.fill: parent
+                                    hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        if (contentCard.isRemoving) return; 
-                                        contentCard.localRemoving = true;
-                                        collapsedRemovalTimer.start()
+                                        if (delegateWrapper.isRemoving) return;
+                                        if (delegateWrapper.isStackTop) {
+                                            contentCard.itemExpanded = false;
+                                            if (root.daemon) root.daemon.dismissNotification(notification);
+                                            return;
+                                        }
+                                        delegateWrapper.localRemoving = true;
+                                        collapsedRemovalTimer.start();
                                     }
                                 }
 
                                 Timer {
                                     id: collapsedRemovalTimer
-                                    interval: Variables.animationDurationUI
-                                    onTriggered: daemon.dismissNotification(notification)
+                                    interval: root.cardAnimDuration
+                                    onTriggered: {
+                                        if (root.daemon) root.daemon.dismissNotification(notification);
+                                    }
                                 }
                             }
                         }
@@ -376,8 +582,15 @@ Rectangle {
             text: "A tumbleweed tumbles..."
             color: Variables.textColor
             font.pixelSize: Variables.fontSize
-            opacity: 0.5
-            visible: notifList.count === 0
+            opacity: (notifList.count === 0 && !root.isClearingAll) ? 0.5 : 0.0
+            visible: opacity > 0.01
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Variables.fadeAnimation
+                    easing.type: Easing.OutCubic
+                }
+            }
         }
     }
 }

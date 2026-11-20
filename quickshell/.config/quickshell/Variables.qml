@@ -32,6 +32,7 @@ QtObject {
     readonly property int circleWidth: circleHeight
     readonly property int circleRadius: circleHeight / 2
     readonly property int borderWidth: scaled(2)
+    readonly property int frameBorderWidth: borderWidth * 4
     readonly property int systemPoll: 5000
     readonly property int profilePoll: 30000
     readonly property int brightnessPoll: 2000
@@ -69,7 +70,6 @@ QtObject {
     readonly property int lockscreenBlurMax: 64
     readonly property int lockscreenClockOffset: scaled(-100)
     readonly property int notificationActionMargin: scaled(8)
-    // Primary surface motion: the short axis uses 64% of the base duration.
     readonly property int animationTypeUI: Easing.OutBack
     readonly property int animationDurationUI: 700
     readonly property int barRadius: scaled(4)
@@ -82,8 +82,20 @@ QtObject {
     readonly property int launcherSearchHeight: scaled(64)
     readonly property int launcherExpandedHeight: scaled(400)
     readonly property var shadowBlur: 1.0
+
+    // Settings Mode layout & transition tokens
     readonly property int settingsWidth: scaled(1500)
     readonly property int settingsHeight: scaled(1000)
+    readonly property int settingsCanvasInset: scaled(20)
+    readonly property int settingsLauncherReserve: launcherSearchHeight + spacing * 2
+    readonly property int settingsHeaderWidth: scaled(480)
+    readonly property int settingsHeaderHeight: scaled(48)
+    readonly property int settingsCloseButtonSize: scaled(28)
+    readonly property int settingsNavWidth: scaled(224)
+    readonly property int settingsContentMaxWidth: scaled(1120)
+    readonly property int settingsTransitionOffset: scaled(36)
+    readonly property int settingsContentEnterDelay: 70
+    readonly property real settingsScrimOpacity: 0.42
     readonly property int settingsSidebarWidth: scaled(192)
     readonly property int settingsSidebarItemSpacing: 0
     readonly property int settingsSidebarHeaderMargin: scaled(6)
@@ -94,8 +106,6 @@ QtObject {
     readonly property int settingsCategoryLeftPadding: scaled(12)
     readonly property int settingsCategoryRightPadding: scaled(10)
     readonly property int settingsCategoryIndicatorSize: scaled(5)
-    readonly property int settingsHeaderHeight: scaled(52)
-    readonly property int settingsCloseButtonSize: scaled(34)
     readonly property int settingsListSpacing: scaled(8)
     readonly property int settingsListMargin: scaled(2)
     readonly property int settingsCardHeight: scaled(96)
@@ -211,15 +221,14 @@ QtObject {
     property int compactVisualizerSize: settingDefaults.compactVisualizerSize
 
     property var monitorOptions: {
-    let options = [];
-    for (let i = 0; i < Quickshell.screens.length; i++) {
-        let s = Quickshell.screens[i];
-        // Use the hardware name if available, otherwise fallback to "Display 1", etc.
-        let displayName = s.name ? s.name : ("Display " + (i + 1));
-        options.push({ value: i.toString(), label: displayName });
+        let options = [];
+        for (let i = 0; i < Quickshell.screens.length; i++) {
+            let s = Quickshell.screens[i];
+            let displayName = s.name ? s.name : ("Display " + (i + 1));
+            options.push({ value: i.toString(), label: displayName });
+        }
+        return options;
     }
-    return options;
-}
 
     // Colors
     readonly property var colorSources: [
@@ -365,7 +374,76 @@ QtObject {
         clearCustomPresetDraft()
     }
 
-    // State Variables
+    // Central Shell & Overlay State
+    property bool settingsOpen: false
+    property var settingsCategories: []
+    property int requestedSettingsCategory: 0
+    property string highlightedSettingKey: ""
+    property var currentSettingsCategory: ({
+        name: "Shell",
+        icon: "",
+        subtitle: "Interaction & layout"
+    })
+
+    function openSettings(openLauncher) {
+        if (lockScreen)
+            return;
+
+        const shouldOpenLauncher = (openLauncher === undefined) ? true : openLauncher;
+
+        controlCenter = false;
+        wallpaperPicker = false;
+        wallpaperPreview = false;
+        powerMenu = false;
+        toolBar = false;
+        notifWidget = false;
+        expandedState = false;
+        volumeOSD = false;
+        brightnessOSD = false;
+        osdPreExpanded = false;
+        workspacesHidden = true;
+        systemHidden = true;
+        settingsOpen = true;
+
+        if (shouldOpenLauncher) {
+            launcherMode = "settings";
+            launcherOpen = true;
+        } else {
+            launcherOpen = false;
+            launcherMode = "apps";
+        }
+    }
+
+    function openSettingsTo(categoryIndex, settingKey) {
+        if (lockScreen)
+            return;
+
+        requestedSettingsCategory = Math.max(0, categoryIndex || 0);
+        highlightedSettingKey = settingKey || "";
+
+        if (!settingsOpen) {
+            openSettings(false);
+        }
+    }
+
+    function closeSettings() {
+        if (settingsOpen) {
+            highlightedSettingKey = "";
+            settingsOpen = false;
+            workspacesHidden = focusMode;
+            systemHidden = focusMode;
+            launcherOpen = false;
+            launcherMode = "apps";
+        }
+    }
+
+    function toggleSettings() {
+        if (settingsOpen)
+            closeSettings();
+        else
+            openSettings(true);
+    }
+
     property string currentProfile: "balanced"
     property bool expandedState: false
     property bool powerMenu: false
@@ -403,6 +481,42 @@ QtObject {
     property bool launcherOpen: false
     property string launcherMode: "apps"
     property string fontFamily: "Noto-Sans"
+
+    onLauncherModeChanged: {
+        if (settingsOpen && launcherMode !== "settings") {
+            launcherMode = "settings";
+        }
+    }
+
+    onLockScreenChanged: {
+        if (lockScreen)
+            closeSettings();
+    }
+
+    onWallpaperPickerChanged: {
+        if (wallpaperPicker && settingsOpen)
+            closeSettings();
+    }
+
+    onPowerMenuChanged: {
+        if (powerMenu && settingsOpen)
+            closeSettings();
+    }
+
+    onToolBarChanged: {
+        if (toolBar && settingsOpen)
+            closeSettings();
+    }
+
+    onNotifWidgetChanged: {
+        if (notifWidget && settingsOpen)
+            closeSettings();
+    }
+
+    onControlCenterChanged: {
+        if (controlCenter && settingsOpen)
+            closeSettings();
+    }
 
     property Settings legacyProfilePictureSettings: Settings {
         property url savedPfp: ""

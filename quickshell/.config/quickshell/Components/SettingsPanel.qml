@@ -1,61 +1,131 @@
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
-import "../Common"
 import "../"
+import "../Common"
 
-PanelWindow {
+Item {
     id: settingsPanel
-    visible: false
-    implicitWidth: Variables.settingsWidth
-    implicitHeight: Variables.settingsHeight
-    color: "transparent"
 
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    visible: Variables.settingsOpen || exitAnimTimer.running
+    enabled: Variables.settingsOpen
+    focus: Variables.settingsOpen && !Variables.launcherOpen
+    clip: true
+
+    property int activeCategory: 0
+    property bool visualExpanded: false
+    property real launcherHeight: 0
 
     IpcHandler {
         target: "settings"
 
-        function toggle(): void { settingsPanel.visible = !settingsPanel.visible; }
-        function open(): void { settingsPanel.visible = true; }
-        function close(): void { settingsPanel.visible = false; }
-    }
-
-    property int activeCategory: 0
-
-    function selectCategory(index) {
-        activeCategory = Math.max(0, Math.min(categories.length - 1, index))
-    }
-
-    function focusCategory(index) {
-        selectCategory(index)
-        if (panelContentLoader.item)
-            panelContentLoader.item.focusCurrentCategory()
-    }
-
-    onActiveCategoryChanged: {
-        if (categories[activeCategory].name !== "Lockscreen")
-            Variables.clearCustomPresetDraft()
-    }
-
-    onVisibleChanged: {
-        if (!visible) {
-            activeCategory = 0
-            Variables.clearCustomPresetDraft()
-        } else {
-            Qt.callLater(() => focusCategory(activeCategory))
-        }
+        function toggle(): void { Variables.toggleSettings(); }
+        function open(): void { Variables.openSettings(); }
+        function close(): void { Variables.closeSettings(); }
     }
 
     Shortcut {
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        enabled: settingsPanel.visible
-        onActivated: settingsPanel.visible = false
+        enabled: Variables.settingsOpen
+        onActivated: Variables.closeSettings()
+    }
+
+    function syncCategoryMetadata() {
+        const cat = categories[activeCategory] || categories[0];
+        Variables.currentSettingsCategory = {
+            name: cat.name,
+            icon: cat.icon,
+            subtitle: cat.subtitle
+        };
+    }
+
+    function selectCategory(index) {
+        activeCategory = Math.max(0, Math.min(categories.length - 1, index));
+    }
+
+    function focusCategory(index) {
+        selectCategory(index);
+        if (contentLoader.item)
+            contentLoader.item.focusCurrentCategory();
+    }
+
+    Component.onCompleted: {
+        Variables.settingsCategories = categories;
+        syncCategoryMetadata();
+    }
+
+    onActiveCategoryChanged: {
+        syncCategoryMetadata();
+        if (categories[activeCategory].name !== "Lockscreen")
+            Variables.clearCustomPresetDraft();
+    }
+
+    Timer {
+        id: exitAnimTimer
+        interval: Variables.activeDurationUI
+        repeat: false
+        onTriggered: {
+            if (!Variables.settingsOpen) {
+                settingsPanel.activeCategory = 0;
+                Variables.requestedSettingsCategory = 0;
+                Variables.highlightedSettingKey = "";
+                Variables.clearCustomPresetDraft();
+            }
+        }
+    }
+
+    Timer {
+        id: focusEnsureTimer
+        interval: 40
+        repeat: true
+        running: Variables.settingsOpen && !Variables.launcherOpen && contentLoader.item !== null && !settingsPanel.activeFocus
+        onTriggered: settingsPanel.focusCategory(settingsPanel.activeCategory)
+    }
+
+    Connections {
+        target: Variables
+
+        function onSettingsOpenChanged() {
+            if (Variables.settingsOpen) {
+                exitAnimTimer.stop();
+                settingsPanel.selectCategory(Variables.requestedSettingsCategory);
+                Variables.clearCustomPresetDraft();
+                settingsPanel.syncCategoryMetadata();
+                Qt.callLater(() => {
+                    settingsPanel.visualExpanded = true;
+                    if (!Variables.launcherOpen)
+                        settingsPanel.focusCategory(settingsPanel.activeCategory);
+                    if (contentLoader.item && Variables.highlightedSettingKey !== "")
+                        contentLoader.item.scrollToHighlightedSetting();
+                });
+            } else {
+                settingsPanel.visualExpanded = false;
+                exitAnimTimer.restart();
+            }
+        }
+
+        function onRequestedSettingsCategoryChanged() {
+            if (Variables.settingsOpen) {
+                settingsPanel.selectCategory(Variables.requestedSettingsCategory);
+                Qt.callLater(() => {
+                    if (contentLoader.item && Variables.highlightedSettingKey !== "")
+                        contentLoader.item.scrollToHighlightedSetting();
+                });
+            }
+        }
+
+        function onHighlightedSettingKeyChanged() {
+            if (Variables.settingsOpen && Variables.highlightedSettingKey !== "" && contentLoader.item) {
+                Qt.callLater(() => contentLoader.item.scrollToHighlightedSetting());
+            }
+        }
+
+        function onLauncherOpenChanged() {
+            if (!Variables.launcherOpen && Variables.settingsOpen) {
+                Qt.callLater(() => settingsPanel.focusCategory(settingsPanel.activeCategory));
+            }
+        }
     }
 
     property var shellSettings: [
@@ -163,450 +233,16 @@ PanelWindow {
         return Variables[key] === Variables.settingDefaults[key];
     }
 
-    Component {
-        id: panelContent
-
-        Rectangle {
-            id: panelFrame
-
-            function focusCurrentCategory() {
-                const item = categoryRepeater.itemAt(settingsPanel.activeCategory)
-                if (item)
-                    item.forceActiveFocus()
-            }
-            anchors.fill: parent
-            color: Variables.uiColor
-            radius: Variables.radius
-            border.color: Variables.borderColor
-            border.width: Variables.borderWidth
-            clip: true
-
-            RowLayout {
-                anchors.fill: parent
-
-                Rectangle {
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: Variables.settingsSidebarWidth
-                    Layout.maximumWidth: Variables.settingsSidebarWidth
-                    color: Variables.backgroundColorUI
-                    topLeftRadius: Variables.radius
-                    bottomLeftRadius: Variables.radius
-                    topRightRadius: 0
-                    bottomRightRadius: 0
-                    border.color: Variables.borderColor
-                    border.width: Variables.borderWidth
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: Variables.spacing
-                        spacing: Variables.settingsSidebarItemSpacing
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Variables.settingsBrandIconSize + Variables.spacing * 2
-                            Layout.bottomMargin: Variables.settingsSidebarHeaderMargin
-                            radius: Variables.settingsCategoryRadius
-                            border.color: Variables.borderColor
-                            border.width: Variables.borderWidth
-                            color: Variables.uiColor
-
-                            RowLayout {
-                                id: logoRow
-
-                                anchors.centerIn: parent
-                                spacing: Variables.settingsBrandGap
-
-                                Rectangle {
-                                    Layout.preferredWidth: Variables.settingsBrandIconSize
-                                    Layout.preferredHeight: width
-                                    radius: width / 2
-                                    color: Variables.borderColor
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰒓"
-                                        color: Variables.uiColor
-                                        font.pixelSize: Variables.fontSize
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    spacing: Variables.settingsControlTextSpacing
-                                    Text {
-                                        text: "SETTINGS"
-                                        font.pixelSize: Variables.fontSize * 1.1
-                                        font.weight: Font.Bold
-                                        font.letterSpacing: 2.5 * Variables.uiScale
-                                        color: Variables.textColor
-                                    }
-                                    Text {
-                                        text: "P1ZZ4_D0TS"
-                                        font.pixelSize: Variables.fontSize * 0.69 
-                                        font.letterSpacing: 2.1 * Variables.uiScale
-                                        color: Variables.borderColor
-                                    }
-                                }
-                            }
-                        }
-
-                        Repeater {
-                            id: categoryRepeater
-                            model: settingsPanel.categories
-
-                            delegate: Rectangle {
-                                id: categoryButton
-                                required property var modelData
-                                required property int index
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Variables.settingsCategoryHeight
-                                radius: Variables.settingsCategoryRadius
-                                color: settingsPanel.activeCategory === index ? Variables.uiColor
-                                      : categoryHover.containsMouse ? Variables.iconColor : Variables.borderColor
-                                border.color: categoryHover.containsMouse ? Variables.buttonColor
-                                      : settingsPanel.activeCategory === index ? Variables.iconColor : Variables.uiColor
-                                border.width: Variables.borderWidth
-                                activeFocusOnTab: true
-
-                                Keys.onPressed: event => {
-                                    if (event.key === Qt.Key_Up || event.key === Qt.Key_Left) {
-                                        settingsPanel.focusCategory(categoryButton.index - 1)
-                                        event.accepted = true
-                                    } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {
-                                        settingsPanel.focusCategory(categoryButton.index + 1)
-                                        event.accepted = true
-                                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                                        settingsPanel.selectCategory(categoryButton.index)
-                                        event.accepted = true
-                                    }
-                                }
-
-                                Behavior on color { ColorAnimation { duration: 140 } }
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Variables.settingsCategoryLeftPadding
-                                    anchors.rightMargin: Variables.settingsCategoryRightPadding
-                                    spacing: Variables.settingsCategoryRightPadding
-
-                                    Text {
-                                        text: categoryButton.modelData.icon
-                                        font.pixelSize: Variables.fontSize * 1.15
-                                        color: categoryHover.containsMouse && settingsPanel.activeCategory !== categoryButton.index
-                                            ? Variables.uiColor : Variables.iconColor
-                                    }
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: categoryButton.modelData.name
-                                        font.pixelSize: Variables.fontSize * 0.8
-                                        font.weight: settingsPanel.activeCategory === index ? Font.DemiBold : Font.Medium
-                                        color: categoryHover.containsMouse && settingsPanel.activeCategory !== categoryButton.index
-                                            ? Variables.uiColor : Variables.textColor
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: categoryHover
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    onClicked: {
-                                        settingsPanel.selectCategory(categoryButton.index)
-                                        categoryButton.forceActiveFocus()
-                                    }
-                                }
-
-                                SettingsToolTip {
-                                    visible: categoryHover.containsMouse
-                                    text: "Open " + categoryButton.modelData.subtitle.toLowerCase() + "."
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: Variables.spacing * 1.5
-                        spacing: Variables.spacing
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Variables.settingsHeaderHeight
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: Variables.settingsControlTextSpacing
-                                Text {
-                                    text: settingsPanel.categories[settingsPanel.activeCategory].name
-                                    font.pixelSize: Variables.fontSize * 1.35
-                                    font.weight: Font.DemiBold
-                                    color: Variables.textColor
-                                }
-                                Text {
-                                    text: settingsPanel.categories[settingsPanel.activeCategory].subtitle
-                                    font.pixelSize: Variables.fontSize * 0.7
-                                    color: Variables.textColor
-                                    opacity: 0.78
-                                }
-                            }
-
-                            Item { Layout.preferredWidth: Variables.settingsCloseButtonSize + Variables.spacing }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 1
-                            color: Variables.borderColor
-                            opacity: 0.6
-                        }
-
-                        ListView {
-                            id: settingsList
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            clip: true
-                            spacing: Variables.settingsListSpacing
-                            model: settingsPanel.categories[settingsPanel.activeCategory].settings
-                            topMargin: Variables.settingsListMargin
-                            bottomMargin: Variables.settingsListMargin
-
-                            add: Transition {
-                                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 160 }
-                                NumberAnimation { property: "y"; from: Variables.settingsListSpacing; duration: 160; easing.type: Easing.OutCubic }
-                            }
-
-                            delegate: Rectangle {
-                                id: settingCard
-                                required property var modelData
-                                width: ListView.view.width
-                                height: settingCard.modelData.fillHeight
-                                        ? ListView.view.height - (Variables.settingsListMargin * 2)
-                                        : (settingCard.modelData.height || Variables.settingsCardHeight)
-                                radius: Variables.settingsCardRadius
-                                color: cardMouse.containsMouse ? Variables.iconColor : Variables.backgroundColorUI
-                                border.color: cardMouse.containsMouse ? Variables.buttonColor : Variables.borderColor
-                                border.width: Variables.borderWidth
-
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                                MouseArea {
-                                    id: cardMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    acceptedButtons: Qt.NoButton
-                                }
-
-                                SettingsToggle {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Variables.settingsCardPadding
-                                    anchors.topMargin: Variables.settingsCardPadding
-                                    anchors.bottomMargin: Variables.settingsCardPadding
-                                    anchors.rightMargin: Variables.settingsCardPadding + Variables.settingsResetButtonSize + Variables.settingsResetButtonMargin
-                                    visible: settingCard.modelData.type === "toggle"
-                                    label: settingCard.modelData.label
-                                    description: settingCard.modelData.description
-                                    checkedState: Boolean(Variables[settingCard.modelData.key])
-                                    onValueChanged: value => settingsPanel.setSetting(settingCard.modelData.key, value)
-                                }
-
-                                SettingsSlider {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Variables.settingsCardPadding
-                                    anchors.topMargin: Variables.settingsCardPadding
-                                    anchors.bottomMargin: Variables.settingsCardPadding
-                                    anchors.rightMargin: Variables.settingsCardPadding + Variables.settingsResetButtonSize + Variables.settingsResetButtonMargin
-                                    visible: settingCard.modelData.type === "slider"
-                                    label: settingCard.modelData.label
-                                    description: settingCard.modelData.description
-                                    fromValue: settingCard.modelData.min
-                                    toValue: settingCard.modelData.max
-                                    valueFactor: settingCard.modelData.factor || 1
-                                    valueSuffix: settingCard.modelData.suffix || ""
-                                    sliderValue: Number(Variables[settingCard.modelData.key])
-                                    onValueChanged: value => settingsPanel.setSetting(settingCard.modelData.key, value)
-                                }
-
-                                SettingsInput {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Variables.settingsCardPadding
-                                    anchors.topMargin: Variables.settingsCardPadding
-                                    anchors.bottomMargin: Variables.settingsCardPadding
-                                    anchors.rightMargin: Variables.settingsCardPadding + Variables.settingsResetButtonSize + Variables.settingsResetButtonMargin
-                                    visible: settingCard.modelData.type === "input"
-                                    label: settingCard.modelData.label
-                                    description: settingCard.modelData.description
-                                    textValue: settingsPanel.settingValue(settingCard.modelData.key)
-                                    hexColor: Boolean(settingCard.modelData.hexColor)
-                                    onValueChanged: value => settingsPanel.setSetting(settingCard.modelData.key, value)
-                                }
-
-                                SettingsChoice {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Variables.settingsCardPadding
-                                    anchors.topMargin: Variables.settingsCardPadding
-                                    anchors.bottomMargin: Variables.settingsCardPadding
-                                    anchors.rightMargin: Variables.settingsCardPadding + Variables.settingsResetButtonSize + Variables.settingsResetButtonMargin
-                                    visible: settingCard.modelData.type === "choice"
-                                    label: settingCard.modelData.label
-                                    description: settingCard.modelData.description
-                                    currentValue: settingsPanel.settingValue(settingCard.modelData.key)
-                                    options: settingCard.modelData.options || []
-                                    showColorPreview: Boolean(settingCard.modelData.palette)
-                                    previewColor: settingCard.modelData.palette
-                                        ? Variables.colorFromSource(settingsPanel.settingValue(settingCard.modelData.key))
-                                        : "transparent"
-                                    onValueChanged: value => settingsPanel.setSetting(settingCard.modelData.key, value)
-                                }
-
-                                SettingsPresetManager {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Variables.settingsCardPadding
-                                    anchors.topMargin: Variables.settingsCardPadding
-                                    anchors.bottomMargin: Variables.settingsCardPadding
-                                    anchors.rightMargin: Variables.settingsCardPadding + Variables.settingsResetButtonSize + Variables.settingsResetButtonMargin
-                                    visible: settingCard.modelData.type === "presetManager"
-                                    label: settingCard.modelData.label || ""
-                                    description: settingCard.modelData.description || ""
-                                }
-
-                                SettingsProfilePicture {
-                                    anchors.fill: parent
-                                    anchors.margins: Variables.settingsCardPadding
-                                    visible: settingCard.modelData.type === "profilePicture"
-                                    label: settingCard.modelData.label || ""
-                                    description: settingCard.modelData.description || ""
-                                }
-
-                                SettingsConnectivity {
-                                    anchors.fill: parent
-                                    anchors.margins: Variables.settingsCardPadding
-                                    visible: settingCard.modelData.type === "connectivity"
-                                }
-
-                                SettingsActivation {
-                                    anchors.fill: parent
-                                    anchors.margins: Variables.settingsCardPadding
-                                    visible: settingCard.modelData.type === "activation"
-                                }
-
-                                Rectangle {
-                                    id: resetButton
-                                    visible: settingCard.modelData.type !== "presetManager"
-                                        && settingCard.modelData.type !== "profilePicture"
-                                        && settingCard.modelData.type !== "connectivity"
-                                        && settingCard.modelData.type !== "activation"
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: Variables.spacing
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: Variables.settingsResetButtonSize
-                                    height: width
-                                    radius: width / 2
-                                    opacity: resetButton.isDefault ? 0.0 : (resetMouse.containsMouse ? 1.0 : 0.6)
-                                    color: resetMouse.containsMouse && !resetButton.isDefault
-                                        ? Variables.iconColor : Variables.uiColor
-                                    border.color: resetMouse.containsMouse && !resetButton.isDefault
-                                        ? Variables.buttonColor : Variables.borderColor
-                                    border.width: 1
-
-                                    readonly property bool isDefault: settingsPanel.isSettingDefault(settingCard.modelData.key)
-                                    activeFocusOnTab: visible
-
-                                    Keys.onPressed: event => {
-                                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)
-                                                && !resetButton.isDefault) {
-                                            settingsPanel.resetSetting(settingCard.modelData.key)
-                                            event.accepted = true
-                                        }
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "↺"
-                                        font.pixelSize: Variables.fontSize * 0.9
-                                        color: resetMouse.containsMouse && !resetButton.isDefault
-                                            ? Variables.backgroundColorUI : Variables.iconColor
-                                    }
-
-                                    MouseArea {
-                                        id: resetMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            if (!resetButton.isDefault)
-                                                settingsPanel.resetSetting(settingCard.modelData.key)
-                                            resetButton.forceActiveFocus()
-                                        }
-                                    }
-
-                                    SettingsToolTip {
-                                        visible: resetMouse.containsMouse && !resetButton.isDefault
-                                        text: "Restore " + settingCard.modelData.label + " to its default value."
-                                    }
-
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on opacity { NumberAnimation { duration: 140 } }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                id: closeButton
-
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.topMargin: Variables.spacing
-                anchors.rightMargin: Variables.spacing
-                width: Variables.settingsCloseButtonSize
-                height: width
-                radius: width / 2
-                color: closeMouse.containsMouse ? Variables.iconColor : Variables.backgroundColorUI
-                border.color: closeMouse.containsMouse ? Variables.buttonColor : Variables.borderColor
-                border.width: Variables.borderWidth
-                z: 2
-                activeFocusOnTab: true
-
-                Keys.onReturnPressed: settingsPanel.visible = false
-                Keys.onEnterPressed: settingsPanel.visible = false
-                Keys.onSpacePressed: settingsPanel.visible = false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "×"
-                    font.pixelSize: Variables.fontSize * 1.25
-                    color: closeMouse.containsMouse ? Variables.uiColor : Variables.textColor
-                }
-
-                MouseArea {
-                    id: closeMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        settingsPanel.visible = false
-                        closeButton.forceActiveFocus()
-                    }
-                }
-
-                SettingsToolTip {
-                    visible: closeMouse.containsMouse
-                    text: "Close settings. Escape also closes this panel."
-                }
-
-                Behavior on color { ColorAnimation { duration: 140 } }
+    Loader {
+        id: contentLoader
+        anchors.fill: parent
+        active: Variables.settingsOpen || exitAnimTimer.running
+        sourceComponent: Component {
+            SettingsContent {
+                controller: settingsPanel
+                expanded: settingsPanel.visualExpanded
+                launcherHeight: settingsPanel.launcherHeight
             }
         }
-    }
-
-    Loader {
-        id: panelContentLoader
-        anchors.fill: parent
-        active: settingsPanel.visible
-        sourceComponent: panelContent
     }
 }

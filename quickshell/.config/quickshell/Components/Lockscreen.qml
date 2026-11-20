@@ -46,6 +46,7 @@ Scope {
 
         ScriptAction {
             script: {
+                Variables.closeSettings();
                 Variables.lockScreen = true; 
                 lockScreen.screenOpacity = 1.0;
                 Variables.expandedState = false;

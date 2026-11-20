@@ -847,7 +847,7 @@ RowLayout {
 
                         Item {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: Variables.musicArtSize
+                            Layout.preferredHeight: Variables.musicArtSize * 1.5
                             Layout.minimumHeight: 0
                             clip: true
 

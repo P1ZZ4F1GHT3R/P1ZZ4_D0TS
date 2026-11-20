@@ -31,7 +31,7 @@ Scope {
     }
 
     Process {
-    id: applyWallpaperProcess
+        id: applyWallpaperProcess
     }
 
     function applyWallpaper(path) {
@@ -52,7 +52,7 @@ Scope {
 
         color: "transparent"
         implicitHeight: 0
-        exclusiveZone: Variables.focused ? 0 : Variables.exclusiveZoneTop + Variables.borderWidth * 4
+        exclusiveZone: Variables.focused ? 0 : Variables.exclusiveZoneTop + Variables.frameBorderWidth
         mask: Region {}
     }
 
@@ -65,7 +65,7 @@ Scope {
         onScreenChanged: Variables.monitor = screen
 
         HyprlandFocusGrab {
-            active: Variables.powerMenu || Variables.wallpaperPicker || Variables.toolBar || Variables.launcherOpen
+            active: Variables.powerMenu || Variables.wallpaperPicker || Variables.toolBar || Variables.launcherOpen || Variables.settingsOpen
             windows: [ unifiedPanel ] 
         }
 
@@ -78,7 +78,7 @@ Scope {
 
         color: "transparent"
         WlrLayershell.layer: Variables.wallpaperPicker ? WlrLayer.Overlay : WlrLayer.Top
-        WlrLayershell.keyboardFocus: Variables.launcherOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: (Variables.launcherOpen || Variables.settingsOpen) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore 
 
         mask: Region {
@@ -86,18 +86,18 @@ Scope {
             Region { item: center }
             Region { item: right }
             Region { item: controlCenter }
-            Region { item: wallpaperSwitcher }
             Region { item: launcher }
+            Region { item: settingsInputRegion }
         }
 
         IpcHandler {
             target: "focusmode"
 
             function toggle(): void {
-                Variables.notchHidden = !Variables.notchHidden
-                Variables.workspacesHidden = !Variables.workspacesHidden
-                Variables.systemHidden = !Variables.systemHidden
                 Variables.focusMode = !Variables.focusMode
+                Variables.notchHidden = Variables.focusMode
+                Variables.workspacesHidden = Variables.settingsOpen ? true : Variables.focusMode
+                Variables.systemHidden = Variables.settingsOpen ? true : Variables.focusMode
                 if (!Variables.focused) {
                     focusTimer.start();
                 }
@@ -111,15 +111,25 @@ Scope {
             target: "launcher"
 
             function toggle(): void {
-                if (Variables.launcherOpen && Variables.launcherMode === "apps") {
-                    Variables.launcherOpen = false;
+                if (Variables.launcherOpen) {
+                    if (Variables.settingsOpen && launcher.item && !launcher.item.searchFocused) {
+                        launcher.item.focusSearch();
+                    } else {
+                        Variables.launcherOpen = false;
+                    }
                 } else {
-                    Variables.launcherMode = "apps";
+                    Variables.launcherMode = Variables.settingsOpen ? "settings" : "apps";
                     Variables.launcherOpen = true; 
                 }
             }
 
             function toggleMode(mode: string): void {
+                if (Variables.settingsOpen) {
+                    Variables.launcherMode = "settings";
+                    Variables.launcherOpen = !Variables.launcherOpen;
+                    return;
+                }
+
                 if (Variables.launcherOpen && Variables.launcherMode === mode) {
                     Variables.launcherOpen = false;
                 } else {
@@ -208,6 +218,21 @@ Scope {
             }
         }
 
+        Rectangle {
+            id: settingsScrim
+            anchors.fill: parent
+            color: Variables.shadowColor
+            opacity: Variables.settingsOpen ? Variables.settingsScrimOpacity : 0.0
+            visible: opacity > 0.001
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Variables.fadeAnimation
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
         Item {
             id: compositeContainer
             anchors.fill: parent
@@ -226,7 +251,7 @@ Scope {
                 anchors.fill: parent
                 antialiasing: true
 
-                readonly property real bw: Variables.borderWidth * 4
+                readonly property real bw: Variables.frameBorderWidth
                 readonly property real r: Variables.radius
 
                 ShapePath {
@@ -252,6 +277,23 @@ Scope {
                     PathLine { x: screenBorderShape.bw; y: screenBorderShape.bw + screenBorderShape.r }
                     PathArc { x: screenBorderShape.bw + screenBorderShape.r; y: screenBorderShape.bw; radiusX: screenBorderShape.r; radiusY: screenBorderShape.r }
                 }
+            }
+
+            SettingsPanel {
+                id: settingsOverlay
+                x: Variables.frameBorderWidth
+                y: Variables.frameBorderWidth + Variables.settingsHeaderHeight
+                width: parent.width - (Variables.frameBorderWidth * 2)
+                height: parent.height - (Variables.frameBorderWidth * 2) - Variables.settingsHeaderHeight
+                launcherHeight: launcher.height
+            }
+
+            Item {
+                id: settingsInputRegion
+                x: settingsOverlay.x
+                y: settingsOverlay.y
+                width: Variables.settingsOpen ? settingsOverlay.width : 0
+                height: Variables.settingsOpen ? settingsOverlay.height : 0
             }
 
             RowLayout {
@@ -299,6 +341,25 @@ Scope {
                     right: parent.right
                 }
                 implicitWidth: Variables.barControlCenterWidth
+                opacity: Variables.settingsOpen ? 0.0 : 1.0
+                enabled: !Variables.settingsOpen
+
+                transform: Translate {
+                    x: Variables.settingsOpen ? (Variables.controlCenterClosedWidth + Variables.settingsTransitionOffset) : 0
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: Variables.settingsOpen ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI
+                            easing.type: Variables.activeAnimationUI
+                        }
+                    }
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Variables.fadeAnimation
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
 
             Loader {

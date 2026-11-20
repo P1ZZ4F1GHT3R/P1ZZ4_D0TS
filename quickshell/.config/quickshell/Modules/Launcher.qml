@@ -33,11 +33,21 @@ Rectangle {
         ? Math.ceil(resultsModel.count / gridColumns) * gridItemSize 
         : resultsModel.count * itemHeight
     readonly property real maxListHeight: Variables.launcherExpandedHeight - baseHeight
+    readonly property bool searchFocused: searchInput.hasFocus
+
+    property bool needsInitialFocus: false
+
+    function focusSearch() {
+        needsInitialFocus = true;
+        searchInput.forceInputFocus();
+    }
 
     implicitWidth: Variables.launcherOpen ? ((Variables.wallpaperPicker || searchMode === "wallpaper") ? Variables.wallpaperPickerWidth : Variables.launcherWidth) : Variables.launcherWidth / 3
     implicitHeight: Variables.launcherOpen ? (
         searchMode === "wallpaper" ? baseHeight + Variables.wallpaperPickerHeight : 
-        (searchInput.text.length > 0 || searchMode !== "apps" ? baseHeight + Math.min(calculatedListHeight, maxListHeight) : baseHeight)
+        (searchInput.text.trim().length > 0 || (searchMode !== "apps" && searchMode !== "settings")
+            ? baseHeight + Math.min(calculatedListHeight, maxListHeight)
+            : baseHeight)
     ) : 0 
     
     color: Variables.uiColor
@@ -46,15 +56,15 @@ Rectangle {
 
     Behavior on implicitWidth {
         NumberAnimation {
-            duration: Variables.launcherOpen ? Variables.activeDurationUI * 0.64 : Variables.activeDurationUI
-            easing.type: Variables.activeAnimationUI
+            duration: Variables.launcherOpen ? Variables.activeDurationUI * 0.55 : Variables.activeDurationUI * 0.45
+            easing.type: Easing.OutCubic
         }
     }
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: Variables.launcherOpen ? Variables.activeDurationUI : Variables.activeDurationUI * 0.64
-            easing.type: Variables.activeAnimationUI
+            duration: Variables.launcherOpen ? Variables.activeDurationUI * 0.55 : Variables.activeDurationUI * 0.45
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -65,6 +75,12 @@ Rectangle {
     property string searchMode: Variables.launcherMode
 
     onSearchModeChanged: {
+        if (Variables.settingsOpen && searchMode !== "settings") {
+            Variables.launcherMode = "settings";
+            searchMode = "settings";
+            return;
+        }
+
         if (searchMode === "wallpaper") {
             Variables.wallpaperPicker = true;
             if (wallpaperLoader.item) {
@@ -72,9 +88,17 @@ Rectangle {
             }
         } else {
             Variables.wallpaperPicker = false;
-            searchInput.forceActiveFocus();
+            if (Variables.launcherOpen) {
+                focusSearch();
+            }
             if (searchMode === "emoji") loadEmojis();
             if (searchMode === "nerdfont") loadNerdIcons();
+            if (searchMode === "settings") {
+                resultsModel.clear();
+                if (searchInput.text.trim().length > 0) {
+                    filterResults(searchInput.text);
+                }
+            }
         }
     }
 
@@ -145,6 +169,74 @@ Rectangle {
         return null;
     }
 
+    function collectMatchingSettings(lowerQuery, includeAllWhenEmpty) {
+        let matches = [];
+        const cats = Variables.settingsCategories || [];
+
+        for (let c = 0; c < cats.length; c++) {
+            const cat = cats[c];
+            const catName = (cat.name || "").toLowerCase();
+            const catSub = (cat.subtitle || "").toLowerCase();
+
+            let catScore = 0;
+            if (includeAllWhenEmpty && lowerQuery.length === 0) {
+                catScore = 500 - c;
+            } else if (lowerQuery.length > 0) {
+                if (catName === lowerQuery) catScore = 920;
+                else if (catName.startsWith(lowerQuery)) catScore = 760;
+                else if (catName.includes(lowerQuery) || catSub.includes(lowerQuery)) catScore = 520;
+            }
+
+            if (catScore > 0) {
+                matches.push({
+                    title: cat.name + "  ·  " + cat.subtitle,
+                    data: String(c),
+                    extra: "",
+                    icon: "",
+                    glyph: cat.icon || "󰒓",
+                    badge: "Category",
+                    type: "setting",
+                    score: catScore
+                });
+            }
+
+            const items = cat.settings || [];
+            for (let s = 0; s < items.length; s++) {
+                const item = items[s];
+                if (!item.label) continue;
+
+                const lowerLabel = item.label.toLowerCase();
+                const lowerDesc = (item.description || "").toLowerCase();
+                let score = 0;
+
+                if (includeAllWhenEmpty && lowerQuery.length === 0) {
+                    score = 300 - (c * 20) - s;
+                } else if (lowerQuery.length > 0) {
+                    if (lowerLabel === lowerQuery) score = 950;
+                    else if (lowerLabel.startsWith(lowerQuery)) score = 780;
+                    else if (lowerLabel.includes(" " + lowerQuery)) score = 680;
+                    else if (lowerLabel.includes(lowerQuery)) score = 580;
+                    else if (lowerDesc.includes(lowerQuery)) score = 420;
+                    else if (catName.includes(lowerQuery)) score = 340;
+                }
+
+                if (score > 0) {
+                    matches.push({
+                        title: item.label,
+                        data: String(c),
+                        extra: item.key || item.type || "",
+                        icon: "",
+                        glyph: cat.icon || "󰒓",
+                        badge: cat.name,
+                        type: "setting",
+                        score: score
+                    });
+                }
+            }
+        }
+        return matches;
+    }
+
     Process {
         id: clipboardFetcher
         command: ["bash", "-c", "cliphist list | head -n 50"]
@@ -179,7 +271,10 @@ Rectangle {
                         resultsModel.append({
                             displayTitle: lines[i].split('/').pop(),
                             actionData: lines[i],
+                            extraData: "",
                             displayIcon: "text-x-generic",
+                            displayGlyph: "",
+                            displayBadge: "",
                             resultType: "file"
                         });
                     }
@@ -243,6 +338,15 @@ Rectangle {
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        enabled: Variables.launcherOpen && root.searchMode !== "wallpaper"
+        onPressed: mouse => {
+            root.focusSearch();
+            mouse.accepted = false;
+        }
+    }
+
     Item {
         anchors.fill: parent
         anchors.margins: Variables.spacing
@@ -265,19 +369,26 @@ Rectangle {
                     if (root.searchMode === "files") return "Search files...";
                     if (root.searchMode === "emoji") return "Search emojis...";
                     if (root.searchMode === "nerdfont") return "Search NerdFont icons...";
-                    return "Search apps (type / for commands)...";
+                    if (root.searchMode === "settings") return "Search settings...";
+                    return "Search apps or settings (type / for commands)...";
+                }
+
+                onHasFocusChanged: {
+                    if (hasFocus) {
+                        root.needsInitialFocus = false;
+                    }
                 }
 
                 Timer {
                     interval: 50
-                    running: Variables.launcherOpen && root.searchMode !== "wallpaper" && !searchInput.hasFocus
+                    running: Variables.launcherOpen && root.searchMode !== "wallpaper" && root.needsInitialFocus && !searchInput.hasFocus
                     repeat: true
                     onTriggered: searchInput.forceInputFocus()
                 }
 
                 onTextEdited: (newText) => {
-                    if (newText.startsWith("/") && root.searchMode !== "apps") {
-                        root.searchMode = "apps";
+                    if (!Variables.settingsOpen && newText.startsWith("/") && root.searchMode !== "apps") {
+                        Variables.launcherMode = "apps";
                     }
                     if (root.searchMode === "files") {
                         fileSearchTimer.restart();
@@ -287,12 +398,16 @@ Rectangle {
                 }
 
                 inputItem.Keys.onEscapePressed: {
-                    Variables.launcherOpen = false;
-                    Variables.wallpaperPicker = false;
+                    if (Variables.settingsOpen) {
+                        Variables.closeSettings();
+                    } else {
+                        Variables.launcherOpen = false;
+                        Variables.wallpaperPicker = false;
+                    }
                 }
 
                 inputItem.Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Backspace && searchInput.text.length === 0 && root.searchMode !== "apps") {
+                    if (event.key === Qt.Key_Backspace && searchInput.text.length === 0 && root.searchMode !== "apps" && !Variables.settingsOpen) {
                         Variables.launcherMode = "apps";
                         filterResults("");
                     } else if (root.isGridMode) {
@@ -325,7 +440,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
-                visible: (searchInput.text.length > 0 || root.searchMode !== "apps") && !root.isGridMode && root.searchMode !== "wallpaper"
+                visible: (searchInput.text.trim().length > 0 || (root.searchMode !== "apps" && root.searchMode !== "settings")) && !root.isGridMode && root.searchMode !== "wallpaper"
                 model: resultsModel
 
                 delegate: Item {
@@ -340,15 +455,26 @@ Rectangle {
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: Variables.spacing
+                            anchors.rightMargin: Variables.spacing
                             spacing: Variables.spacing * 2
 
                             Image {
                                 Layout.preferredWidth: Variables.fontSize * 1.5
                                 Layout.preferredHeight: Variables.fontSize * 1.5
                                 Layout.alignment: Qt.AlignVCenter
-                                visible: model.displayIcon !== ""
+                                visible: (model.displayIcon || "") !== "" && (model.displayGlyph || "") === ""
                                 source: model.displayIcon.startsWith("/") ? "file://" + model.displayIcon : (model.displayIcon ? Quickshell.iconPath(model.displayIcon, "help-contents") : "")
                                 fillMode: Image.PreserveAspectFit
+                            }
+
+                            Text {
+                                Layout.preferredWidth: Variables.fontSize * 1.5
+                                Layout.alignment: Qt.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                visible: (model.displayGlyph || "") !== ""
+                                text: model.displayGlyph || ""
+                                color: index === resultsList.currentIndex ? Variables.uiColor : Variables.iconColor
+                                font.pixelSize: Variables.fontSize * 1.2
                             }
 
                             Text {
@@ -362,6 +488,14 @@ Rectangle {
                                 Behavior on color {
                                     ColorAnimation {duration: Variables.fadeAnimation / 1.5}
                                 }
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignVCenter
+                                visible: (model.displayBadge || "") !== ""
+                                text: model.displayBadge || ""
+                                color: index === resultsList.currentIndex ? Variables.uiColor : Variables.borderColor
+                                font.pixelSize: Variables.fontSize * 0.78
                             }
                         }
 
@@ -447,6 +581,7 @@ Rectangle {
         let scoredItems = []
 
         const virtualModes = [
+            { name: "Settings Search", command: "settings", trigger: "settings", icon: "preferences-system", type: "mode" },
             { name: "Clipboard History", command: "clipboard", trigger: "clipboard", icon: "edit-paste", type: "mode" },
             { name: "File Search", command: "files", trigger: "files", icon: "system-file-manager", type: "mode" },
             { name: "Emoji Picker", command: "emoji", trigger: "emoji", icon: "face-smile", type: "mode" },
@@ -464,6 +599,8 @@ Rectangle {
                     data: String(calcVal),
                     extra: "",
                     icon: "accessories-calculator",
+                    glyph: "",
+                    badge: "",
                     type: "calc",
                     score: 9999
                 });
@@ -481,6 +618,8 @@ Rectangle {
                             data: virtualModes[j].command,
                             extra: "",
                             icon: virtualModes[j].icon,
+                            glyph: "",
+                            badge: "",
                             type: virtualModes[j].type,
                             score: slashQuery === "" ? (virtualModes.length - j) : score
                         });
@@ -531,12 +670,19 @@ Rectangle {
                             data: entry.id, 
                             extra: entry.id,
                             icon: entry.icon || "dialog-question",
+                            glyph: "",
+                            badge: "",
                             type: "app",
                             score: score
                         });
                     }
                 }
+
+                scoredItems = scoredItems.concat(collectMatchingSettings(lowerQuery, false));
             }
+        } else if (root.searchMode === "settings") {
+            if (query.trim().length === 0) return;
+            scoredItems = collectMatchingSettings(lowerQuery.trim(), false);
         } else if (root.searchMode === "clipboard") {
             for (let i = 0; i < allClipboard.length; i++) {
                 let text = allClipboard[i].text;
@@ -557,6 +703,8 @@ Rectangle {
                         data: allClipboard[i].rawLine,
                         extra: "",
                         icon: "edit-paste",
+                        glyph: "",
+                        badge: "",
                         type: "clipboard",
                         score: score
                     });
@@ -587,7 +735,9 @@ Rectangle {
                         title: e.desc,
                         data: e.char,
                         extra: "",
-                        icon: "", 
+                        icon: "",
+                        glyph: "",
+                        badge: "",
                         type: "emoji",
                         score: score
                     });
@@ -617,6 +767,8 @@ Rectangle {
                         data: icon.char,
                         extra: "",
                         icon: "",
+                        glyph: "",
+                        badge: "",
                         type: "nerdfont",
                         score: score
                     });
@@ -634,7 +786,9 @@ Rectangle {
                 displayTitle: scoredItems[i].title,
                 actionData: scoredItems[i].data,
                 extraData: scoredItems[i].extra,
-                displayIcon: scoredItems[i].icon,
+                displayIcon: scoredItems[i].icon || "",
+                displayGlyph: scoredItems[i].glyph || "",
+                displayBadge: scoredItems[i].badge || "",
                 resultType: scoredItems[i].type
             });
         }
@@ -644,8 +798,10 @@ Rectangle {
 
     function executeResult(type, data, extra) {
         if (type === "mode") {
+            if (Variables.settingsOpen) return;
             Variables.launcherMode = data;
             searchInput.text = "";
+            resultsModel.clear();
             if (data === "clipboard") clipboardFetcher.running = true;
             if (data === "emoji") loadEmojis();
             if (data === "nerdfont") loadNerdIcons();
@@ -655,6 +811,12 @@ Rectangle {
                 Variables.wallpaperPreview = true;
             }
             return; 
+        } else if (type === "setting") {
+            const catIdx = parseInt(data) || 0;
+            Variables.launcherOpen = false;
+            Variables.wallpaperPicker = false;
+            Variables.openSettingsTo(catIdx, extra || "");
+            return;
         } else if (type === "app") {
             let usageCache = {};
             try { usageCache = JSON.parse(appUsageSettings.usageJson || "{}"); } catch (e) {}
@@ -690,14 +852,31 @@ Rectangle {
 
     Connections {
         target: Variables
+        function onLauncherModeChanged() {
+            if (Variables.settingsOpen && Variables.launcherMode !== "settings") {
+                Variables.launcherMode = "settings";
+                return;
+            }
+            if (root.searchMode !== Variables.launcherMode)
+                root.searchMode = Variables.launcherMode;
+        }
+
         function onLauncherOpenChanged() {
             if (Variables.launcherOpen) {
+                if (Variables.settingsOpen) {
+                    Variables.launcherMode = "settings";
+                }
+                root.needsInitialFocus = true;
+                searchInput.text = "";
+                resultsModel.clear();
                 if (Variables.launcherMode === "clipboard") clipboardFetcher.running = true;
                 if (Variables.launcherMode === "emoji") loadEmojis();
                 if (Variables.launcherMode === "nerdfont") loadNerdIcons();
             } else {
+                root.needsInitialFocus = false;
                 searchInput.text = "";
-                Variables.launcherMode = "apps";
+                resultsModel.clear();
+                Variables.launcherMode = Variables.settingsOpen ? "settings" : "apps";
                 Variables.wallpaperPicker = false;
                 root.allEmojis = [];
                 root.allNerdIcons = [];

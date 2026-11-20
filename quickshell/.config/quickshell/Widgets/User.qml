@@ -73,10 +73,12 @@ Rectangle {
     RowLayout {
         id: userStats
 
-        anchors{
+        anchors {
             fill: parent
-            centerIn: parent
+            leftMargin: Variables.spacing
+            rightMargin: Variables.spacing
         }
+        spacing: Variables.spacing * 0.75
 
         FileDialog {
             id: imageDialog
@@ -108,7 +110,7 @@ Rectangle {
             }
         }
 
-        Item { Layout.fillWidth: true}
+        Item { Layout.fillWidth: true }
 
         ClippingWrapperRectangle {
             id: pfpIcon
@@ -118,7 +120,7 @@ Rectangle {
             radius: Variables.imgRadius
             visible: Variables.profilePicture !== ""
 
-            Image{
+            Image {
                 anchors.fill: parent
                 source: Variables.profilePicture
                 visible: Variables.profilePicture !== ""
@@ -133,14 +135,21 @@ Rectangle {
                 }
             }
         }
+
         Rectangle {
             Layout.preferredHeight: Variables.imgHeight
             Layout.preferredWidth: Variables.imgWidth
+            Layout.alignment: Qt.AlignVCenter
             color: Variables.buttonColor
             radius: Variables.imgRadius
             visible: Variables.profilePicture === ""
 
-            Text{ text: "󰀄"; color: Variables.textColor; font.pixelSize: Variables.fontSize; visible: Variables.profilePicture === ""; anchors.centerIn: parent }
+            Text {
+                text: "󰀄"
+                color: Variables.textColor
+                font.pixelSize: Variables.fontSize
+                anchors.centerIn: parent
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -148,8 +157,49 @@ Rectangle {
                 cursorShape: Qt.PointingHandCursor
             }
         }
-        Item {}
-        Text{ text: Quickshell.env("USER") + " - " + uptimeChecker.uptimeText; color: Variables.textColor; font.pixelSize: Variables.fontSize; Layout.alignment: Qt.AlignVCenter}
-        Item { Layout.fillWidth: true}
+
+        Text {
+            text: Quickshell.env("USER") + " - " + uptimeChecker.uptimeText
+            color: Variables.textColor
+            font.pixelSize: Variables.fontSize
+            elide: Text.ElideRight
+            Layout.maximumWidth: root.width - Variables.imgWidth - Variables.sliderButtonSize - (Variables.spacing * 4)
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Rectangle {
+            id: settingsButton
+
+            Layout.preferredWidth: Variables.sliderButtonSize
+            Layout.preferredHeight: Variables.sliderButtonSize
+            Layout.alignment: Qt.AlignVCenter
+            radius: width / 2
+            color: settingsMouse.containsMouse ? Variables.iconColor : Variables.uiColor
+            border.color: settingsMouse.containsMouse ? Variables.buttonColor : Variables.borderColor
+            border.width: Variables.borderWidth
+
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on border.color { ColorAnimation { duration: 140 } }
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰒓"
+                font.pixelSize: Variables.fontSize
+                color: settingsMouse.containsMouse ? Variables.uiColor : Variables.iconColor
+
+                Behavior on color { ColorAnimation { duration: 140 } }
+            }
+
+            MouseArea {
+                id: settingsMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Variables.openSettings()
+            }
+        }
+
+        Item { Layout.fillWidth: true }
+
     }
 }

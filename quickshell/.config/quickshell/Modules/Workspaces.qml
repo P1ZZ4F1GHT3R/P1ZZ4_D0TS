@@ -7,15 +7,16 @@ import QtQuick.Shapes
 import "../"
 
 Rectangle {
+    id: workspaces
 
-  Layout.alignment: Qt.AlignTop
-  implicitHeight: rowLayout.implicitHeight + Variables.height + Variables.borderWidth * 4
-  implicitWidth: Variables.workspacesHidden ? 0 : rowLayout.implicitWidth + Variables.width
-  color: Variables.uiColor
-  topLeftRadius: 0
-  topRightRadius: 0
-  bottomLeftRadius: 0
-  bottomRightRadius: Variables.radius
+    Layout.alignment: Qt.AlignTop
+    implicitHeight: rowLayout.implicitHeight + Variables.height + Variables.borderWidth * 4
+    implicitWidth: Variables.workspacesHidden ? 0 : rowLayout.implicitWidth + Variables.width
+    color: Variables.uiColor
+    topLeftRadius: 0
+    topRightRadius: 0
+    bottomLeftRadius: 0
+    bottomRightRadius: Variables.radius
 
     readonly property bool hasSpecialWindows: {
         let hasWin = false;
@@ -41,17 +42,18 @@ Rectangle {
     Shape {
         id: rightConcave
         
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        anchors.top: parent.top
+        anchors.left: parent.right
+        anchors.topMargin: Variables.frameBorderWidth
+
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, Math.max(0, parent.height - anchors.topMargin))))
         visible: cornerSize > 0
 
         width: cornerSize
         height: cornerSize
-        anchors.top: parent.top
-        anchors.left: parent.right
-        anchors.topMargin: Variables.borderWidth * 4
 
         ShapePath {
-            fillColor: Variables.uiColor
+            fillColor: workspaces.color
             strokeWidth: 0
 
             PathMove { x: 0; y: 0 }
@@ -69,17 +71,18 @@ Rectangle {
     Shape {
         id: bottomLeftConcave
         
-        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
+        anchors.top: parent.bottom
+        anchors.left: parent.left
+        anchors.leftMargin: Variables.frameBorderWidth
+
+        readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(Math.max(0, parent.width - anchors.leftMargin), parent.height)))
         visible: cornerSize > 0
 
         width: cornerSize
         height: cornerSize
-        anchors.top: parent.bottom
-        anchors.left: parent.left
-        anchors.leftMargin: Variables.borderWidth * 4
 
         ShapePath {
-            fillColor: Variables.uiColor
+            fillColor: workspaces.color
             strokeWidth: 0
 
             PathMove { x: 0; y: 0 }
@@ -113,11 +116,11 @@ Rectangle {
         visible: !Variables.workspacesHidden
 
         Behavior on x {
-        NumberAnimation { duration: Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
+            NumberAnimation { duration: Variables.activeDurationUI * 0.64; easing.type: Variables.activeAnimationUI }
         }
     }
 
-    RowLayout{
+    RowLayout {
         id: rowLayout
         visible: !Variables.workspacesHidden
 

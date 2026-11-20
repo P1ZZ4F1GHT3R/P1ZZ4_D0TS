@@ -8,24 +8,60 @@ import "../"
 Rectangle {
     id: updateButton
 
+    readonly property bool isHidden: Variables.workspacesHidden
+
     Layout.alignment: Qt.AlignTop
     Layout.topMargin: Variables.borderWidth * 6 + Variables.topMargin
     implicitHeight: Variables.circleHeight * 1.3
     implicitWidth: Variables.circleWidth * 1.3
     color: Variables.uiColor
     radius: Variables.radius
-    border.color: Variables.borderColor
+    border.color: (actionMouse.containsMouse || updateProc.running) ? Variables.iconColor : Variables.borderColor
     border.width: Variables.borderWidth
-    opacity: actionMouse.containsMouse ? 0.85 : 1
-    visible: !Variables.workspacesHidden
+
+    opacity: isHidden ? 0.0 : (actionMouse.containsMouse ? 0.9 : 1.0)
+    scale: isHidden ? 0.0 : (actionMouse.pressed ? 0.92 : (actionMouse.containsMouse ? 1.06 : 1.0))
+    visible: opacity > 0.001
+    enabled: !isHidden
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: updateButton.isHidden ? Variables.activeDurationUI * 0.5 : Variables.activeDurationUI * 0.64
+            easing.type: Variables.activeAnimationUI
+        }
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Variables.fadeAnimation
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Behavior on border.color {
+        ColorAnimation { duration: Variables.fadeAnimation }
+    }
+
+    Behavior on color {
+        ColorAnimation { duration: Variables.fadeAnimation }
+    }
 
     Text {
+        id: iconText
         anchors.fill: parent
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         text: "󰣇"
         color: Variables.iconColor
         font.pixelSize: Variables.fontSize
+        opacity: updateProc.running ? 1.0 : 1.0
+
+        SequentialAnimation on opacity {
+            running: updateProc.running
+            loops: Animation.Infinite
+            NumberAnimation { to: 0.35; duration: 600; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 1.0; duration: 600; easing.type: Easing.InOutSine }
+        }
     }
 
     Process {
@@ -46,15 +82,16 @@ Rectangle {
         ]
     }
 
-        MouseArea {
-            id: actionMouse
-            
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                if (!updateProc.running) {
-                    updateProc.running = true
-                }
+    MouseArea {
+        id: actionMouse
+
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+            if (!updateProc.running) {
+                updateProc.running = true
             }
+        }
     }
 }

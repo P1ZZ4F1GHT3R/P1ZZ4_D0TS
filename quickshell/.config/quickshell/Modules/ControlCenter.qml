@@ -15,12 +15,12 @@ import "../"
 
 Rectangle { 
     id: controlCenter
-    anchors{
+    anchors {
         right: parent.right
         verticalCenter: parent.verticalCenter
     }
 
-    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.borderWidth * 4 : Variables.controlCenterClosedWidth
+    width: Variables.controlCenter ? controlLayout.implicitWidth + Variables.frameBorderWidth : Variables.controlCenterClosedWidth
     height: Variables.controlCenter ? controlLayout.implicitHeight : Variables.controlCenterClosedHeight
     color: Variables.uiColor
     topLeftRadius: Variables.radius
@@ -33,7 +33,7 @@ Rectangle {
         
         anchors.top: parent.bottom
         anchors.right: parent.right
-        anchors.rightMargin: Variables.controlCenter ? Variables.borderWidth * 4 : 0
+        anchors.rightMargin: Variables.controlCenter ? Variables.frameBorderWidth : 0
 
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
         visible: cornerSize > 0
@@ -62,7 +62,7 @@ Rectangle {
 
         anchors.bottom: parent.top
         anchors.right: parent.right
-        anchors.rightMargin: Variables.controlCenter ? Variables.borderWidth * 4 : 0
+        anchors.rightMargin: Variables.controlCenter ? Variables.frameBorderWidth : 0
 
         readonly property real cornerSize: Math.max(0, Math.min(Variables.radius, Math.min(parent.width, parent.height)))
         visible: cornerSize > 0
@@ -101,7 +101,7 @@ Rectangle {
     }
 
     Behavior on color {
-        ColorAnimation { duration: Variables.fadeAnimation}
+        ColorAnimation { duration: Variables.fadeAnimation }
     }
 
     MouseArea {
@@ -109,16 +109,20 @@ Rectangle {
 
         anchors.fill: parent
         hoverEnabled: true
+        enabled: !Variables.settingsOpen
 
-        onClicked: Variables.clickEnabled && !Variables.controlCenter ? Variables.controlCenter = true : Variables.controlCenter = false
+        onClicked: {
+            if (Variables.settingsOpen) return;
+            Variables.clickEnabled && !Variables.controlCenter ? Variables.controlCenter = true : Variables.controlCenter = false;
+        }
     }
 
     HoverHandler {
         id: hoverHandler
-        enabled: Variables.hoverEnabled
+        enabled: Variables.hoverEnabled && !Variables.settingsOpen
 
         onHoveredChanged: {
-            if (hovered) {
+            if (hovered && !Variables.settingsOpen) {
                 hovertimer.start()
             } else {
                 hovertimer.stop()
@@ -133,7 +137,7 @@ Rectangle {
         running: false
         repeat: false
         triggeredOnStart: false
-        onTriggered: Variables.controlCenter = true
+        onTriggered: if (!Variables.settingsOpen) Variables.controlCenter = true
     }
 
 
@@ -163,7 +167,7 @@ Rectangle {
                 NumberAnimation { duration: Variables.fadeAnimation }
             }
 
-            User{
+            User {
                 Layout.topMargin: Variables.topMargin * 4
                 Layout.leftMargin: Variables.topMargin * 4
                 Layout.rightMargin: Variables.topMargin * 4
@@ -176,20 +180,20 @@ Rectangle {
                 Layout.rightMargin: Variables.topMargin * 4
                 spacing: Variables.spacing
 
-                Volume{}
+                Volume {}
 
-                PomodoroTimer{}
+                PomodoroTimer {}
 
-                Brightness{}
+                Brightness {}
             }
 
             Rectangle {
                 id: buttonrowBackground
             
                 implicitWidth: Math.max(Variables.controlCenterButtonWidth,
-                    buttonRow.implicitWidth + Variables.borderWidth * 4)
+                    buttonRow.implicitWidth + Variables.frameBorderWidth)
                 implicitHeight: Math.max(Variables.controlCenterButtonHeight + Variables.topMargin * 2,
-                    buttonRow.implicitHeight + Variables.borderWidth * 4)
+                    buttonRow.implicitHeight + Variables.frameBorderWidth)
                 Layout.leftMargin: Variables.topMargin * 4
                 Layout.rightMargin: Variables.topMargin * 4
 
@@ -207,15 +211,15 @@ Rectangle {
                     }
                     spacing: Variables.spacing / 1.2
 
-                    IdleMonitorToggle{}
+                    IdleMonitorToggle {}
 
-                    FocusModeToggle{}
+                    FocusModeToggle {}
 
-                    ActivateLinuxToggle{}
+                    ActivateLinuxToggle {}
                     
-                    WifiToggle{}
+                    WifiToggle {}
 
-                    BluetoothToggle{}
+                    BluetoothToggle {}
                 }
             }
 
